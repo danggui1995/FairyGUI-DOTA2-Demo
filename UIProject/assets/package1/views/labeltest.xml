@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <text id="n0_v6t3" name="n0" xy="18,104" size="696,105" fontSize="24" ubb="true" autoSize="none" text="阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大"/>
+    <text id="n1_v6t3" name="n1" xy="19,252" size="1348,34" fontSize="24" ubb="true" text="阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大"/>
+    <text id="n2_v6t3" name="n2" xy="17,400" size="690,132" fontSize="24" ubb="true" autoSize="height" text="阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大"/>
+    <text id="n3_v6t3" name="n3" xy="17,577" size="699,105" fontSize="24" ubb="true" autoSize="shrink" text="阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大"/>
+    <text id="n4_v6t3" name="n4" xy="19,752" size="690,105" fontSize="24" ubb="true" autoSize="ellipsis" text="阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大阿斯顿撒大所大"/>
+    <richtext id="n5_v6t3" name="n5" xy="18,931" size="1057,91" fontSize="24" ubb="true" autoSize="none" text="阿达萨达[b]阿斯顿撒旦[/b][i]阿斯顿撒旦[/i][u]撒大声地撒[/u][img]ui://rbw1tv9tohxam[/img][color=#00ff99]阿萨德大所[/color]"/>
+  </displayList>
+</component>

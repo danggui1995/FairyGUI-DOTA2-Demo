@@ -1,0 +1,411 @@
+.Root {
+    width: 100%;
+    height: 100%;
+    /* background-color: rgb(31, 30, 30); */
+}
+
+#HiddenRoot {
+    visibility: collapse;
+}
+
+.FGUI_Gray {
+    brightness: 0.2;
+    saturation: 0;
+}
+
+.testspan {
+    width: 200px;
+    height: 200px;
+    horizontal-align: center;
+    vertical-align: middle;
+    font-weight: bold;
+    color: #BE8AB9;
+}
+
+.FGUI_FontSize12 {
+    font-size: 12px;
+}
+
+.FGUI_FontSize13 {
+    font-size: 13px;
+}
+
+.FGUI_FontSize14 {
+    font-size: 14px;
+}
+
+.FGUI_FontSize15 {
+    font-size: 15px;
+}
+
+.FGUI_FontSize16 {
+    font-size: 16px;
+}
+
+.FGUI_FontSize17 {
+    font-size: 17px;
+}
+
+.FGUI_FontSize18 {
+    font-size: 18px;
+}
+
+.FGUI_FontSize19 {
+    font-size: 19px;
+}
+
+.FGUI_FontSize20 {
+    font-size: 20px;
+}
+
+.FGUI_FontSize21 {
+    font-size: 21px;
+}
+
+.FGUI_FontSize22 {
+    font-size: 22px;
+}
+
+.FGUI_FontSize23 {
+    font-size: 23px;
+}
+
+.FGUI_FontSize24 {
+    font-size: 24px;
+}
+
+.FGUI_FontSize25 {
+    font-size: 25px;
+}
+
+.FGUI_FontSize26 {
+    font-size: 26px;
+}
+
+.FGUI_FontSize27 {
+    font-size: 27px;
+}
+
+.FGUI_FontSize28 {
+    font-size: 28px;
+}
+
+.FGUI_FontSize29 {
+    font-size: 29px;
+}
+
+.FGUI_FontSize30 {
+    font-size: 30px;
+}
+
+.FGUI_FontSize31 {
+    font-size: 31px;
+}
+
+.FGUI_FontSize32 {
+    font-size: 32px;
+}
+
+.FGUI_FontSize33 {
+    font-size: 33px;
+}
+
+.FGUI_FontSize34 {
+    font-size: 34px;
+}
+
+.FGUI_FontSize35 {
+    font-size: 35px;
+}
+
+.FGUI_FontSize36 {
+    font-size: 36px;
+}
+
+.FGUI_FontSize37 {
+    font-size: 37px;
+}
+
+.FGUI_FontSize38 {
+    font-size: 38px;
+}
+
+.FGUI_FontSize39 {
+    font-size: 39px;
+}
+
+.FGUI_FontSize40 {
+    font-size: 40px;
+}
+
+.FGUI_FontSize41 {
+    font-size: 41px;
+}
+
+.FGUI_FontSize42 {
+    font-size: 42px;
+}
+
+.FGUI_FontSize43 {
+    font-size: 43px;
+}
+
+.FGUI_FontSize44 {
+    font-size: 44px;
+}
+
+.FGUI_FontSize45 {
+    font-size: 45px;
+}
+
+.FGUI_FontSize46 {
+    font-size: 46px;
+}
+
+.FGUI_FontSize47 {
+    font-size: 47px;
+}
+
+.FGUI_FontSize48 {
+    font-size: 48px;
+}
+
+.FGUI_FontSize49 {
+    font-size: 49px;
+}
+
+.FGUI_FontSize50 {
+    font-size: 50px;
+}
+
+.FGUI_FontSize51 {
+    font-size: 51px;
+}
+
+.FGUI_FontSize52 {
+    font-size: 52px;
+}
+
+.FGUI_FontSize53 {
+    font-size: 53px;
+}
+
+.FGUI_FontSize54 {
+    font-size: 54px;
+}
+
+.FGUI_FontSize55 {
+    font-size: 55px;
+}
+
+.FGUI_FontSize56 {
+    font-size: 56px;
+}
+
+.FGUI_FontSize57 {
+    font-size: 57px;
+}
+
+.FGUI_FontSize58 {
+    font-size: 58px;
+}
+
+.FGUI_FontSize59 {
+    font-size: 59px;
+}
+
+.FGUI_FontSize60 {
+    font-size: 60px;
+}
+
+.FGUI_FontSize61 {
+    font-size: 61px;
+}
+
+.FGUI_FontSize62 {
+    font-size: 62px;
+}
+
+.FGUI_FontSize63 {
+    font-size: 63px;
+}
+
+.FGUI_FontSize64 {
+    font-size: 64px;
+}
+
+.FGUI_FontSize65 {
+    font-size: 65px;
+}
+
+.FGUI_FontSize66 {
+    font-size: 66px;
+}
+
+.FGUI_FontSize67 {
+    font-size: 67px;
+}
+
+.FGUI_FontSize68 {
+    font-size: 68px;
+}
+
+.FGUI_FontSize69 {
+    font-size: 69px;
+}
+
+.FGUI_FontSize70 {
+    font-size: 70px;
+}
+
+.FGUI_FontSize71 {
+    font-size: 71px;
+}
+
+.FGUI_FontSize72 {
+    font-size: 72px;
+}
+
+.FGUI_FontSize73 {
+    font-size: 73px;
+}
+
+.FGUI_FontSize74 {
+    font-size: 74px;
+}
+
+.FGUI_FontSize75 {
+    font-size: 75px;
+}
+
+.FGUI_FontSize76 {
+    font-size: 76px;
+}
+
+.FGUI_FontSize77 {
+    font-size: 77px;
+}
+
+.FGUI_FontSize78 {
+    font-size: 78px;
+}
+
+.FGUI_FontSize79 {
+    font-size: 79px;
+}
+
+.FGUI_FontSize80 {
+    font-size: 80px;
+}
+
+.FGUI_FontSize81 {
+    font-size: 81px;
+}
+
+.FGUI_FontSize82 {
+    font-size: 82px;
+}
+
+.FGUI_FontSize83 {
+    font-size: 83px;
+}
+
+.FGUI_FontSize84 {
+    font-size: 84px;
+}
+
+.FGUI_FontSize85 {
+    font-size: 85px;
+}
+
+.FGUI_FontSize86 {
+    font-size: 86px;
+}
+
+.FGUI_FontSize87 {
+    font-size: 87px;
+}
+
+.FGUI_FontSize88 {
+    font-size: 88px;
+}
+
+.FGUI_FontSize89 {
+    font-size: 89px;
+}
+
+.FGUI_FontSize90 {
+    font-size: 90px;
+}
+
+.FGUI_FontSize91 {
+    font-size: 91px;
+}
+
+.FGUI_FontSize92 {
+    font-size: 92px;
+}
+
+.FGUI_FontSize93 {
+    font-size: 93px;
+}
+
+.FGUI_FontSize94 {
+    font-size: 94px;
+}
+
+.FGUI_FontSize95 {
+    font-size: 95px;
+}
+
+.FGUI_FontSize96 {
+    font-size: 96px;
+}
+
+.FGUI_FontSize97 {
+    font-size: 97px;
+}
+
+.FGUI_FontSize98 {
+    font-size: 98px;
+}
+
+.FGUI_FontSize99 {
+    font-size: 99px;
+}
+
+.FGUI_Bold {
+    font-weight: bold;
+}
+
+.FGUI_Italic {
+    font-style: italic;
+}
+
+.FGUI_Underline {
+    text-decoration: underline;
+}
+
+.aaa {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(31, 30, 30);
+}
+
+.bbb {
+    margin-left: -10000px;
+    width: 30px;
+    horizontal-align: center;
+    vertical-align: middle;
+}
+
+.MeasurePanel {
+    margin-left: -10000px;
+    /* margin-top: 5px;
+    margin-left: 5px;
+    border: 2px solid #BE8AB9 ; */
+}
+
+#MeasureRoot {
+    /* flow-children : down; */
+}

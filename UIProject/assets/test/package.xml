@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="tu2mrw0y">
+  <resources>
+    <component id="8edq0" name="vipView.xml" path="/views/" exported="true"/>
+    <component id="8edq1" name="Button1.xml" path="/"/>
+  </resources>
+  <publish name=""/>
+</packageDescription>

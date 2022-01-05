@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080" designImageForTest="true">
+  <displayList>
+    <component id="n7_elln" name="n7" src="u7zav" fileName="views/ComboBox1.xml" xy="104,705" size="350,66">
+      <ComboBox visibleItemCount="10"/>
+    </component>
+    <component id="n8_elln" name="n8" src="u7zar" fileName="views/Slider1.xml" xy="96,603" size="345,10">
+      <Slider value="50" max="100"/>
+    </component>
+    <list id="n9_elln" name="n9" xy="1035,133" size="129,248" overflow="scroll" lineGap="5" defaultItem="ui://rbw1tv9tu7zao" autoItemSize="false">
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+    </list>
+  </displayList>
+</component>

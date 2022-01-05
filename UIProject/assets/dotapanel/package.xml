@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="4v0vlfq9">
+  <resources>
+    <component id="k40v0" name="DOTAModel.xml" path="/" exported="true"/>
+    <component id="k40v1" name="DOTAEffect.xml" path="/" exported="true"/>
+    <component id="k40v2" name="DOTAHeroImage.xml" path="/" exported="true"/>
+    <component id="k40v3" name="DOTAAvatarImage.xml" path="/" exported="true"/>
+    <component id="k40v4" name="DOTAItemImage.xml" path="/" exported="true"/>
+    <component id="k40v5" name="DOTAAbilityImage.xml" path="/" exported="true"/>
+    <component id="k40v6" name="DOTAUserName.xml" path="/" exported="true"/>
+    <image id="dn3v7" name="empty_png.png" path="/"/>
+  </resources>
+  <publish name=""/>
+</packageDescription>

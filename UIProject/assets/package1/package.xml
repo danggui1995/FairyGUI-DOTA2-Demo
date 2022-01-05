@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="rbw1tv9t">
+  <resources>
+    <component id="fvaib" name="mainhud.xml" path="/views/" exported="true"/>
+    <image id="ohxam" name="2.png" path="/" exported="true"/>
+    <component id="u7zan" name="Button1.xml" path="/"/>
+    <component id="u7zao" name="Button2.xml" path="/"/>
+    <component id="u7zap" name="login.xml" path="/views/" exported="true"/>
+    <component id="u7zaq" name="Slider1_grip.xml" path="/views/"/>
+    <component id="u7zar" name="Slider1.xml" path="/views/"/>
+    <component id="u7zas" name="Label1.xml" path="/views/"/>
+    <component id="u7zat" name="ComboBox1_item.xml" path="/views/"/>
+    <component id="u7zau" name="ComboBox1_popup.xml" path="/views/"/>
+    <component id="u7zav" name="ComboBox1.xml" path="/views/" exported="true"/>
+    <component id="ellnw" name="testcomp.xml" path="/"/>
+    <component id="oggix" name="Slider2_grip.xml" path="/views/"/>
+    <component id="oggiy" name="Slider2.xml" path="/views/"/>
+    <component id="avg6z" name="testcomp2.xml" path="/"/>
+    <component id="k40v10" name="testui.xml" path="/views/" exported="true"/>
+    <component id="q1dk11" name="Component1.xml" path="/"/>
+    <component id="v6t312" name="labeltest.xml" path="/views/" exported="true"/>
+    <component id="df5p13" name="ProgressBar1.xml" path="/views/"/>
+    <image id="g2u714" name="3.png" path="/p2/" exported="true"/>
+  </resources>
+  <publish name="">
+    <atlas name="Default" index="0"/>
+  </publish>
+</packageDescription>

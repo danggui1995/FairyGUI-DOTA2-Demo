@@ -1,0 +1,11 @@
+<root>
+    <styles>
+    </styles>
+    <scripts>
+    </scripts>
+  <Panel hittest="true" class="CompileRoot">
+<Image src="file://{resources}/scripts/custom_game/fgui/package1/g2u714.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/package1/ohxam.png"/>
+  </Panel>
+</root>
+

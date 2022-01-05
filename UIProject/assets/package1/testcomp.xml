@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="200,30" extention="Button">
+  <controller name="button" pages="0,up,1,down" selected="0"/>
+  <displayList>
+    <graph id="n0_avg6" name="n0" xy="0,0" size="200,30" type="rect" fillColor="#ff006600">
+      <gearDisplay controller="button" pages="1"/>
+    </graph>
+    <graph id="n1_avg6" name="n1" xy="0,0" size="200,30" type="rect" fillColor="#ff99ff33">
+      <gearDisplay controller="button" pages="0"/>
+    </graph>
+    <text id="n2_idoc" name="rank" xy="10,6" size="52,19" fontSize="12" text="第一名："/>
+    <text id="n3_idoc" name="name" xy="141,6" size="40,19" fontSize="12" align="right" text="时光机"/>
+  </displayList>
+  <Button mode="Radio"/>
+</component>

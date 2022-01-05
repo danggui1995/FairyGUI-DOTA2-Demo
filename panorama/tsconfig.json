@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "moduleResolution": "Node",
+      "target": "es2017",
+      "lib": ["es2017"],
+      "strict": true,
+      "strictNullChecks": false,
+      "skipLibCheck" : true,
+      "types": ["panorama-fgui-types"],
+      "outDir": "./dist"
+    },
+    "include": [
+      "./scripts/**/*"
+    ],
+    "exclude": [
+      "node_modules",
+      "./dist/*"
+    ],
+  }

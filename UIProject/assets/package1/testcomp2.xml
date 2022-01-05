@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="200,30" extention="Button">
+  <controller name="button" pages="0,up,1,down" selected="0"/>
+  <displayList>
+    <graph id="n0_avg6" name="n0" xy="0,0" size="200,30" type="rect" fillColor="#ff666666"/>
+    <graph id="n2_k40v" name="n2" xy="0,0" size="50,30" type="rect" fillColor="#ff0099ff">
+      <gearXY controller="button" pages="1" values="108,0" default="0,0" tween="true"/>
+      <gearColor controller="button" pages="1" values="#3333cc" default="#0099ff"/>
+    </graph>
+    <graph id="n3_k40v" name="n3" xy="150,0" size="50,30" type="rect" fillColor="#ffff0000">
+      <gearXY controller="button" pages="0,1" values="150,0|19,0" tween="true"/>
+      <gearSize controller="button" pages="1" values="50,30,0.4,0.5" default="50,30,1,1" tween="true"/>
+      <gearLook controller="button" pages="1" values="0,0,0,1" default="1,0,0,1" tween="true"/>
+    </graph>
+    <graph id="n5_idoc" name="n5" xy="50,-37" size="38,100" type="rect">
+      <relation target="n2_k40v" sidePair="middle-middle,left-right"/>
+    </graph>
+  </displayList>
+  <Button mode="Check"/>
+</component>

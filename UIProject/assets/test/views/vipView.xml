@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <graph id="n1_8edq" name="n1" xy="0,0" size="1920,1080" type="rect" fillColor="#ff333333"/>
+    <text id="n0_8edq" name="titleLabel" xy="902,0" size="116,74" fontSize="56" align="center" ubb="true" underline="true" text="标题">
+      <relation target="" sidePair="center-center,top-top"/>
+    </text>
+    <component id="n2_8edq" name="testBtn" src="8edq1" fileName="Button1.xml" xy="751,702" size="417,175">
+      <Button title="奥术大师多"/>
+    </component>
+  </displayList>
+</component>

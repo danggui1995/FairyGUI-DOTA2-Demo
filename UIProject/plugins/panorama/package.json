@@ -1,0 +1,11 @@
+{
+  "name": "panorama",
+  "displayName": "发布到dota2",
+  "description": "",
+  "version": "1.0",
+  "author": {
+    "name": "1"
+  },
+  "icon": "",
+  "main": "main.lua"
+}
