@@ -1,10 +1,12 @@
-import { GComponent, UIPackage, Controller, Transition } from "panorama-fgui-types/fgui/FairyGUI";
+import { GComponent, UIPackage, Controller, Transition, Timers, UIElement } from "../../plugin/fgui/FairyGUI";
 
 export class BaseView{
     protected package : string;
     protected packageItem : string;
     protected isFullScreen: boolean = false;
     protected binData : string;
+    protected maskComp : GComponent;
+    public viewName : string;
 
     public root : GComponent;
 
@@ -32,13 +34,10 @@ export class BaseView{
     {
         UIPackage.loadPackage(this.package, this.binData);
         this.root = UIPackage.createObject(this.package, this.packageItem);
-        if (this.root == undefined)
+        if (!this.root)
         {
             $.Msg("load package error : " + this.package + " / " + this.packageItem + "\n" + new Error().stack);
             return;
-        }
-        if (this.isFullScreen == true) {
-            this.root.setFullScreen();
         }
     }
 
@@ -54,6 +53,18 @@ export class BaseView{
 
     public __OnShow(args:string[]):void
     {
+        if (this.isFullScreen == true) {
+            this.root.setFullScreen();
+        }
+        else
+        {
+            this.root.center();
+            //加一层黑底
+            this.maskComp = UIPackage.createObject("dotapanel", "BlackMask") as GComponent;
+            this.maskComp.SetParent(this.root.parent);
+            this.root.SetParent(this.maskComp);
+            this.maskComp.onEvent('onactivate', this.onMaskClicked, this);
+        }
         this.root.emit("added_to_stage");
         this.OnShow(args);
     }
@@ -62,5 +73,23 @@ export class BaseView{
     {
         this.root.emit("removed_from_stage");
         this.OnClose();
+        if (this.maskComp)
+        {
+            this.maskComp.removeFromParent();
+        }
+        else
+        {
+            this.root.removeFromParent();
+        }
+    }
+
+    protected onMaskClicked(): void
+    {
+        this.CloseSelf();
+    }
+
+    protected CloseSelf():void
+    {
+        $.ViewManager.close(this.viewName);
     }
 }

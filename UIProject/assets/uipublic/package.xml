@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="wdrcd8rp">
+  <resources>
+    <image id="jrl66" name="gg_tsbg_01.png" path="/textures/" exported="true"/>
+    <image id="jrl69" name="gg_xiaodi_01.png" path="/textures/" exported="true" scale="9grid" scale9grid="5,5,10,10"/>
+    <image id="jrl61g" name="gg_chat_sel.png" path="/textures/" exported="true"/>
+    <image id="jrl61k" name="gg_close_03.png" path="/textures/" exported="true"/>
+    <component id="c2n71" name="itemcell.xml" path="/components/" exported="true"/>
+  </resources>
+  <publish name=""/>
+</packageDescription>

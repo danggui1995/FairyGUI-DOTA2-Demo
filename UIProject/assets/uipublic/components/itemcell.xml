@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="100,100" extention="Button">
+  <controller name="button" pages="0,up,1,down" selected="1"/>
+  <controller name="empty" pages="0,,1," selected="1"/>
+  <displayList>
+    <loader id="n5_c2n7" name="n5" xy="-15,-15" size="132,132" url="ui://wdrcd8rpjrl61g" fill="scaleFree">
+      <gearDisplay controller="button" pages="1"/>
+      <relation target="" sidePair="width-width,height-height,center-center,middle-middle"/>
+    </loader>
+    <loader id="n3_c2n7" name="qualityLoader" xy="0,0" size="100,100" fill="scaleFree">
+      <relation target="" sidePair="width-width,height-height"/>
+    </loader>
+    <component id="n2_c2n7" name="item" src="k40v4" fileName="DOTAItemImage.xml" pkg="4v0vlfq9" xy="0,0" size="100,100">
+      <relation target="" sidePair="width-width,height-height"/>
+    </component>
+    <loader id="n6_goaf" name="n6" xy="0,0" size="100,100" url="ui://4v0vlfq9dn3v7" fill="scaleFree">
+      <gearDisplay controller="empty" pages="1"/>
+      <relation target="" sidePair="width-width,height-height"/>
+    </loader>
+  </displayList>
+  <Button mode="Radio"/>
+</component>

@@ -21,6 +21,7 @@
     <component id="v6t312" name="labeltest.xml" path="/views/" exported="true"/>
     <component id="df5p13" name="ProgressBar1.xml" path="/views/"/>
     <image id="g2u714" name="3.png" path="/p2/" exported="true"/>
+    <image id="jrl615" name="kuang_xuanzhong.png" path="/"/>
   </resources>
   <publish name="">
     <atlas name="Default" index="0"/>

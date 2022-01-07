@@ -1,0 +1,26 @@
+<root>
+    <styles>
+    </styles>
+    <scripts>
+    </scripts>
+  <Panel hittest="true" class="CompileRoot">
+<Image src="file://{resources}/scripts/custom_game/fgui/dotapanel/dn3v7.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n78b.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n78g.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n79r.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7o1.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7o2.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7o3.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7o4.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7o5.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7o6.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/mainhud/c2n7xc.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/package1/g2u714.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/package1/ohxam.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl61g.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl61k.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl66.png"/>
+<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69.png"/>
+  </Panel>
+</root>
+

@@ -49,6 +49,18 @@ ${getchildren}
 }
 ]]
 
+local template_Data_GComponent = [[
+export class ${pkgName}_${pkgItem}_data extends ${baseClass}{
+${vardeclare}
+
+    protected onConstruct():void
+    {
+        this.panelName = "${pkgName}_${pkgItem}";
+${getchildren}
+    }
+}
+]]
+
 local function stringformat(pattern, map)
     for key, value in pairs(map) do
         pattern = pattern:gsub(string.format("${%s}", key), value)
@@ -95,6 +107,10 @@ local function getType(memberInfo)
     end
 end
 
+local function getTypeVarName()
+
+end
+
 local function genCode(handler)
     local allCls = {}
     local allImport = {}
@@ -106,7 +122,8 @@ local function genCode(handler)
     local pkgName = handler.pkg.name
     for i=0,classCnt-1 do
         local classInfo = classes[i]
-        if (classInfo.res.path:find("/view") or classInfo.res.path:find("/component")) and classInfo.res.exported then
+        local lowerPath = classInfo.res.path:lower()
+        if (lowerPath:find("/view") or lowerPath:find("/component")) and classInfo.res.exported then
             local targetDir = string.format("%s/../view/%s", handler.exportCodePath, pkgName)
             local targetPath = string.format("%s/%s_%s.ts", targetDir, pkgName, classInfo.resName)
             targetPath = targetPath:gsub("\\", "/")
@@ -117,37 +134,26 @@ local function genCode(handler)
 
             local childrenArr = {}
             local getArr = {}
-            local importArr = {}
 
             local members = classInfo.members
-            local references = classInfo.references
-
-            local refCount = references.Count
-            if refCount>0 then
-                for j=0,refCount-1 do
-                    local ref = references[j]
-                    table.insert(importArr, string.format('import %s from "./%s";', ref, ref))
-                end
-            end
             
             local memberCnt = members.Count
             for j=0,memberCnt-1 do
                 local memberInfo = members[j]
-                table.insert(childrenArr, string.format('\tpublic %s : %s;', memberInfo.name, getType(memberInfo)))
-            end
-
-            for j=0,memberCnt-1 do
-                local memberInfo = members[j]
+                local varName = memberInfo.name
                 if memberInfo.group==0 then
-                    table.insert(getArr, string.format('\t\tthis.%s = <%s><unknown>(this.getChild("%s"));', memberInfo.name, getType(memberInfo), memberInfo.name))
+                    table.insert(getArr, string.format('\t\tthis.%s = <%s><unknown>(this.getChild("%s"));', varName, getType(memberInfo), memberInfo.name))
                 elseif memberInfo.group==1 then
-                    table.insert(getArr, string.format('\t\tthis.%s = this.getController("%s");', memberInfo.name, memberInfo.name))
+                    varName = varName .. "_c"
+                    table.insert(getArr, string.format('\t\tthis.%s = this.getController("%s");', varName, memberInfo.name))
                 else
-                    table.insert(getArr, string.format('\t\tthis.%s = this.getTransition("%s");', memberInfo.name, memberInfo.name))
+                    varName = varName .. "_t"
+                    table.insert(getArr, string.format('\t\tthis.%s = this.getTransition("%s");', varName, memberInfo.name))
                 end
+
+                table.insert(childrenArr, string.format('\tpublic %s : %s;', varName, getType(memberInfo)))
             end
             
-            local importStr = table.concat(importArr, "\n")
             local childrenStr = table.concat(childrenArr, "\n")
             local getStr = table.concat(getArr, "\n")
 
@@ -155,15 +161,29 @@ local function genCode(handler)
                 pkgName = pkgName,
                 pkgItem = classInfo.resName,
             })
-            local saveData2 = stringformat(template_Data, {
-                pkgName = pkgName,
-                getchildren = getStr,
-                pkgItem = classInfo.resName,
-                vardeclare = childrenStr,
-                import = importStr,
-            })
 
-            table.insert(allCls, saveData2)
+            if not lowerPath:find("/view") then
+                local saveData2 = stringformat(template_Data_GComponent, {
+                    pkgName = pkgName,
+                    getchildren = getStr,
+                    pkgItem = classInfo.resName,
+                    vardeclare = childrenStr,
+                    baseClass = classInfo.superClassName,
+                })
+
+                table.insert(allCls, saveData2)
+            else
+
+                local saveData2 = stringformat(template_Data, {
+                    pkgName = pkgName,
+                    getchildren = getStr,
+                    pkgItem = classInfo.resName,
+                    vardeclare = childrenStr,
+                })
+
+                table.insert(allCls, saveData2)
+            end
+            
 
             local file = io.open(targetPath, "r")
             if not file then

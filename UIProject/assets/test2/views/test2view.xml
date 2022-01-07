@@ -10,6 +10,7 @@
       <Button title="哦哦大声道"/>
     </component>
     <graph id="n3_qehj" name="n3" xy="444,336" pivot="0.5,0.5" anchor="true" size="100,100" type="rect"/>
+    <image id="n4_l3yb" name="n4" src="l3yb2" fileName="kuang_xuanzhong.png" xy="339,489" size="485,52"/>
   </displayList>
   <transition name="show" autoPlay="true" autoPlayRepeat="-1">
     <item time="0" type="Rotation" target="n3_qehj" tween="true" startValue="0" endValue="90" duration="6"/>
