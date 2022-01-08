@@ -1,7 +1,7 @@
 local genCode = require(PluginPath..'/GenCode_TS')
 
 local template_data = [[
-import * as fgui from "../../../plugin/fgui/FairyGUI";
+import * as fgui from "panorama-fgui-types/fgui/FairyGUI";
 import { BaseView } from "../BaseView";
 
 export const __%s_Data : string = "%s";
