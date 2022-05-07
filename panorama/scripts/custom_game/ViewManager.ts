@@ -1,4 +1,4 @@
-import { GComponent, UIObjectFactory, UIPackage } from "../plugin/fgui/FairyGUI";
+import { GComponent, UIObjectFactory, UIPackage } from "panorama-fgui-types/fgui/FairyGUI";
 import { BaseView } from "./view/BaseView";
 import { __dotapanel_Data } from "./view/dotapanel/dotapanel_data";
 import { __uipublic_Data } from "./view/uipublic/uipublic_data";

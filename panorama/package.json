@@ -25,6 +25,7 @@
         "gulp-typescript": "^6.0.0-alpha.1",
         "gulp-uglify-es": "^3.0.0",
         "html-webpack-plugin": "^5.5.0",
+        "panorama-fgui-types": "^1.0.4",
         "rollup": "^2.61.1",
         "rollup-plugin-babel": "^4.4.0",
         "rollup-plugin-commonjs": "^10.1.0",

@@ -1,5 +1,5 @@
 
-import { GComponent, GObject } from "../../../plugin/fgui/FairyGUI";
+import { GComponent, GObject } from "panorama-fgui-types/fgui/FairyGUI";
 import { package1_testui_data } from "./package1_data";
 
 export class package1_testui extends package1_testui_data{

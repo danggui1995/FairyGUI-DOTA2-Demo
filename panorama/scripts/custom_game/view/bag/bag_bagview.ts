@@ -1,4 +1,4 @@
-import { GComponent, GDOTAItemImage, GObject } from "../../../plugin/fgui/FairyGUI";
+import { GComponent, GDOTAItemImage, GObject } from "panorama-fgui-types/fgui/FairyGUI";
 import { uipublic_itemcell } from "../uipublic/uipublic_itemcell";
 import { bag_bagview_data } from "./bag_data";
 

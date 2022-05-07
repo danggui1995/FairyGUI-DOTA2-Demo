@@ -1,4 +1,4 @@
-import { GComponent, UIPackage, Controller, Transition, Timers, UIElement } from "../../plugin/fgui/FairyGUI";
+import { GComponent, UIPackage, Controller, Transition, Timers, UIElement } from "panorama-fgui-types/fgui/FairyGUI";
 
 export class BaseView{
     protected package : string;
