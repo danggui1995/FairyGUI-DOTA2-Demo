@@ -20,12 +20,12 @@ gulp.task('buildJs', () => {
         .pipe(tsProject({
             declaration: true
         }))
-        .pipe(gulp.dest('./build'));
+        .pipe(gulp.dest('build'));
 })
 
 gulp.task('cleanJs', () => {
     return gulp
-        .src('./build/**/*.js', { read: false })
+        .src('build/**/*.js', { read: false })
         .pipe(clean('*.js'));
 });
 
@@ -53,7 +53,7 @@ gulp.task("rollup", async function() {
 gulp.task("uglify", function() {
     return gulp.src("dist/main.js")
         .pipe(uglify( /* options */ ))
-        .pipe(gulp.dest("dist/"));
+        .pipe(gulp.dest("content/panorama/scripts/"));
 });
 
 gulp.task('build', gulp.series(

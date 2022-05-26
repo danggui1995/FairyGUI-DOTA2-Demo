@@ -4,7 +4,6 @@ export class BaseView{
     protected package : string;
     protected packageItem : string;
     protected isFullScreen: boolean = false;
-    protected binData : string;
     protected maskComp : GComponent;
     public viewName : string;
 

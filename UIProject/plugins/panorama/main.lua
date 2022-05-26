@@ -3,11 +3,10 @@ local genCode = require(PluginPath..'/GenCode_TS')
 local template_data = [[
 import * as fgui from "panorama-fgui-types/fgui/FairyGUI";
 import { BaseView } from "../BaseView";
-
-export const __%s_Data : string = "%s";
-
 %s
 ]]
+
+local template_BinList = [[export const __%s_Data : string = "%s";]]
 
 local function genBase64(handler, allClsData)
     local pkgName = handler.pkg.name
@@ -28,7 +27,9 @@ local function genBase64(handler, allClsData)
             local str = CS.System.Convert.ToBase64String(bytes)
 
             local allClsStr = table.concat(allClsData, '\n')
-            CS.System.IO.File.WriteAllText(targetPath, string.format(template_data, pkgName, str, allClsStr))
+            CS.System.IO.File.WriteAllText(targetPath, string.format(template_data, allClsStr))
+
+            local newdata = 
         else
             fprint("File Not Found : " .. path)
         end
