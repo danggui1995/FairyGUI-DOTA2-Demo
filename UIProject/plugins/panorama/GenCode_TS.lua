@@ -36,7 +36,6 @@ ${vardeclare}
         super();
         this.package = "${pkgName}";
         this.packageItem = "${pkgItem}";
-        this.binData = __${pkgName}_Data;
 
         this.OnInit();
     }

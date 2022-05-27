@@ -1,4 +1,4 @@
-import { AbUtil } from "panorama-fgui-types/fgui/FairyGUI";
+import { AbUtil, UIPackage } from "panorama-fgui-types/fgui/FairyGUI";
 
 
 //预载入UI界面和缓存
@@ -23,7 +23,14 @@ export class BinCache{
     /**
      * GetPackageData
      */
-    public GetPackageData(pkgName : string) {
+    public static GetPackageData(pkgName : string) {
         return BinCache.cacheData.get(pkgName);
+    }
+
+    /**
+     * PreloadPackage
+     */
+    public static PreloadPackage(pkgName : string) {
+        UIPackage.loadPackageWithArrayBuffer(pkgName, BinCache.GetPackageData(pkgName));
     }
 }

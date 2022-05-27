@@ -13,11 +13,11 @@ export class uipublic_itemcell extends uipublic_itemcell_data{
         this._itemname = value;
         if (value == "")
         {
-            this.empty.setSelectedIndex(1);
+            this.empty_c.setSelectedIndex(1);
         }
         else
         {
-            this.empty.setSelectedIndex(0);
+            this.empty_c.setSelectedIndex(0);
             this.item.element.itemname = value;
         }
     }

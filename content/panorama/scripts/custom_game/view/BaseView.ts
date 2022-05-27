@@ -1,4 +1,5 @@
 import { GComponent, UIPackage, Controller, Transition, Timers, UIElement } from "panorama-fgui-types/fgui/FairyGUI";
+import { BinCache } from "./BinCache";
 
 export class BaseView{
     protected package : string;
@@ -31,7 +32,7 @@ export class BaseView{
 
     public OnInit():void
     {
-        UIPackage.loadPackage(this.package, this.binData);
+        UIPackage.loadPackageWithArrayBuffer(this.package, BinCache.GetPackageData(this.package));
         this.root = UIPackage.createObject(this.package, this.packageItem);
         if (!this.root)
         {

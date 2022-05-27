@@ -1,7 +1,6 @@
-import { GComponent, UIObjectFactory, UIPackage } from "panorama-fgui-types/fgui/FairyGUI";
+import { GComponent } from "panorama-fgui-types/fgui/FairyGUI";
 import { BaseView } from "./view/BaseView";
-import { __dotapanel_Data } from "./view/dotapanel/dotapanel_data";
-import { __uipublic_Data } from "./view/uipublic/uipublic_data";
+import { BinCache } from "./view/BinCache";
 import { uipublic_itemcell } from "./view/uipublic/uipublic_itemcell";
 const DEBUG : boolean = true;
 
@@ -30,8 +29,8 @@ export class ViewManager
         }
 
         //预载入 可提前到游戏载入阶段
-        UIPackage.loadPackage("dotapanel", __dotapanel_Data);
-        UIPackage.loadPackage("uipublic", __uipublic_Data);
+        BinCache.PreloadPackage("dotapanel");
+        BinCache.PreloadPackage("uipublic");
 
         //注册一些自定义类型 后面复用这些控件的时候会自动匹配类型
         $.UIObjectFactory.setExtensionWithPkg("uipublic", "itemcell", uipublic_itemcell);
