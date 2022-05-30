@@ -11,9 +11,5 @@
         "panorama-fgui-types": "^1.0.6",
         "rollup": "^2.61.1",
         "rollup-plugin-commonjs": "^10.1.0"
-    },
-    "scripts": {
-        "build": "node --preserve-symlinks node_modules/webpack/bin/webpack.js --config webpack.config.js",
-        "dev": "node --preserve-symlinks node_modules/webpack/bin/webpack.js --config webpack.config.js --watch"
     }
 }
