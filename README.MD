@@ -8,13 +8,15 @@
 1.由于Dota2阉割了Web的不少特性，你可能会遇到编辑器生效，游戏内不生效的问题。<BR>
 2.项目结构为
 ```
-root
-    -content
-        -panorama
-    -game
-        -panorama
-    -UIProject
-    -node配置文件
+|-- UIProject
+|-- content
+|-- game
+|-- node_modules
+```
+其中content和game为软连接，例如：
+```
+mklink /J game "C:\Games\steamapps\common\dota 2 beta\game\dota_addons\testlink" 
+mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\testlink"
 ```
 
 # Q & A
@@ -23,7 +25,7 @@ A:在custom_ui_manifest.xml中引用compile_helper.xml，这个平时是不引�
 ```
 <Panel>
     <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/main.xml" />
-    <CustomUIElement type="Hud" layoutfile="file://{resources}/scripts/custom_game/fgui/compile_helper.xml" />
+    <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/fgui/compile_helper.xml" />
 </Panel>
 ```
 
