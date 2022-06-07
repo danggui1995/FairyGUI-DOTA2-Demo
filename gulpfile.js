@@ -56,9 +56,16 @@ gulp.task("uglify", function() {
         .pipe(gulp.dest("content/panorama/scripts/"));
 });
 
+gulp.task("move", function() {
+    return gulp.src("dist/main.js")
+        .pipe(gulp.dest("content/panorama/scripts/"));
+});
+
+
 gulp.task('build', gulp.series(
     gulp.parallel('buildJs'),
     gulp.parallel('rollup'),
     gulp.parallel('cleanJs'),
-    gulp.parallel('uglify')
+    gulp.parallel('move')
+    // gulp.parallel('uglify')
 ))

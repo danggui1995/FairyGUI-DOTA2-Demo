@@ -3,11 +3,11 @@ import { AbUtil, UIPackage } from "panorama-fgui-types/fgui/FairyGUI";
 
 //预载入UI界面和缓存
 export class BinCache{
-    static cacheData : Map<string, ArrayBuffer>;
+    static cacheData : Map<string, ArrayBuffer> = new Map();
 
     constructor()
     {
-        BinCache.cacheData = new Map();
+
     }
 
     /**
@@ -31,6 +31,14 @@ export class BinCache{
      * PreloadPackage
      */
     public static PreloadPackage(pkgName : string) {
-        UIPackage.loadPackageWithArrayBuffer(pkgName, BinCache.GetPackageData(pkgName));
+        let data = BinCache.GetPackageData(pkgName);
+        if (data != null)
+        {
+            UIPackage.loadPackageWithArrayBuffer(pkgName, BinCache.GetPackageData(pkgName));
+        }
+        else
+        {
+            $.Msg("error PreloadPackage : " + pkgName);
+        }
     }
 }

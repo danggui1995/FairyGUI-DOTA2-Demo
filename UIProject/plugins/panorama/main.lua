@@ -5,9 +5,30 @@ import * as fgui from "panorama-fgui-types/fgui/FairyGUI";
 import { BaseView } from "../BaseView";
 import { BinCache } from "../BinCache";
 %s
-
-BinCache.PrecachePackage("%s", "%s");
 ]]
+
+local function genPackageRegister(exportPath, pkgName, str)
+    local path = string.format("%s/../PackageRegister.ts", exportPath)
+    local file = io.open(path, "r")
+    local data = file:read("*a")
+    local findpattern = "BinCache%.PrecachePackage%(\"" .. pkgName .. "\","
+    local output = string.format("\tBinCache.PrecachePackage(\"%s\", \"%s\");\n", pkgName, str)
+    local pattern = "\tBinCache%.PrecachePackage%(\"" .. pkgName .. "\", \"(.-)\"%);\n"
+
+    --TODO 当包被删除时这里也要删除
+    data = data:gsub("Init%(%)%s*{(.-)\t}", function (scope)
+        if not scope:find(findpattern) then
+            scope = scope .. "\t" .. output
+        else
+            scope = scope:gsub(pattern, function (scopeLine)
+                return output
+            end)
+        end
+        return string.format("Init()\n\t{%s\t}", scope)
+    end)
+
+    CS.System.IO.File.WriteAllText(path, data)
+end
 
 local function genBase64(handler, allClsData)
     local pkgName = handler.pkg.name
@@ -24,11 +45,12 @@ local function genBase64(handler, allClsData)
             end
             
             local targetPath = string.format("%s/%s_data.ts", targetDir, pkgName)
+            local allClsStr = table.concat(allClsData, '\n')
+            CS.System.IO.File.WriteAllText(targetPath, string.format(template_data, allClsStr))
+
             local bytes = CS.System.IO.File.ReadAllBytes(path)
             local str = CS.System.Convert.ToBase64String(bytes)
-
-            local allClsStr = table.concat(allClsData, '\n')
-            CS.System.IO.File.WriteAllText(targetPath, string.format(template_data, allClsStr, pkgName, str))
+            genPackageRegister(exportPath, pkgName, str)
         else
             fprint("File Not Found : " .. path)
         end

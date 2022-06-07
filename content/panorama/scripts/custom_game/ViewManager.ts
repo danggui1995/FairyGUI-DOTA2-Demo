@@ -1,4 +1,5 @@
 import { GComponent } from "panorama-fgui-types/fgui/FairyGUI";
+import { PackageRegister } from "./PackageRegister";
 import { BaseView } from "./view/BaseView";
 import { BinCache } from "./view/BinCache";
 import { uipublic_itemcell } from "./view/uipublic/uipublic_itemcell";
@@ -27,6 +28,8 @@ export class ViewManager
                 $.Msg(new Error().stack);
             }
         }
+
+        PackageRegister.Init();
 
         //预载入 可提前到游戏载入阶段
         BinCache.PreloadPackage("dotapanel");
