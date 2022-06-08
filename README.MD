@@ -15,6 +15,7 @@
 ```
 其中content和game为软连接，例如：
 ```
+需要先将对应目录(panorama)拷贝到对应的addon目录下，然后删掉当前目录(content)，再进行软连接（dota2不认软连接，但是版本控制软件是认的）。
 mklink /J game "C:\Games\steamapps\common\dota 2 beta\game\dota_addons\testlink" 
 mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\testlink"
 ```
