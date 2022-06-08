@@ -8,7 +8,7 @@
         "gulp-clean": "^0.4.0",
         "gulp-typescript": "^6.0.0-alpha.1",
         "gulp-uglify-es": "^3.0.0",
-        "panorama-fgui-types": "^1.0.6",
+        "panorama-fgui-types": "^1.0.8",
         "rollup": "^2.61.1",
         "rollup-plugin-commonjs": "^10.1.0"
     }
