@@ -35,7 +35,7 @@ gulp.task("rollup", async function() {
         external: ['three'],
         onwarn: onwarn,
         output: {
-            file: 'dist/main.js',
+            file: 'main.js',
             format: 'umd',
             extend: true,
             name: 'fgui',
@@ -51,21 +51,25 @@ gulp.task("rollup", async function() {
 });
 
 gulp.task("uglify", function() {
-    return gulp.src("dist/main.js")
-        .pipe(uglify( /* options */ ))
-        .pipe(gulp.dest("content/panorama/scripts/"));
+    return gulp.src("main.js")
+        .pipe(uglify( /* options */ ));
 });
 
 gulp.task("move", function() {
-    return gulp.src("dist/main.js")
+    return gulp.src("main.js")
         .pipe(gulp.dest("content/panorama/scripts/"));
 });
 
+gulp.task("finalclean", function() {
+    return gulp.src("main.js")
+        .pipe(clean('main.js'));
+});
 
 gulp.task('build', gulp.series(
     gulp.parallel('buildJs'),
     gulp.parallel('rollup'),
     gulp.parallel('cleanJs'),
-    gulp.parallel('move')
-    // gulp.parallel('uglify')
+    gulp.parallel('uglify'),
+    gulp.parallel('move'),
+    gulp.parallel('finalclean'),
 ))
