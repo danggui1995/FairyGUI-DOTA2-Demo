@@ -5,15 +5,9 @@
   <scripts>
     <include src="file://{resources}/scripts/main.js" />
   </scripts>
-    <snippets>
-    <snippet name="TextMeasure">
-      <Panel class="MeasurePanel" hittest="false">
-        <Label id="Label" text=""/>
-      </Panel>
-    </snippet>
-  </snippets>
-  <Panel hittest="true" class="Root">
+
+  <Panel hittest="false" class="Root">
     <Panel id="HiddenRoot" />
-    <Panel id="MeasureRoot" />
+    <Panel id="ViewRoot"/>
   </Panel>
 </root>

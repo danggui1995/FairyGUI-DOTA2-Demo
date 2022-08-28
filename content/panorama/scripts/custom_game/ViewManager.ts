@@ -1,4 +1,4 @@
-import { GComponent } from "panorama-fgui-types/fgui/FairyGUI";
+import { GComponent, UIConfig } from "panorama-fgui-types/fgui/FairyGUI";
 import { PackageRegister } from "./PackageRegister";
 import { BaseView } from "./view/BaseView";
 import { BinCache } from "./view/BinCache";
@@ -14,11 +14,8 @@ export class ViewManager
     {
         $.ViewManager = this;
         this.allViews = new Map();
-
-        var rootPanel = $.GetContextPanel();
-
-        this.root = new GComponent("ViewRoot");
-        this.root.SetNativeParent(rootPanel);
+        this.root = new GComponent("ViewRootComp");
+        this.root.SetNativeParent($('#ViewRoot'));
         this.root.setFullScreen();
 
         $.TraceBack = function()
@@ -30,6 +27,7 @@ export class ViewManager
         }
 
         PackageRegister.Init();
+        UIConfig.buttonSound = "General.ButtonClick";
 
         //预载入 可提前到游戏载入阶段
         BinCache.PreloadPackage("dotapanel");
@@ -89,6 +87,5 @@ export class ViewManager
     public clearTempNode()
     {
         $('#HiddenRoot').RemoveAndDeleteChildren();
-        $('#MeasureRoot').RemoveAndDeleteChildren();
     }
 }

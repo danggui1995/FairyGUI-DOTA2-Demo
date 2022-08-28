@@ -8,7 +8,11 @@ export class ${pkgName}_${pkgItem} extends ${pkgName}_${pkgItem}_data{
 
         //add code to here
     }
+    ${funcs}
+}
+]]
 
+local template_Function = [[
     public OnInit():void
     {
         this.isFullScreen = true;
@@ -25,7 +29,6 @@ export class ${pkgName}_${pkgItem} extends ${pkgName}_${pkgItem}_data{
     {
 
     }
-}
 ]]
 
 local template_Data = [[
@@ -140,8 +143,11 @@ local function genCode(handler)
             for j=0,memberCnt-1 do
                 local memberInfo = members[j]
                 local varName = memberInfo.name
+                
                 if memberInfo.group==0 then
-                    table.insert(getArr, string.format('\t\tthis.%s = <%s><unknown>(this.getChild("%s"));', varName, getType(memberInfo), memberInfo.name))
+                    local ctype = getType(memberInfo)
+                    varName = varName .. "_" .. ctype:gsub("fgui%.", "")
+                    table.insert(getArr, string.format('\t\tthis.%s = <%s><unknown>(this.getChild("%s"));', varName, ctype, memberInfo.name))
                 elseif memberInfo.group==1 then
                     varName = varName .. "_c"
                     table.insert(getArr, string.format('\t\tthis.%s = this.getController("%s");', varName, memberInfo.name))
@@ -156,12 +162,9 @@ local function genCode(handler)
             local childrenStr = table.concat(childrenArr, "\n")
             local getStr = table.concat(getArr, "\n")
 
-            local saveData1 = stringformat(template, {
-                pkgName = pkgName,
-                pkgItem = classInfo.resName,
-            })
-
+            local funcs
             if not lowerPath:find("/view") then
+                funcs = ""
                 local saveData2 = stringformat(template_Data_GComponent, {
                     pkgName = pkgName,
                     getchildren = getStr,
@@ -172,7 +175,7 @@ local function genCode(handler)
 
                 table.insert(allCls, saveData2)
             else
-
+                funcs = template_Function
                 local saveData2 = stringformat(template_Data, {
                     pkgName = pkgName,
                     getchildren = getStr,
@@ -187,6 +190,12 @@ local function genCode(handler)
             local file = io.open(targetPath, "r")
             if not file then
                 local wf = io.open(targetPath, "w")
+
+                local saveData1 = stringformat(template, {
+                    pkgName = pkgName,
+                    pkgItem = classInfo.resName,
+                    funcs = funcs,
+                })
                 wf:write(saveData1)
                 wf:close()
             else
