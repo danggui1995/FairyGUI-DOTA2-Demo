@@ -1,7 +1,6 @@
 .Root {
     width: 100%;
     height: 100%;
-    /* background-color: rgb(31, 30, 30); */
 }
 
 #HiddenRoot {
@@ -11,15 +10,6 @@
 .FGUI_Gray {
     brightness: 0.2;
     saturation: 0;
-}
-
-.testspan {
-    width: 200px;
-    height: 200px;
-    horizontal-align: center;
-    vertical-align: middle;
-    font-weight: bold;
-    color: #BE8AB9;
 }
 
 .FGUI_FontSize12 {
@@ -386,26 +376,7 @@
     text-decoration: underline;
 }
 
-.aaa {
-    width: 100%;
-    height: 100%;
-    background-color: rgb(31, 30, 30);
-}
-
-.bbb {
-    margin-left: -10000px;
-    width: 30px;
-    horizontal-align: center;
-    vertical-align: middle;
-}
-
-.MeasurePanel {
-    margin-left: -10000px;
-    /* margin-top: 5px;
-    margin-left: 5px;
-    border: 2px solid #BE8AB9 ; */
-}
-
-#MeasureRoot {
-    /* flow-children : down; */
+.FGUI_OutScreen {
+    margin-top: -9999px;
+    margin-left: -9999px;
 }
