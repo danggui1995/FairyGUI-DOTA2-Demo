@@ -6,9 +6,11 @@ export class BaseView{
     protected packageItem : string;
     protected isFullScreen: boolean = false;
     protected maskComp : GComponent;
-    public viewName : string;
+    protected static s_hiddenViews : BaseView[];
 
+    public viewName : string;
     public root : GComponent;
+    public gcTick : number;
 
     constructor()
     {
@@ -73,6 +75,7 @@ export class BaseView{
     {
         this.root.emit("removed_from_stage");
         this.OnClose();
+        
         if (this.maskComp)
         {
             this.maskComp.removeFromParent();
@@ -81,6 +84,9 @@ export class BaseView{
         {
             this.root.removeFromParent();
         }
+
+        this.gcTick = 0;
+        BaseView.s_hiddenViews.push(this);
     }
 
     protected onMaskClicked(): void
@@ -92,4 +98,51 @@ export class BaseView{
     {
         $.ViewManager.close(this.viewName);
     }
+
+    public static InitViewCache()
+    {
+        BaseView.s_hiddenViews = [];
+        BaseView.ViewCacheUpdate();
+    }
+
+    public static GcTickInterval = 2;
+    public static GcTickMax = 10;
+    public static ViewCacheUpdate()
+    {
+        $.Schedule(BaseView.GcTickInterval, BaseView.ViewCacheUpdate);
+        for(let i = BaseView.s_hiddenViews.length - 1; i >= 0; i--)
+        {
+            let view = BaseView.s_hiddenViews[i];
+            view.gcTick += BaseView.GcTickInterval;
+            if (view.gcTick > BaseView.GcTickMax)
+            {
+                if (view.maskComp)
+                {
+                    view.maskComp.removeFromParent(true);
+                }
+                else
+                {
+                    view.root.removeFromParent(true);
+                }
+                BaseView.s_hiddenViews.splice(i, 1);
+            }
+        }
+    }
+
+    public static GetCacheView(name : string) : BaseView
+    {
+        for(let i = BaseView.s_hiddenViews.length - 1; i >= 0; i--)
+        {
+            let view = BaseView.s_hiddenViews[i];
+            if (view.viewName == name)
+            {
+                view.gcTick = 0;
+                BaseView.s_hiddenViews.splice(i, 1);
+                return view;
+            }
+        }
+        return null;
+    }
 }
+
+BaseView.InitViewCache();

@@ -53,7 +53,12 @@ export class ViewManager
         let clsType = ctor.name;
         if (!this.allViews.has(clsType))
         {
-            let view = new ctor();
+            let view = BaseView.GetCacheView(clsType);
+            if (!view)
+            {
+                view = new ctor();
+            }
+
             view.viewName = clsType;
             this.allViews.set(clsType, view);
             this.addChild(view.root);

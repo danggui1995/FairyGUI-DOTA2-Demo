@@ -247,7 +247,7 @@ local xmlTemplate = [[
     </styles>
     <scripts>
     </scripts>
-  <Panel hittest="true" class="CompileRoot">
+  <Panel hittest="true" class="CompileRoot" style="width:100%%;height:100%%;">
 %s
   </Panel>
 </root>
@@ -267,12 +267,25 @@ function compileTextures(exportPath)
         end)
     end)
 
+    table.insert(arr, string.format("<Label text='有图片在编译，3秒后FairyGUI将关闭此界面,也可以自己在compile_helper.xml中删除指定数据' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>"))
+
     local str = string.format(xmlTemplate, table.concat(arr, '\n'))
     local layoutPath = exportPath:gsub("\\", "/"):gsub("/scripts/", "/layout/")
     if (not IO.Directory.Exists(layoutPath)) then
         IO.Directory.CreateDirectory(layoutPath)
     end
     IO.File.WriteAllText(layoutPath .. "/compile_helper.xml", str)
+
+    local timer = CS.FairyGUI.Timers()
+    --wtf 这个参数真的迷
+    timer:Add(50, 1, function()
+        local str = string.format(xmlTemplate, "")
+        local layoutPath = exportPath:gsub("\\", "/"):gsub("/scripts/", "/layout/")
+        if (not IO.Directory.Exists(layoutPath)) then
+            IO.Directory.CreateDirectory(layoutPath)
+        end
+        IO.File.WriteAllText(layoutPath .. "/compile_helper.xml", str)
+    end)
 end
 
 function onPublish(handler)

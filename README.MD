@@ -33,3 +33,7 @@ A:在custom_ui_manifest.xml中引用compile_helper.xml，这个平时是不引�
 Q:如何在UI中使用kv表数据？<BR>
 A1:在Lua端调用LoadKeyValues然后使用json组件encode成字符串，存到UI那边<BR>
 A2:直接使用kv解析器（git上应该有比较多的实现，js和c#都有）将kv解析成json字符串或者json结构体存到UI那边<BR>
+
+
+Q:如何分别导出继承自GComponent和BaseView的组件？<BR>
+A:这个规则目前写死在导出插件里面，/view*目录下面的会继承BaseView，其他的则继承GComponent<BR>

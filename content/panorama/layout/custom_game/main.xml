@@ -7,11 +7,7 @@
   </scripts>
 
   <Panel hittest="false" class="Root">
-    <Panel id="MeasureRoot" />
     <Panel id="HiddenRoot" />
     <Panel id="ViewRoot"/>
-    <Panel id="TestRoot">
-      <Image id="panel_id" class="PanelClass" src="file://{resources}/scripts/custom_game/fgui/uipublic/nhre1n.png" onactivate="$.Msg($('#panel_id').contentwidth / $('#panel_id').actualuiscale_x);" />
-    </Panel>
   </Panel>
 </root>
