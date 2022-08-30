@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <graph id="n0_nhre" name="n0" xy="176,164" pivot="0.5,0.5" anchor="true" size="100,100" type="rect"/>
+    <graph id="n1_nhre" name="n1" xy="130,284" size="100,100" type="rect"/>
+    <graph id="n2_nhre" name="n2" xy="123,460" size="100,100" type="rect"/>
+    <graph id="n3_nhre" name="n3" xy="173,706" pivot="0.5,0.5" anchor="true" size="100,100" type="rect"/>
+    <graph id="n4_nhre" name="n4" xy="226,867" pivot="1,0" anchor="true" size="100,100" type="rect"/>
+    <graph id="n5_nhre" name="n5" xy="995,119" size="100,100" type="rect"/>
+  </displayList>
+  <transition name="rotate" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="Rotation" target="n0_nhre" tween="true" startValue="0" endValue="90" duration="6"/>
+    <item time="6" type="Rotation" target="n0_nhre" tween="true" startValue="90" endValue="180" duration="6"/>
+  </transition>
+  <transition name="move" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="XY" target="n1_nhre" tween="true" startValue="130,284" endValue="675,284" duration="12"/>
+    <item time="12" type="XY" target="n1_nhre" tween="true" startValue="675,284" endValue="130,284" duration="12"/>
+  </transition>
+  <transition name="scale" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="Scale" target="n2_nhre" tween="true" startValue="1,1" endValue="0.2,0.2" duration="12"/>
+    <item time="12" type="Scale" target="n2_nhre" tween="true" startValue="0.2,0.2" endValue="1,1" duration="12"/>
+  </transition>
+  <transition name="scale_center" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="Scale" target="n3_nhre" tween="true" startValue="1,1" endValue="0.2,0.2" duration="12"/>
+    <item time="12" type="Scale" target="n3_nhre" tween="true" startValue="0.2,0.2" endValue="1,1" duration="12"/>
+  </transition>
+  <transition name="scale_right" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="Scale" target="n4_nhre" tween="true" startValue="1,1" endValue="0.2,0.2" duration="12"/>
+    <item time="12" type="Scale" target="n4_nhre" tween="true" startValue="0.2,0.2" endValue="1,1" duration="12"/>
+  </transition>
+  <transition name="group1" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="Alpha" target="n5_nhre" tween="true" startValue="1" endValue="0" duration="12"/>
+    <item time="0" type="Color" target="n5_nhre" tween="true" startValue="#ffffff" endValue="#00ccff" duration="12"/>
+    <item time="0" type="Rotation" target="n5_nhre" tween="true" startValue="0" endValue="90" duration="12"/>
+    <item time="0" type="Scale" target="n5_nhre" tween="true" startValue="1,1" endValue="0.2,0.2" duration="12"/>
+    <item time="0" type="XY" target="n5_nhre" tween="true" startValue="954,130" endValue="1537,-" duration="12"/>
+    <item time="12" type="Alpha" target="n5_nhre" tween="true" startValue="0" endValue="1" duration="12"/>
+    <item time="12" type="Color" target="n5_nhre" tween="true" startValue="#00ccff" endValue="#000000" duration="12"/>
+    <item time="12" type="Rotation" target="n5_nhre" tween="true" startValue="90" endValue="180" duration="12"/>
+    <item time="12" type="Scale" target="n5_nhre" tween="true" startValue="0.2,0.2" endValue="1,1" duration="12"/>
+    <item time="12" type="XY" target="n5_nhre" tween="true" startValue="1537,-" endValue="-,540" duration="12"/>
+  </transition>
+</component>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="200,200" overflow="scroll" scroll="horizontal">
+  <displayList>
+    <image id="n0_nhre" name="n0" src="jrl69" fileName="textures/gg_xiaodi_01.png" pkg="wdrcd8rp" xy="0,0" size="400,400"/>
+  </displayList>
+</component>

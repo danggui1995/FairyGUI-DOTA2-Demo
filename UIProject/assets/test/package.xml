@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<packageDescription id="tu2mrw0y">
+<packageDescription id="k0bkz6g1">
   <resources>
-    <component id="8edq0" name="vipView.xml" path="/views/" exported="true"/>
-    <component id="8edq1" name="Button1.xml" path="/"/>
-    <component id="sv0k2" name="HeroSelectView.xml" path="/views/" exported="true"/>
+    <component id="nhre0" name="TestList.xml" path="/views/" exported="true"/>
+    <component id="nhre1" name="TestLabel.xml" path="/views/" exported="true"/>
+    <component id="nhre2" name="TestButton.xml" path="/views/" exported="true"/>
+    <component id="nhre4" name="TestTransition.xml" path="/views/" exported="true"/>
+    <component id="nhre6" name="TestNative.xml" path="/views/" exported="true"/>
+    <component id="nhre7" name="Button1.xml" path="/components/"/>
+    <component id="nhreb" name="ButtonCheck.xml" path="/components/"/>
+    <component id="nhree" name="TestLoader.xml" path="/views/" exported="true"/>
+    <component id="nhref" name="TestRelation.xml" path="/views/" exported="true"/>
+    <component id="nhreh" name="ButtonSingle.xml" path="/components/"/>
+    <component id="nhrei" name="ScrollCompFree.xml" path="/components/"/>
+    <component id="nhrej" name="ScrollCompV.xml" path="/components/"/>
+    <component id="nhrek" name="ScrollCompH.xml" path="/components/"/>
+    <component id="nhrel" name="ComboBox1_item.xml" path="/components/"/>
+    <component id="nhrem" name="ComboBox1_popup.xml" path="/components/"/>
+    <component id="nhren" name="ComboBox1.xml" path="/components/" exported="true"/>
+    <component id="nhreo" name="Slider1_grip.xml" path="/components/"/>
+    <component id="nhrep" name="Slider1.xml" path="/components/"/>
+    <component id="nhreq" name="TestHud.xml" path="/views/" exported="true"/>
   </resources>
   <publish name=""/>
 </packageDescription>

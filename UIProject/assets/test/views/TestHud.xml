@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080" opaque="false">
+  <displayList>
+    <graph id="n1_xu3d" name="n1" xy="0,0" size="1920,1080" type="rect" fillColor="#ff999999"/>
+    <list id="n0_nhre" name="tabList" xy="149,54" size="1621,88" layout="row" overflow="scroll" scroll="horizontal" colGap="20" defaultItem="ui://k0bkz6g1nhreh" align="center" autoClearItems="true">
+      <relation target="" sidePair="center-center,top-top"/>
+      <item/>
+      <item/>
+      <item/>
+    </list>
+  </displayList>
+</component>

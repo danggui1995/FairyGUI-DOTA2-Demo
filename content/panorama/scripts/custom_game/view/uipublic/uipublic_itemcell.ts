@@ -18,7 +18,7 @@ export class uipublic_itemcell extends uipublic_itemcell_data{
         else
         {
             this.empty_c.setSelectedIndex(0);
-            this.item.element.itemname = value;
+            this.item_GDOTAItemImage.element.itemname = value;
         }
     }
     constructor()

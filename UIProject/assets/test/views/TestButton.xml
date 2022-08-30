@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <controller name="radioctrl" pages="0,,1,,2,,3," selected="0"/>
+  <displayList>
+    <component id="n0_nhre" name="n0" src="nhre7" fileName="components/Button1.xml" xy="299,236">
+      <Button title="普通按钮"/>
+    </component>
+    <component id="n1_nhre" name="n1" src="nhreb" fileName="components/ButtonCheck.xml" xy="310,353">
+      <Button title="复选按钮"/>
+    </component>
+    <component id="n2_nhre" name="n2" src="nhreb" fileName="components/ButtonCheck.xml" xy="475,464">
+      <Button title="组合按钮" controller="radioctrl" page="1"/>
+    </component>
+    <component id="n3_nhre" name="n3" src="nhreb" fileName="components/ButtonCheck.xml" xy="640,464">
+      <Button title="组合按钮" controller="radioctrl" page="2"/>
+    </component>
+    <component id="n4_nhre" name="n4" src="nhreb" fileName="components/ButtonCheck.xml" xy="805,464">
+      <Button title="组合按钮" controller="radioctrl" page="3"/>
+    </component>
+    <component id="n5_nhre" name="n5" src="nhreb" fileName="components/ButtonCheck.xml" xy="310,464">
+      <Button title="组合按钮" controller="radioctrl" page="0"/>
+    </component>
+    <component id="n6_nhre" name="dropBox" src="nhren" fileName="components/ComboBox1.xml" xy="302,682" size="488,44">
+      <ComboBox title="下拉框" visibleItemCount="10">
+        <item title="111"/>
+        <item title="22"/>
+        <item title="333"/>
+        <item title="4444"/>
+      </ComboBox>
+    </component>
+    <component id="n7_nhre" name="slider" src="nhrep" fileName="components/Slider1.xml" xy="274,912" size="377,10">
+      <Slider value="50" max="100"/>
+    </component>
+  </displayList>
+</component>

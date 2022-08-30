@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <text id="n0_nhre" name="n0" xy="105,220" size="720,46" fontSize="24" autoSize="none" text="固定宽高文本：裁剪多出去的部分。啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊"/>
+    <text id="n1_nhre" name="n1" xy="105,282" size="1492,34" fontSize="24" text="自动宽高文本：自动适应宽度。啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊"/>
+    <text id="n2_nhre" name="n2" xy="105,353" size="729,98" fontSize="24" autoSize="height" text="自动高度文本：固定宽度，自动适应高度。啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊"/>
+    <text id="n3_nhre" name="n3" xy="105,488" size="743,39" fontSize="24" ubb="true" autoSize="shrink" text="自动收缩文本：固定宽高，文字缩放。啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊"/>
+    <text id="n4_nhre" name="n4" xy="105,556" size="743,39" fontSize="24" ubb="true" autoSize="ellipsis" text="省略号文本：固定宽高，超出部分省略。啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊"/>
+    <text id="n5_nhre" name="n5" xy="105,647" size="300,34" fontSize="24" autoSize="none" text="左对齐文本"/>
+    <text id="n6_nhre" name="n6" xy="105,701" size="300,34" fontSize="24" align="center" autoSize="none" text="中间对齐文本"/>
+    <text id="n7_nhre" name="n7" xy="105,759" size="300,34" fontSize="24" align="right" autoSize="none" text="右对齐文本"/>
+    <text id="n8_nhre" name="n8" xy="461,646" size="300,147" fontSize="24" autoSize="none" text="顶对齐文本顶对齐文本顶对齐文本"/>
+    <text id="n9_nhre" name="n9" xy="830,646" size="300,147" fontSize="24" vAlign="middle" autoSize="none" text="中对齐文本中对齐文本中对齐文本中对齐文本"/>
+    <text id="n10_nhre" name="n10" xy="1217,646" size="300,147" fontSize="24" vAlign="bottom" autoSize="none" text="底对齐文本底对齐文本底对齐文本底对齐文"/>
+    <richtext id="n11_nhre" name="n11" xy="108,804" size="623,220" fontSize="24" ubb="true" autoSize="height" text="富文本富[b]文本富[/b]文本[u]富文本[/u][i]富文本[/i][color=#00ff66]富文本[/color]富文本[size=55]富文本[/size][img]ui://wdrcd8rpjrl69[/img]富文本[img]ui://wdrcd8rpjrl61g[/img]&#xA;[b]richtext中文不支持加粗&#xA;[/b][i]richtext中文不支持斜体[/i]"/>
+  </displayList>
+</component>

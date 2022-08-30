@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <list id="n0_nhre" name="n0" xy="149,504" size="244,449" overflow="scroll" defaultItem="ui://k0bkz6g1nhreh">
+      <item title="1"/>
+      <item title="2"/>
+      <item title="3"/>
+      <item title="4"/>
+      <item title="5"/>
+      <item title="6"/>
+      <item title="7"/>
+      <item title="8"/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+    </list>
+    <text id="n1_nhre" name="n1" xy="219,439" size="100,34" fontSize="24" text="单选列表"/>
+    <list id="n2_nhre" name="n2" xy="518,505" size="244,458" selectionMode="multipleSingleClick" overflow="scroll" defaultItem="ui://k0bkz6g1nhreh">
+      <item title="1"/>
+      <item title="2"/>
+      <item title="3"/>
+      <item title="4"/>
+      <item title="5"/>
+      <item title="6"/>
+      <item title="7"/>
+      <item title="8"/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+    </list>
+    <text id="n3_nhre" name="n3" xy="585,441" size="100,34" fontSize="24" text="多选列表"/>
+    <list id="n4_nhre" name="virtualList" xy="843,499" size="244,461" group="n6_nhre" selectionMode="multipleSingleClick" overflow="scroll" defaultItem="ui://k0bkz6g1nhreh">
+      <item title="1"/>
+      <item title="2"/>
+      <item title="3"/>
+      <item title="4"/>
+      <item title="5"/>
+      <item title="6"/>
+      <item title="7"/>
+      <item title="8"/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+      <item/>
+    </list>
+    <text id="n5_nhre" name="n5" xy="832,445" size="268,0" group="n6_nhre" fontSize="24" text="虚拟列表，节省大量资源">
+      <relation target="n4_nhre" sidePair="center-center,bottom-top"/>
+    </text>
+    <group id="n6_nhre" name="n6" xy="832,445" size="268,515"/>
+    <component id="n7_nhre" name="n7" src="nhrei" fileName="components/ScrollCompFree.xml" xy="1364,253" size="467,200"/>
+    <text id="n8_nhre" name="n8" xy="1501,211" size="100,34" fontSize="24" text="自由滚动"/>
+    <component id="n9_nhre" name="n9" src="nhrek" fileName="components/ScrollCompH.xml" xy="1367,557" size="467,200"/>
+    <component id="n10_nhre" name="n10" src="nhrej" fileName="components/ScrollCompV.xml" xy="1361,820" size="461,221"/>
+    <text id="n11_nhre" name="n11" xy="1502,515" size="100,34" fontSize="24" text="水平滚动"/>
+    <text id="n12_nhre" name="n12" xy="1494,778" size="100,34" fontSize="24" text="垂直滚动"/>
+  </displayList>
+</component>

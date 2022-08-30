@@ -29,6 +29,6 @@
 
   <Panel>
     <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/main.xml" />
-    <!-- <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/fgui/compile_helper.xml" /> -->
+    <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/fgui/compile_helper.xml" />
   </Panel>
 </root>

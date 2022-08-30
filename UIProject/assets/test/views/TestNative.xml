@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <component id="n3_nhre" name="abilityImage" src="k40v5" fileName="DOTAAbilityImage.xml" pkg="4v0vlfq9" xy="85,380"/>
+    <component id="n4_nhre" name="avatarImage" src="k40v3" fileName="DOTAAvatarImage.xml" pkg="4v0vlfq9" xy="97,568"/>
+    <component id="n5_nhre" name="effect" src="k40v1" fileName="DOTAEffect.xml" pkg="4v0vlfq9" xy="492,554" size="472,464"/>
+    <component id="n6_nhre" name="heroImage" src="k40v2" fileName="DOTAHeroImage.xml" pkg="4v0vlfq9" xy="588,347"/>
+    <component id="n7_nhre" name="itemImage" src="k40v4" fileName="DOTAItemImage.xml" pkg="4v0vlfq9" xy="1044,337"/>
+    <component id="n8_nhre" name="model" src="k40v0" fileName="DOTAModel.xml" pkg="4v0vlfq9" xy="1202,532" size="536,497"/>
+    <component id="n9_nhre" name="userName" src="k40v6" fileName="DOTAUserName.xml" pkg="4v0vlfq9" xy="97,772"/>
+  </displayList>
+</component>

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<packageDescription id="vpi8mikt">
-  <resources>
-    <component id="qehj0" name="test2view.xml" path="/views/" exported="true"/>
-    <component id="qehj1" name="Button1.xml" path="/"/>
-    <image id="l3yb2" name="kuang_xuanzhong.png" path="/" scale="9grid" scale9grid="23,25,8,3"/>
-  </resources>
-  <publish name=""/>
-</packageDescription>

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<packageDescription id="bd1779lw">
-  <resources>
-    <component id="c2n70" name="bagview.xml" path="/views/" exported="true"/>
-    <component id="goaf2" name="closebtn.xml" path="/components/"/>
-  </resources>
-  <publish name=""/>
-</packageDescription>

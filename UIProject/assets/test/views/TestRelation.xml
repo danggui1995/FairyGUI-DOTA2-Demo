@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <graph id="n0_nhre" name="n0" xy="234,470" size="316,276" type="rect"/>
+    <text id="n1_nhre" name="n1" xy="594,455" size="30,310" fontSize="24" autoSize="none" text="我关联了左边的图形">
+      <relation target="n0_nhre" sidePair="middle-middle,left-right"/>
+    </text>
+  </displayList>
+  <transition name="t0" autoPlay="true" autoPlayRepeat="-1">
+    <item time="0" type="XY" target="n0_nhre" tween="true" startValue="234,470" endValue="717,470" duration="12"/>
+    <item time="12" type="XY" target="n0_nhre" tween="true" startValue="717,470" endValue="717,211" duration="12"/>
+  </transition>
+</component>

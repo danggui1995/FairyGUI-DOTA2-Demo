@@ -8,7 +8,7 @@ export class ${pkgName}_${pkgItem} extends ${pkgName}_${pkgItem}_data{
 
         //add code to here
     }
-    ${funcs}
+${funcs}
 }
 ]]
 

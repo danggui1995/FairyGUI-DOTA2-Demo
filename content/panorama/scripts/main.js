@@ -473,8 +473,7 @@
               return;
           }
           child.SetParent($('#HiddenRoot'));
-          // child.SetParent(null);
-          // child.DeleteAsync(0);
+          // child.DeleteAsync(5);
       }
       insertBefore(child, refNode) {
           if (!child.nativePanel.IsValid() || !refNode.nativePanel.IsValid() || !this.nativePanel.IsValid()) {
@@ -506,7 +505,6 @@
       }
       initElement() {
           this.nativePanel = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.panelName);
-          this.nativePanel.hittestchildren;
       }
       get name() {
           return this.id;
@@ -817,8 +815,7 @@
               child._parent = this;
               child.updateTouchableFlag();
           }
-          if (this.isConnected)
-              child.broadcastEvent("added_to_stage");
+          child.broadcastEvent("added_to_stage");
       }
       removeChild(child) {
           if (child instanceof UIElement) {
@@ -835,10 +832,7 @@
       }
       removeChildAt(index) {
           let child = this._children[index];
-          if (this.isConnected) {
-              child.broadcastEvent("removed_from_stage");
-              // this.stage.validateFocus(this, child);
-          }
+          child.broadcastEvent("removed_from_stage");
           this._children.splice(index, 1);
           super.removeChild(child);
           child._parent = null;
@@ -1457,9 +1451,10 @@
       return false;
   }
   let tickFunc;
+  let tickInterval = 1 / 60;
   tickFunc = function () {
       __timer(Game.Time() * 1000);
-      $.Schedule(1 / 90, tickFunc);
+      $.Schedule(tickInterval, tickFunc);
   };
   tickFunc();
 
@@ -3318,6 +3313,43 @@
   // else
   //     UIConfig.scaleLevel = 0;
 
+  const PanelEventSet = new Set([
+      "onactivate",
+      "oncancel",
+      "oncontextmenu",
+      "ondblclick",
+      "ondeselect",
+      "oneconsetloaded",
+      "onfilled",
+      "onfindmatchend",
+      "onfindmatchstart",
+      "onfocus",
+      "onblur",
+      "ondescendantfocus",
+      "ondescendantblur",
+      "oninputsubmit",
+      "onload",
+      "onmouseactivate",
+      "onmouseout",
+      "onmouseover",
+      "onmousemove",
+      "onmovedown",
+      "onmoveleft",
+      "onmoveright",
+      "onmoveup",
+      "onnotfilled",
+      "onpagesetupsuccess",
+      "onpopupsdismissed",
+      "onselect",
+      "ontabforward",
+      "ontabbackward",
+      "ontextentrychange",
+      "ontextentrysubmit",
+      "onscrolledtobottom",
+      "onscrolledtorightedge",
+      "ontooltiploaded",
+      "onvaluechanged"
+  ]);
   class GObject extends EventDispatcher {
       constructor(name) {
           super();
@@ -3353,10 +3385,6 @@
           this._rawHeight = 0;
           /** @internal */
           this._sizePercentInGroup = 0;
-          //drag support
-          //-------------------------------------------------------------------
-          this._dragStartPos = new Vec2();
-          this._dragTesting = false;
           this._id = "" + gInstanceCounter++;
           this._name = "";
           this.panelName = name;
@@ -3365,8 +3393,8 @@
           this._relations = new Relations(this);
           this._gears = new Array(10);
           this.touchAction = 0;
-          this.evtMap = new Map();
-          this.updateFuncRegisted = false;
+          this._localRect = new Rect(0, 0, 1, 1);
+          this._updateRegisted = false;
       }
       get id() {
           return this._id;
@@ -3413,8 +3441,6 @@
                       this._group.setBoundsChangedFlag(true);
                   this.emit.call(this, "pos_changed");
               }
-              if (GObject.draggingObject == this && !s_dragging)
-                  this.localToGlobalRect(0, 0, this.width, this.height, sGlobalRect);
           }
       }
       get xMin() {
@@ -3456,8 +3482,6 @@
           this.setSize(this._rawWidth, value);
       }
       setFullScreen() {
-          // this.element.nativePanel.style.width = "100%";
-          // this.element.nativePanel.style.height = "100%";
           var radio = $.UIObjectFactory.getAspectRadio();
           this.width = Game.GetScreenWidth() * radio;
           this.height = Game.GetScreenHeight() * radio;
@@ -3587,8 +3611,8 @@
       set touchable(value) {
           if (this._touchable != value) {
               this._touchable = value;
+              this.handleTouchableChanged();
               this.updateGear(3);
-              this._element.touchable = this._touchable;
           }
       }
       get grayed() {
@@ -3802,12 +3826,15 @@
           return this._element == null;
       }
       clearAllPanelEvent() {
-          this.clearPanelEvent('onactivate');
-          this.clearPanelEvent('onmouseover');
-          this.clearPanelEvent('onmouseout');
+          if (this._updateRegisted) {
+              this._updateRegisted = false;
+              GObject.UnregisterUpdate(this);
+          }
+      }
+      clearTouchEvent() {
+          this.clearAllPanelEvent();
       }
       dispose() {
-          this.clearAllPanelEvent();
           this.removeFromParent();
           this._relations.dispose();
           this._element.dispose();
@@ -3826,25 +3853,6 @@
               this._draggable = value;
               this.initDrag();
           }
-      }
-      get dragBounds() {
-          return this._dragBounds;
-      }
-      set dragBounds(value) {
-          this._dragBounds = value;
-      }
-      startDrag(pointerId) {
-          if (!this._element.onStage)
-              return;
-          if (pointerId == null)
-              pointerId = -1;
-          this.dragBegin(pointerId);
-      }
-      stopDrag() {
-          this.dragEnd();
-      }
-      get dragging() {
-          return GObject.draggingObject == this;
       }
       localToGlobal(ax, ay, result) {
           ax = ax || 0;
@@ -3926,6 +3934,8 @@
       }
       handleSizeChanged() {
           this._element.setSize(this._width, this._height);
+          this._localRect.width = this._width;
+          this._localRect.height = this._height;
       }
       handleScaleChanged() {
           this._element.setScale(this._scaleX, this._scaleY);
@@ -3935,6 +3945,9 @@
       }
       handleAlphaChanged() {
           this._element.alpha = this._alpha;
+      }
+      handleTouchableChanged() {
+          this._element.touchable = this._touchable;
       }
       handleVisibleChanged() {
           this._element.visible = this.internalVisible2;
@@ -4048,30 +4061,47 @@
               buffer.pos = nextPos;
           }
       }
-      initDrag() {
-          if (this._draggable) {
-              this.addEvent('onTouchBegin', this.__touchBegin, this);
-              this.addEvent('onTouchMove', this.__touchMove, this);
-              this.addEvent('onTouchEnd', this.__touchEnd, this);
-          }
-          else {
-              this.removeEvent('onTouchBegin', this.__touchBegin, this);
-              this.removeEvent('onTouchMove', this.__touchMove, this);
-              this.removeEvent('onTouchEnd', this.__touchEnd, this);
+      GetNativePanel() {
+          if (this.element != null) {
+              return this.element.nativePanel;
           }
       }
-      dragBegin(pointerId) {
-          if (GObject.draggingObject) {
-              let tmp = GObject.draggingObject;
-              GObject.draggingObject.stopDrag();
-              GObject.draggingObject = null;
-              tmp.emit("drag_end");
+      //drag support
+      //-------------------------------------------------------------------
+      initDrag() {
+          var nativePanel = this.GetNativePanel();
+          if (this._draggable) {
+              nativePanel.SetDraggable(true);
+              $.RegisterEventHandler('DragEnter', nativePanel, (panelID, dragged) => {
+                  this.emit.call(this, 'drag_enter');
+                  return true;
+              });
+              $.RegisterEventHandler('DragDrop', nativePanel, (panelID, dragged) => {
+                  this.emit.call(this, 'drag_drop');
+                  return true;
+              });
+              $.RegisterEventHandler('DragLeave', nativePanel, (panelID, dragged) => {
+                  this.emit.call(this, 'drag_leave');
+                  return true;
+              });
+              $.RegisterEventHandler('DragStart', nativePanel, (panelID, settings) => {
+                  settings.displayPanel = nativePanel;
+                  GObject.draggingObject = this;
+                  this.data = settings;
+                  this.emit.call(this, 'drag_start');
+                  return true;
+              });
+              $.RegisterEventHandler('DragEnd', nativePanel, (panelID, dragged) => {
+                  this.data = dragged;
+                  this.emit.call(this, 'drag_end');
+                  GObject.draggingObject = null;
+                  return true;
+              });
           }
-          this._element.stage.getPointerPos(pointerId, sGlobalDragStart);
-          this.localToGlobalRect(0, 0, this.width, this.height, sGlobalRect);
-          this._dragTesting = false;
-          GObject.draggingObject = this;
-          this._element.stage.addPointerMonitor(pointerId, this);
+          else {
+              nativePanel.SetDraggable(false);
+              //TODO  不知道这里有没有释放绑定的function
+          }
       }
       setPanelEvent(evt, callback) {
           this.element.nativePanel.ClearPanelEvent(evt);
@@ -4080,88 +4110,39 @@
       clearPanelEvent(evt) {
           this.element.nativePanel.ClearPanelEvent(evt);
       }
-      OnMouseOver(caller) {
-          this.isInCompArea = true;
-          this.OnUpdate();
-      }
-      OnMouseOut(caller) {
-          this.isInCompArea = false;
-          this.OnUpdate();
-      }
       addEvent(evt, callback, caller) {
-          this.on.call(caller, evt, callback, caller);
-          if (!this.evtMap.has(evt)) {
-              this.evtMap.set(evt, caller);
-              if (evt == 'onTouchBegin' || evt == 'onTouchEnd' || evt == 'onTouchMove') {
-                  this.addEvent('onmouseout', this.OnMouseOut.bind(caller), caller);
-                  this.addEvent('onmouseover', this.OnMouseOver.bind(caller), caller);
-                  if (this.updateFuncRegisted == false) {
-                      this.updateFuncRegisted = true;
-                      Timers.addUpdate(this.OnUpdate, this);
-                  }
+          this.on(evt, callback, caller);
+          if (evt == "onTouchBegin" || evt == "onTouchMove" || evt == "onTouchEnd") {
+              if (this._updateRegisted == false) {
+                  this._updateRegisted = true;
+                  GObject.RegisterUpdate(this);
               }
-              else {
-                  this.element.nativePanel.SetPanelEvent(evt, this.emit.bind(caller, evt, caller));
-              }
+          }
+          else if (PanelEventSet.has(evt)) {
+              //直接this.emit分发
+              this.element.nativePanel.SetPanelEvent(evt, this.emit.bind(caller, evt));
           }
       }
       removeEvent(evt, callback, caller) {
-          this.off.call(caller, evt, callback, caller);
-          //TODO 移除Native事件
+          this.off(evt, callback, caller);
       }
-      //开放给外部的
+      //同一对象 同一事件最多绑定一个函数
       onEvent(evt, callback, caller) {
-          this.addEvent(evt, callback.bind(caller), this);
+          this.addEvent(evt, callback.bind(caller, this), this);
       }
       offEvent(evt, callback, caller) {
-          this.removeEvent(evt, callback.bind(caller), this);
+          this.removeEvent(evt, callback, caller);
       }
-      callEvent(evt) {
-          if (this.evtMap.has(evt)) {
-              var sender = this.evtMap.get(evt);
-              this.emit.call(sender, evt, sender);
-          }
+      callEvent(evt, arg) {
+          this.emit(evt, arg);
       }
-      OnUpdate() {
-          var isMouseDown = GameUI.IsMouseDown(0);
-          if (this.isInCompArea == true) {
-              // var cpos = GameUI.GetCursorPosition();
-              if (isMouseDown == true) {
-                  if (this.touchAction == 0) {
-                      this.touchAction = 1;
-                      this.callEvent('onTouchBegin');
-                  }
-                  else if (this.touchAction == 1) {
-                      this.callEvent('onTouchMove');
-                  }
-              }
-              else {
-                  if (this.touchAction == 1) {
-                      this.callEvent('onTouchEnd');
-                      this.touchAction = 0;
-                  }
-              }
-              if (GameUI.IsMouseDown(2)) {
-                  this.callEvent('onMouseWheel');
-              }
+      isInsideObject(gpos) {
+          var localMousePos = this.globalToLocal(gpos[0], gpos[1]);
+          if (localMousePos.x >= this._localRect.xMin && localMousePos.x <= this._localRect.xMax
+              && localMousePos.y >= this._localRect.yMin && localMousePos.y <= this._localRect.yMax) {
+              return true;
           }
-          else {
-              if (this.touchAction == 1) {
-                  if (isMouseDown == false) {
-                      this.callEvent('onTouchEnd');
-                      this.touchAction = 0;
-                  }
-                  else {
-                      this.callEvent('onTouchMove');
-                  }
-              }
-          }
-      }
-      dragEnd() {
-          if (GObject.draggingObject == this) {
-              this._dragTesting = false;
-              GObject.draggingObject = null;
-          }
+          return false;
       }
       SetNativeParent(panel) {
           this._element.nativePanel.SetParent(panel);
@@ -4171,66 +4152,61 @@
               this.parent.removeChild(this);
           obj.addChild(this);
       }
-      __touchBegin(evt) {
-          let currentFocus = GRoot.inst.focus;
-          if (currentFocus && ('editable' in currentFocus) && currentFocus.editable) {
-              this._dragTesting = false;
+      processUpdate(mousePosition, isLeftDown) {
+          if (isLeftDown) {
+              if (this.touchAction == 1) {
+                  this.callEvent('onTouchMove');
+              }
+              if (this.isInsideObject(mousePosition)) {
+                  if (this.touchAction == 0) {
+                      this.touchAction = 1;
+                      this.callEvent('onTouchBegin');
+                  }
+              }
+          }
+          else {
+              if (this.touchAction == 1) {
+                  this.callEvent('onTouchEnd');
+                  this.touchAction = 0;
+              }
+          }
+      }
+      static RegisterUpdate(thisobj) {
+          GObject.s_AllUpdateObj.add(thisobj);
+      }
+      static UnregisterUpdate(thisobj) {
+          GObject.s_AllUpdateObj.delete(thisobj);
+      }
+      static OnGlobalUpdate() {
+          $.Schedule(0.01, GObject.OnGlobalUpdate);
+          if (GObject.s_AllUpdateObj.size == 0) {
               return;
           }
-          if (this._dragStartPos == null)
-              this._dragStartPos = new Vec2();
-          this._dragStartPos.set(evt.input.x, evt.input.y);
-          this._dragTesting = true;
-          // evt.capturePointer();
+          let isLeftDown = GameUI.IsMouseDown(0);
+          var pos = GameUI.GetCursorPosition();
+          for (let obj of GObject.s_AllUpdateObj) {
+              obj.processUpdate(pos, isLeftDown);
+          }
       }
-      __touchMove(evt) {
-          if (this._dragTesting && GObject.draggingObject != this) {
-              let sensitivity;
-              if (this._element.stage.touchScreen)
-                  sensitivity = UIConfig.touchDragSensitivity;
-              else
-                  sensitivity = UIConfig.clickDragSensitivity;
-              if (this._dragStartPos
-                  && Math.abs(this._dragStartPos.x - evt.input.x) < sensitivity
-                  && Math.abs(this._dragStartPos.y - evt.input.y) < sensitivity)
+      static InitGlobalUpdate() {
+          GObject.s_AllUpdateObj = new Set();
+          GObject.OnGlobalUpdate();
+          GameUI.SetMouseCallback((eventName, arg) => {
+              if (GObject.s_AllUpdateObj.size == 0) {
                   return;
-              this._dragTesting = false;
-              if (!this.emit.call(this, "drag_start", evt.input.pointerId))
-                  this.dragBegin(evt.input.pointerId);
-          }
-          if (GObject.draggingObject == this) {
-              let xx = evt.input.x - sGlobalDragStart.x + sGlobalRect.x;
-              let yy = evt.input.y - sGlobalDragStart.y + sGlobalRect.y;
-              // if (this._dragBounds) {
-              //     let rect: Rect = (<GObject>GRoot.getInst(this)).localToGlobalRect(this._dragBounds.x, this._dragBounds.y,
-              //         this._dragBounds.width, this._dragBounds.height, s_rect);
-              //     if (xx < rect.x)
-              //         xx = rect.x;
-              //     else if (xx + sGlobalRect.width > rect.xMax) {
-              //         xx = rect.xMax - sGlobalRect.width;
-              //         if (xx < rect.x)
-              //             xx = rect.x;
-              //     }
-              //     if (yy < rect.y)
-              //         yy = rect.y;
-              //     else if (yy + sGlobalRect.height > rect.yMax) {
-              //         yy = rect.yMax - sGlobalRect.height;
-              //         if (yy < rect.y)
-              //             yy = rect.y;
-              //     }
-              // }
-              let pt = this.parent.globalToLocal(xx, yy, s_vec2$3);
-              s_dragging = true;
-              this.setPosition(Math.round(pt.x), Math.round(pt.y));
-              s_dragging = false;
-              this.emit.call(this, "drag_move");
-          }
-      }
-      __touchEnd() {
-          if (GObject.draggingObject == this) {
-              GObject.draggingObject = null;
-              this.emit.call(this, "drag_end");
-          }
+              }
+              let wheelScroll = 0;
+              if (eventName == 'wheeled') {
+                  wheelScroll = arg;
+              }
+              if (wheelScroll != 0) {
+                  for (let obj of GObject.s_AllUpdateObj) {
+                      obj.callEvent('onMouseWheel', wheelScroll);
+                  }
+              }
+              let captureMouse = false;
+              return captureMouse;
+          });
       }
   }
   let GearClasses = [
@@ -4243,12 +4219,9 @@
       return ret;
   }
   var s_vec2$3 = new Vec2();
-  new Rect();
-  var sGlobalDragStart = new Vec2();
-  var sGlobalRect = new Rect();
-  var s_dragging;
   var gInstanceCounter = 0;
   var constructingDepth = { n: 0 };
+  GObject.InitGlobalUpdate();
 
   class GGroup extends GObject {
       constructor(name) {
@@ -4845,13 +4818,140 @@
       }
   }
 
+  var MarginType;
+  (function (MarginType) {
+      MarginType[MarginType["W11"] = 0] = "W11";
+      MarginType[MarginType["H11"] = 1] = "H11";
+      MarginType[MarginType["W12"] = 2] = "W12";
+      MarginType[MarginType["H12"] = 3] = "H12";
+      MarginType[MarginType["W13"] = 4] = "W13";
+      MarginType[MarginType["H13"] = 5] = "H13";
+      MarginType[MarginType["W21"] = 6] = "W21";
+      MarginType[MarginType["H21"] = 7] = "H21";
+      MarginType[MarginType["W22"] = 8] = "W22";
+      MarginType[MarginType["H22"] = 9] = "H22";
+      MarginType[MarginType["W23"] = 10] = "W23";
+      MarginType[MarginType["H23"] = 11] = "H23";
+      MarginType[MarginType["W31"] = 12] = "W31";
+      MarginType[MarginType["H31"] = 13] = "H31";
+      MarginType[MarginType["W32"] = 14] = "W32";
+      MarginType[MarginType["H32"] = 15] = "H32";
+      MarginType[MarginType["W33"] = 16] = "W33";
+      MarginType[MarginType["H33"] = 17] = "H33";
+  })(MarginType || (MarginType = {}));
+  class Margin {
+      constructor() {
+          this.left = 0;
+          this.right = 0;
+          this.top = 0;
+          this.bottom = 0;
+          //中间的宽度
+          this.width = 0;
+          //中间的高度
+          this.height = 0;
+      }
+      copy(source) {
+          this.top = source.top;
+          this.bottom = source.bottom;
+          this.left = source.left;
+          this.right = source.right;
+          this.width = source.width;
+          this.height = source.height;
+      }
+      getMargin(m) {
+          switch (m) {
+              //horizontal
+              case MarginType.W11:
+              case MarginType.W21:
+              case MarginType.W31:
+                  {
+                      return `${this.left}px`;
+                  }
+              case MarginType.W12:
+                  {
+                      return `${this.left}px`;
+                  }
+              case MarginType.W32:
+                  {
+                      return `${this.right}px`;
+                  }
+              case MarginType.W13:
+              case MarginType.W23:
+              case MarginType.W33:
+                  {
+                      return `${this.right}px`;
+                  }
+              //vertival
+              case MarginType.H11:
+              case MarginType.H12:
+              case MarginType.H13:
+                  {
+                      return `${this.top}px`;
+                  }
+              case MarginType.H21:
+              case MarginType.H23:
+                  {
+                      return `${this.height}px`;
+                  }
+              case MarginType.H31:
+              case MarginType.H32:
+              case MarginType.H33:
+                  {
+                      return `${this.bottom}px`;
+                  }
+              case MarginType.W22:
+                  {
+                      return `${this.left}px`;
+                  }
+              case MarginType.H22:
+                  {
+                      return `${this.right}px`;
+                  }
+              default:
+                  {
+                      return `0px`;
+                  }
+          }
+      }
+  }
+
+  const GridStyleTemplate = new Map([
+      ["cornerStyle", {
+              "background-size": `100%`,
+              "background-repeat": `no-repeat`,
+          }],
+      ["horizontalBorderStyle", {
+              "width": `100%`,
+              "background-repeat": `repeat-x`,
+          }],
+      ["verticalBorderStyle", {
+              "height": `100%`,
+              "background-repeat": `repeat-y`,
+          }],
+      ["centerStyle", {
+              "width": `100%`,
+              "height": `100%`,
+              "background-size": `100%`,
+              "background-repeat": `repeat`,
+          }]
+  ]);
+  const GridStyleParams = [
+      ["width", MarginType.W11, "height", MarginType.H11], ["margin-left", MarginType.W11, "margin-right", MarginType.W13, "height", MarginType.H12], ["width", MarginType.W13, "height", MarginType.H13],
+      ["margin-top", MarginType.H11, "margin-bottom", MarginType.H31, "width", MarginType.W21], ["margin-left", MarginType.W12, "margin-right", MarginType.W32, "margin-top", MarginType.H12, "margin-bottom", MarginType.H32], ["margin-top", MarginType.H13, "margin-bottom", MarginType.H33, "width", MarginType.W23],
+      ["width", MarginType.W31, "height", MarginType.H31], ["margin-left", MarginType.W11, "margin-right", MarginType.W33, "height", MarginType.H32], ["width", MarginType.W33, "height", MarginType.H33],
+  ];
+  const GridStyleMap = [
+      ["tl", "left top", "cornerStyle"], ["tc", "center top", "horizontalBorderStyle"], ["tr", "right top", "cornerStyle"],
+      ["ml", "left center", "verticalBorderStyle"], ["mc", "center center", "centerStyle"], ["mr", "right center", "verticalBorderStyle"],
+      ["bl", "left bottom", "cornerStyle"], ["bc", "center bottom", "horizontalBorderStyle"], ["br", "right bottom", "cornerStyle"],
+  ];
   class Image extends UIElement {
       constructor() {
           super();
           this._tileGridIndice = 0;
-          this._timerID_1 = 0;
           this._color = 0xFFFFFF;
           this._textureScale = new Vec2(1, 1);
+          this._scale9Panels = [];
       }
       init() {
           this.nativePanel = $.CreatePanel("Image", $('#HiddenRoot'), this.$owner.panelName);
@@ -4939,34 +5039,62 @@
               this.nativePanel.style.backgroundImage = "none";
               return;
           }
-          this.nativePanel.style.backgroundImage = "url('" + this._src + "')";
           if (this._scaleByTile) {
               if (this._textureScale.x != 1 || this._textureScale.y != 1)
                   this.nativePanel.style.backgroundSize = (this._textureScale.x * 100) + "% " + (this._textureScale.y * 100) + "%";
               else
                   this.nativePanel.style.backgroundSize = "auto";
               this.nativePanel.style.backgroundRepeat = "repeat";
+              this.nativePanel.SetImage(this._src);
           }
-          // else if (this._scale9Grid) {
-          //     this.nativePanel.style.backgroundRepeat = "round round";
-          //     if (this._textureScale.x != 1 || this._textureScale.y != 1)
-          //     {
-          //         this.nativePanel.style.backgroundSize = (this._textureScale.x * 100) + "% " + (this._textureScale.y * 100) + "%";
-          //     }
-          //     else
-          //         this.nativePanel.style.backgroundSize = "auto";
-          //     this.nativePanel.style.borderTopWidth = this._scale9Grid.top + "px";
-          //     this.nativePanel.style.borderBottomWidth = this._scale9Grid.bottom + "px";
-          //     this.nativePanel.style.borderLeftWidth = this._scale9Grid.left + "px";
-          //     this.nativePanel.style.borderRightWidth = this._scale9Grid.right + "px";
-          //     // if ((this._tileGridIndice & 0xF) != 0)
-          //     //     this.nativePanel.style.backgroundRepeat = "repeat";
-          //     // else
-          //     //     this.nativePanel.style.backgroundRepeat = null;
-          // }
+          else if (this._scale9Grid) {
+              this.nativePanel.style.backgroundRepeat = "no-repeat";
+              if (this._textureScale.x != 1 || this._textureScale.y != 1) {
+                  this.nativePanel.style.backgroundSize = (this._textureScale.x * 100) + "% " + (this._textureScale.y * 100) + "%";
+              }
+              else {
+                  this.nativePanel.style.backgroundSize = "auto";
+              }
+              if (this._scale9Panels.length == 0) {
+                  var urlDir;
+                  var urlExt;
+                  var totalLen = this._src.length - 1;
+                  for (var i = totalLen; i >= 0; i--) {
+                      if (this._src[i] == '.') {
+                          urlDir = this._src.substring(0, i);
+                          urlExt = this._src.substring(i + 1, totalLen + 1);
+                          break;
+                      }
+                  }
+                  for (var i = 0; i < GridStyleMap.length; i++) {
+                      var gridArray = GridStyleMap[i];
+                      var gridPos = gridArray[0];
+                      var gridAlign = gridArray[1];
+                      var gridStyleName = gridArray[2];
+                      var gridPath = `url('${urlDir}_${gridPos}.${urlExt}')`;
+                      var styleType = GridStyleTemplate.get(gridStyleName);
+                      var styleImplement = Object.assign({
+                          "align": `${gridAlign}`,
+                          "background-image": `${gridPath}`,
+                      }, styleType);
+                      var gridpanel = $.CreatePanel("Image", this.nativePanel, gridPos);
+                      for (const k in styleImplement) {
+                          gridpanel.style[k] = styleImplement[k];
+                      }
+                      var GridStyleParam = GridStyleParams[i];
+                      for (var j = 0; j < GridStyleParam.length; j += 2) {
+                          var key = GridStyleParam[j];
+                          var value = GridStyleParam[j + 1];
+                          gridpanel.style[key] = this._scale9Grid.getMargin(value);
+                      }
+                      this._scale9Panels.push(gridpanel);
+                  }
+              }
+          }
           else {
               this.nativePanel.style.backgroundSize = "100% 100%";
               this.nativePanel.style.backgroundRepeat = "no-repeat";
+              this.nativePanel.SetImage(this._src);
           }
       }
   }
@@ -5087,8 +5215,11 @@
           this._reversed = false;
           this._repeatedCount = 0;
           this.setPlaySettings();
-          // this.addEvent("added_to_stage", this.__addToStage, this);
-          // this.addEvent("removed_from_stage", this.__removeFromStage, this);
+      }
+      init() {
+          super.init();
+          this.$owner.onEvent("added_to_stage", this.__addToStage, this);
+          this.$owner.onEvent("removed_from_stage", this.__removeFromStage, this);
       }
       get frames() {
           return this._frames;
@@ -5450,110 +5581,24 @@
       }
   }
 
-  class MeasureTup {
-      constructor(panel) {
-          this.span = panel;
-          this.label = panel.FindChild('Label');
-      }
-  }
-  //在main.xml有snippet可供加载   坑bV蛇，要下一帧才能知道大小
-  class MeasurePool {
-      static Get() {
-          if (this.needUpdate == true && this._poolItems.length > this.maxCntInPool) {
-              this.needUpdate = false;
-              Timers.add(5, -1, this.CheckPool, this);
-          }
-          if (this._poolItems.length > 0) {
-              var tup = this._poolItems.pop();
-              tup.span.visible = true;
-              return tup;
-          }
-          else {
-              var panel = $.CreatePanel('Panel', $('#MeasureRoot'), "MeasurePool" + this._index);
-              panel.BLoadLayoutSnippet("TextMeasure");
-              var tup = new MeasureTup(panel);
-              this._index++;
-              return tup;
-          }
-      }
-      static CheckPool() {
-          var len = this._poolItems.length;
-          if (len > this.maxCntInPool) {
-              for (var i = len; i >= this.maxCntInPool; i--) {
-                  var nativePanel = this._poolItems.pop();
-                  nativePanel.span.DeleteAsync(0);
-              }
-          }
-      }
-      static Back(tup) {
-          this._poolItems.push(tup);
-          tup.span.visible = false;
-      }
-  }
-  MeasurePool._poolItems = [];
-  MeasurePool._index = 0;
-  MeasurePool.maxCntInPool = 10;
-  MeasurePool.needUpdate = true;
   class TextField extends UIElement {
       constructor() {
           super();
           this._maxWidth = 0;
           this._layoutStyleChanged = true;
-          this._measureCount = 0;
+          this._tmpChangWrapping = false;
           this._textFormat = new TextFormat();
           this._text = "";
           this._textSize = new Vec2();
-          this._scheduleId = false;
+          this._delayUpdateFunc = () => {
+              this.DelayUpdate();
+          };
       }
       init() {
           super.init();
-          this._label = $.CreatePanel("Label", $('#HiddenRoot'), this.$owner.panelName);
-          this.nativePanel = this._label;
-      }
-      clearPool() {
-          this._scheduleId = false;
-          MeasurePool.Back(this._measureTup);
-          this._measureTup = null;
-          Timers.remove(this.delayUpdate, this);
-      }
-      delayUpdate() {
-          if (!this._label.IsValid()) {
-              this.clearPool();
-              return;
-          }
-          this._measureCount++;
-          if (this._measureCount > 3) {
-              //超过3次就不继续了  防止死循环
-              this.clearPool();
-              return;
-          }
-          var height = Math.floor(this._measureTup.span.contentheight / this._measureTup.span.actualuiscale_y);
-          if (this._lastHeight == height) {
-              return;
-          }
-          var width = this._measureTup.span.contentwidth / this._measureTup.span.actualuiscale_x;
-          this._lastHeight = height;
-          this.clearPool();
-          this._textSize.set(width, height);
-          if (this._autoSize == AutoSizeType.Both) {
-              this._contentRect.width = this._textSize.x;
-              this._contentRect.height = this._textSize.y;
-              if (this.$owner)
-                  this.$owner.setSize(this._textSize.x, this._textSize.y);
-          }
-          else if (this._autoSize == AutoSizeType.Height) {
-              this._contentRect.height = this._textSize.y;
-              if (this.$owner)
-                  this.$owner.height = this._textSize.y;
-          }
-          this._label.style.width = this._contentRect.width + "px";
-          if (this._textFormat.verticalAlign == "top")
-              this._label.style.paddingTop = "0px";
-          else if (this._textFormat.verticalAlign == "middle")
-              this._label.style.paddingTop = Math.max(0, Math.floor((this._contentRect.height - this._textSize.y) * 0.5)) + "px";
-          else
-              this._label.style.paddingTop = Math.max(0, this._contentRect.height - this._textSize.y) + "px";
-          this._updatingSize = false;
+          this._container = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.panelName);
+          this._label = $.CreatePanel("Label", this._container, this.$owner.panelName);
+          this.nativePanel = this._container;
       }
       get textFormat() {
           return this._textFormat;
@@ -5563,20 +5608,18 @@
           if (!fontName)
               fontName = UIConfig.defaultFont;
           this._label.style.color = convertToHtmlColor(this._textFormat.color);
-          this._label_style_fontSize = this._textFormat.size + "px";
-          this._label_style_fontFamily = fontName;
-          this._label_style_lineHeight = (this._textFormat.size + this._textFormat.lineSpacing) + "px";
-          this._label_style_fontWeight = this._textFormat.bold ? "bold" : "normal";
-          this._label_style_fontStyle = this._textFormat.italic ? "italic" : "normal";
-          this._label_style_textDecoration = this._textFormat.underline ? "underline" : "none";
-          this._label_style_textAlign = (this._textFormat.align == undefined) ? null : this._textFormat.align; // 对于中文和Localize的文本有效  直接设置一堆字符是不支持的
-          this._label.style.fontSize = this._label_style_fontSize;
-          this._label.style.fontFamily = this._label_style_fontFamily;
-          this._label.style.lineHeight = this._label_style_lineHeight;
-          this._label.style.fontWeight = this._label_style_fontWeight;
-          this._label.style.fontStyle = this._label_style_fontStyle;
-          this._label.style.textDecoration = this._label_style_textDecoration;
-          this._label.style.textAlign = this._label_style_textAlign;
+          this._label.style.fontSize = this._textFormat.size + "px";
+          this._label.style.fontFamily = fontName;
+          this._label.style.fontWeight = this._textFormat.bold ? "bold" : "normal";
+          this._label.style.fontStyle = this._textFormat.italic ? "italic" : "normal";
+          this._label.style.textDecoration = this._textFormat.underline ? "underline" : "none";
+          if (this._textFormat.align != undefined) {
+              this._label.style.horizontalAlign = this._textFormat.align;
+              this._label.style.textAlign = this._textFormat.align;
+          }
+          if (this._textFormat.verticalAlign != undefined) {
+              this._label.style.verticalAlign = this._textFormat.verticalAlign;
+          }
           // 其实不是正宗的描边
           if (this._textFormat.outline > 0) {
               var arr = [];
@@ -5612,40 +5655,44 @@
       }
       applyText() {
           this._updatingSize = true;
-          let tmpChangWrapping;
+          this._tmpChangWrapping = false;
           if (this._autoSize == AutoSizeType.Both) {
               this._label.style.width = null;
               if (this._maxWidth > 0) {
                   this.updateWrapping();
-                  tmpChangWrapping = true;
+                  this._tmpChangWrapping = true;
               }
           }
+          this._label.AddClass("FGUI_OutScreen");
           this._label.html = this._html;
           this._label.text = this.text;
-          if (tmpChangWrapping && this._contentRect.width > this._maxWidth) {
+          this._delayUpdateFunc();
+      }
+      DelayUpdate() {
+          if (!this._label.IsSizeValid()) {
+              $.Schedule(0.05, this._delayUpdateFunc);
+              return;
+          }
+          var height = Math.floor(this._label.contentheight / this._label.actualuiscale_y);
+          var width = Math.floor(this._label.contentwidth / this._label.actualuiscale_x);
+          this._label.RemoveClass("FGUI_OutScreen");
+          this._textSize.set(width, height);
+          if (this._autoSize == AutoSizeType.Both) {
+              if (this.$owner) {
+                  this.$owner.setSize(this._textSize.x, this._textSize.y);
+              }
+          }
+          else if (this._autoSize == AutoSizeType.Height) {
+              if (this.$owner) {
+                  this.$owner.height = this._textSize.y;
+              }
+          }
+          if (this._tmpChangWrapping && this._contentRect.width > this._maxWidth) {
               this._label.style.width = this._maxWidth + "px";
               this.updateWrapping(true);
           }
-          if (this._measureTup == null) {
-              this._measureTup = MeasurePool.Get();
-          }
-          this._measureTup.label.style.overflow = this._label.style.overflow;
-          this._measureTup.label.style.textOverflow = this._label.style.textOverflow;
-          this._measureTup.label.style.width = this._label.style.width;
-          // this._measureTup.label.style.height = this._label.style.height;
-          this._measureTup.label.style.fontSize = this._label_style_fontSize;
-          this._measureTup.label.style.fontFamily = this._label_style_fontFamily;
-          this._measureTup.label.style.lineHeight = this._label_style_lineHeight;
-          this._measureTup.label.style.fontWeight = this._label_style_fontWeight;
-          this._measureTup.label.style.fontStyle = this._label_style_fontStyle;
-          this._measureTup.label.style.textDecoration = this._label_style_textDecoration;
-          this._measureTup.label.style.textAlign = this._label_style_textAlign;
-          this._measureTup.label.html = this._html;
-          this._measureTup.label.text = this.text;
-          if (this._scheduleId == false) {
-              this._scheduleId = true;
-              Timers.add(50, -1, this.delayUpdate, this);
-          }
+          this._container.style.width = this._contentRect.width + "px";
+          this._updatingSize = false;
       }
       get autoSize() {
           return this._autoSize;
@@ -5656,19 +5703,17 @@
               this.updateWrapping();
               if (this._autoSize == AutoSizeType.Both) {
                   this._label.style.width = null;
-                  this._label.style.overflow = "noclip";
+                  this._label.style.textOverflow = "noclip";
               }
               else if (this._autoSize == AutoSizeType.Height) {
-                  this._label.style.overflow = "noclip";
+                  this._label.style.textOverflow = "noclip";
               }
-              else
-                  this._label.style.overflow = "clip";
-              if (this._autoSize == AutoSizeType.Ellipsis)
+              else if (this._autoSize == AutoSizeType.Ellipsis)
                   this._label.style.textOverflow = "ellipsis";
               else if (this._autoSize == AutoSizeType.Shrink)
                   this._label.style.textOverflow = "shrink";
               else
-                  this._label.style.textOverflow = "clip";
+                  this._label.style.textOverflow = null;
           }
       }
       get singleLine() {
@@ -5690,15 +5735,6 @@
       }
       get textWidth() {
           return this._textSize.x;
-      }
-      onSizeChanged() {
-          super.onSizeChanged();
-          if (!this._updatingSize) {
-              if (this._autoSize != AutoSizeType.Both) {
-                  this._label.style.maxWidth = this._contentRect.width + "px";
-                  this._label.style.width = this._contentRect.width + "px";
-              }
-          }
       }
       updateWrapping(forceWrap) {
           if ((this._autoSize == AutoSizeType.Both || this._singleLine) && !forceWrap) {
@@ -9252,21 +9288,6 @@
       }
   }
 
-  class Margin {
-      constructor() {
-          this.left = 0;
-          this.right = 0;
-          this.top = 0;
-          this.bottom = 0;
-      }
-      copy(source) {
-          this.top = source.top;
-          this.bottom = source.bottom;
-          this.left = source.left;
-          this.right = source.right;
-      }
-  }
-
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   // Use a lookup table to find the index.
   const lookup = new Uint8Array(256);
@@ -9404,6 +9425,15 @@
               return null;
           return UIConfig.ouputDir + pkgName + "/" + pkg.id + pi.id;
       }
+      static getItemAssetPath(pkgName, resName) {
+          var pkg = UIPackage.getByName(pkgName);
+          if (!pkg)
+              return null;
+          var pi = pkg._itemsByName[resName];
+          if (!pi)
+              return null;
+          return pi.file;
+      }
       static getItemRawURL(pkgName, resName) {
           var pkg = UIPackage.getByName(pkgName);
           if (!pkg)
@@ -9532,6 +9562,8 @@
                               pi.scale9Grid.top = sy;
                               pi.scale9Grid.right = pi.width - sx - sw;
                               pi.scale9Grid.bottom = pi.height - sy - sh;
+                              pi.scale9Grid.width = sw;
+                              pi.scale9Grid.height = sh;
                               pi.tileGridIndice = buffer.readInt();
                           }
                           else if (scaleOption == 2)
@@ -10059,7 +10091,7 @@
               return;
           if (this._underConstruct)
               this._element.setSize(this.width, this.height);
-          else if (this._element.autoSize != AutoSizeType.Both) {
+          else {
               if (this._element.autoSize == AutoSizeType.Height) {
                   this._element.width = this.width; //先调整宽度，让文本重排
                   if (this._text != "") //文本为空时，1是本来就不需要调整， 2是为了防止改掉文本为空时的默认高度，造成关联错误
@@ -10263,12 +10295,11 @@
       set singleLine(value) {
           if (this._singleLine != value) {
               this._singleLine = value;
-              if (this._singleLine) {
-                  this.nativePanel.style.whiteSpace = "nowrap";
-              }
-              else {
-                  this.nativePanel.style.whiteSpace = "normal";
-              }
+              // if (this._singleLine) {
+              //     this.nativePanel.style.whiteSpace = "nowrap";
+              // } else {
+              //     this.nativePanel.style.whiteSpace = "normal";
+              // }
           }
       }
       updateTouchableFlag() {
@@ -10813,6 +10844,7 @@
           this._maskContainer = new UIElement();
           this._maskContainer.$owner = owner;
           this._maskContainer.initElement();
+          this._maskContainer.opaque = false;
           this._owner.element.addChild(this._maskContainer);
           this._container = this._owner._container;
           this._container.setPosition(0, 0);
@@ -10896,7 +10928,7 @@
                   if (res) {
                       this._vtScrollBar = (UIPackage.createObjectFromURL(res));
                       if (!this._vtScrollBar)
-                          throw "cannot create scrollbar} from " + res;
+                          throw "cannot create scrollbar from " + res;
                       this._vtScrollBar.setScrollPane(this, true);
                       this._owner.element.addChild(this._vtScrollBar.element);
                   }
@@ -10906,7 +10938,7 @@
                   if (res) {
                       this._hzScrollBar = (UIPackage.createObjectFromURL(res));
                       if (!this._hzScrollBar)
-                          throw "cannot create scrollbar} from " + res;
+                          throw "cannot create scrollbar from " + res;
                       this._hzScrollBar.setScrollPane(this, false);
                       this._owner.element.addChild(this._hzScrollBar.element);
                   }
@@ -10918,6 +10950,8 @@
                       this._vtScrollBar.element.visible = false;
                   if (this._hzScrollBar)
                       this._hzScrollBar.element.visible = false;
+                  this._owner.onEvent("onmouseover", this.__rollOver, this);
+                  this._owner.onEvent("onmouseout", this.__rollOut, this);
               }
           }
           else
@@ -11188,7 +11222,9 @@
               rect = target;
           if (this._overlapSize.y > 0) {
               var bottom = this._yPos + this._viewSize.y;
-              if (setFirst || rect.y <= this._yPos || rect.height >= this._viewSize.y) {
+              if (setFirst || rect.y <= this._yPos) {
+                  if (rect.y + rect.height >= bottom) //if an item size is large than viewSize, dont scroll
+                      return;
                   if (this._pageMode)
                       this.setPosY(Math.floor(rect.y / this._pageSize.y) * this._pageSize.y, ani);
                   else
@@ -11200,12 +11236,14 @@
                   else if (rect.height <= this._viewSize.y / 2)
                       this.setPosY(rect.y + rect.height * 2 - this._viewSize.y, ani);
                   else
-                      this.setPosY(rect.y + rect.height - this._viewSize.y, ani);
+                      this.setPosY(rect.y + Math.min(rect.height - this._viewSize.y, 0), ani);
               }
           }
           if (this._overlapSize.x > 0) {
               var right = this._xPos + this._viewSize.x;
-              if (setFirst || rect.x <= this._xPos || rect.width >= this._viewSize.x) {
+              if (setFirst || rect.x <= this._xPos) {
+                  if (rect.x + rect.width >= right) //if an item size is large than viewSize, dont scroll
+                      return;
                   if (this._pageMode)
                       this.setPosX(Math.floor(rect.x / this._pageSize.x) * this._pageSize.x, ani);
                   else
@@ -11217,7 +11255,7 @@
                   else if (rect.width <= this._viewSize.x / 2)
                       this.setPosX(rect.x + rect.width * 2 - this._viewSize.x, ani);
                   else
-                      this.setPosX(rect.x + rect.width - this._viewSize.x, ani);
+                      this.setPosX(rect.x + Math.min(rect.width - this._viewSize.x, 0), ani);
               }
           }
           if (!ani && this._needRefresh)
@@ -11416,6 +11454,16 @@
           if (this._displayInDemand) {
               this._vScrollNone = this._contentSize.y <= this._viewSize.y;
               this._hScrollNone = this._contentSize.x <= this._viewSize.x;
+              if (this._vtScrollBar && this._hzScrollBar) {
+                  if (!this._hScrollNone)
+                      this._vtScrollBar.height = this._owner.height - this._hzScrollBar.height - this._scrollBarMargin.top - this._scrollBarMargin.bottom;
+                  else
+                      this._vtScrollBar.height = this._owner.height - this._scrollBarMargin.top - this._scrollBarMargin.bottom;
+                  if (!this._vScrollNone)
+                      this._hzScrollBar.width = this._owner.width - this._vtScrollBar.width - this._scrollBarMargin.left - this._scrollBarMargin.right;
+                  else
+                      this._hzScrollBar.width = this._owner.width - this._scrollBarMargin.left - this._scrollBarMargin.right;
+              }
           }
           if (this._vtScrollBar) {
               if (this._contentSize.y == 0)
@@ -11547,7 +11595,7 @@
           if (this._pageMode)
               this.updatePageController();
       }
-      __touchBegin(evt) {
+      __touchBegin(owner) {
           if (!this._touchEffect)
               return;
           if (this._tweening != 0) {
@@ -11557,7 +11605,6 @@
           }
           else
               this._dragged = false;
-          var owner = evt.data;
           var cpos = GameUI.GetCursorPosition();
           var pt = owner.globalToLocal(cpos[0], cpos[1], s_vec2$2);
           this._containerPos.set(this._container.x, this._container.y);
@@ -11567,14 +11614,13 @@
           this._isHoldAreaDone = false;
           this._velocity.set(0, 0);
           this._velocityScale = 1;
-          this._lastMoveTime = Game.Time() * 1000;
+          this._lastMoveTime = Game.Time();
       }
-      __touchMove(evt) {
+      __touchMove(owner) {
           if (!this._touchEffect || this.owner.isDisposed)
               return;
           if (ScrollPane.draggingPane && ScrollPane.draggingPane != this || GObject.draggingObject) //已经有其他拖动
               return;
-          var owner = evt.data;
           var sensitivity = UIConfig.touchScrollSensitivity;
           var cpos = GameUI.GetCursorPosition();
           var pt = owner.globalToLocal(cpos[0], cpos[1]);
@@ -11666,7 +11712,7 @@
           }
           //更新速度
           var frameRate = 60;
-          var now = Game.Time() * 1000;
+          var now = Game.Time();
           var deltaTime = Math.max(now - this._lastMoveTime, 1 / frameRate);
           var deltaPositionX = pt.x - this._lastTouchPos.x;
           var deltaPositionY = pt.y - this._lastTouchPos.y;
@@ -11780,7 +11826,7 @@
               //更新速度
               if (!this._inertiaDisabled) {
                   var frameRate = 60;
-                  var elapsed = (Game.Time() * 1000 - this._lastMoveTime) * frameRate - 1;
+                  var elapsed = (Game.Time() - this._lastMoveTime) * frameRate - 1;
                   if (elapsed > 1) {
                       var factor = Math.pow(0.833, elapsed);
                       this._velocity.x = this._velocity.x * factor;
@@ -11810,20 +11856,26 @@
           }
           this.startTween(2);
       }
-      __mouseWheel(evt) {
+      __mouseWheel(owner, evt) {
           if (!this._mouseWheelEnabled)
               return;
-          // var delta: number = evt.input.mouseWheelDelta;
-          // if (this._snapToItem && Math.abs(delta) < 1)
-          //     delta = Math.sign(delta);
-          // if (this._overlapSize.x > 0 && this._overlapSize.y == 0) {
-          //     let step: number = this._pageMode ? this._pageSize.x : this._scrollStep;
-          //     this.setPosX(this._xPos + step * delta, false);
-          // }
-          // else {
-          //     let step: number = this._pageMode ? this._pageSize.y : this._scrollStep;
-          //     this.setPosY(this._yPos + step * delta, false);
-          // }
+          var delta = -evt.data;
+          if (this._overlapSize.x > 0 && this._overlapSize.y == 0) {
+              let step = this._pageMode ? this._pageSize.x : this._scrollStep;
+              this.setPosX(this._xPos + step * delta, false);
+          }
+          else {
+              let step = this._pageMode ? this._pageSize.y : this._scrollStep;
+              this.setPosY(this._yPos + step * delta, false);
+          }
+      }
+      __rollOver() {
+          this._hover = true;
+          this.updateScrollBarVisible();
+      }
+      __rollOut() {
+          this._hover = false;
+          this.updateScrollBarVisible();
       }
       updateScrollBarPos() {
           if (this._vtScrollBar)
@@ -11849,7 +11901,7 @@
       updateScrollBarVisible2(bar) {
           if (this._scrollBarDisplayAuto)
               GTween.kill(bar, false, "alpha");
-          if (this._scrollBarDisplayAuto && this._tweening == 0 && !this._dragged && !bar.gripDragging) {
+          if (this._scrollBarDisplayAuto && !this._hover && this._tweening == 0 && !this._dragged && !bar.gripDragging) {
               if (bar.element.visible)
                   GTween.to(1, 0, 0.5).setDelay(0.5).onComplete(this.__barTweenComplete, this).setTarget(bar, "alpha");
           }
@@ -11864,7 +11916,8 @@
           bar.element.visible = false;
       }
       getLoopPartSize(division, axis) {
-          return (this._contentSize[axis] + (axis == "x" ? (this._owner).columnGap : (this._owner).lineGap)) / division;
+          let list = this._owner; //assume it is a list
+          return (this._contentSize[axis] + (axis == "x" ? list.columnGap : list.lineGap)) / division;
       }
       loopCheckingCurrent() {
           var changed = false;
@@ -13659,6 +13712,7 @@
                   if (this._childrenRenderOrder == ChildrenRenderOrder.Arch)
                       Timers.callLater(this.buildNativeDisplayList, this);
               }
+              child.clearTouchEvent();
               if (dispose)
                   child.dispose();
               this.setBoundsChangedFlag();
@@ -14091,6 +14145,7 @@
           }
           this._scrollPane = new ScrollPane(this);
           this._scrollPane.setup(buffer);
+          this._trackBounds = true;
       }
       setupOverflow(overflow) {
           if (overflow == OverflowType.Hidden) {
@@ -14139,7 +14194,7 @@
               this._scrollPane.handleControllerChanged(c);
       }
       setBoundsChangedFlag() {
-          if (!this._scrollPane && !this._trackBounds)
+          if (!this._trackBounds)
               return;
           if (!this._boundsChanged) {
               this._boundsChanged = true;
@@ -14387,7 +14442,7 @@
                       child.constructFromResource();
                   }
                   else
-                      child = $.UIObjectFactory.newObject(type);
+                      child = $.UIObjectFactory.newObject(type, null, ObjectType[type]);
               }
               child._underConstruct = true;
               child.setup_beforeAdd(buffer, curPos);
@@ -14482,6 +14537,12 @@
               }
           }
       }
+      clearTouchEvent() {
+          super.clearTouchEvent();
+          for (let child of this._children) {
+              child.clearTouchEvent();
+          }
+      }
   }
 
   class GLoader extends GObject {
@@ -14491,11 +14552,16 @@
           this._fill = LoaderFillType.None;
           this._align = "left";
           this._valign = "top";
+          this._checkSourceSizeFunc = () => {
+              this._checkSourceSizeFuncTimer = null;
+              this.checkSourceSize();
+          };
       }
       createElement() {
           this._element = new Image();
           this._element.$owner = this;
           this._element.init();
+          this._element.nativePanel.style.overflow = 'noclip';
           this._content = new MovieClip();
           this._content.$owner = this;
           this._content.init();
@@ -14631,8 +14697,34 @@
               this.clearContent();
               return;
           }
-          if (this._url.startsWith("ui://"))
+          this._content.nativePanel.AddClass("FGUI_OutScreen");
+          if (this._url.startsWith("ui://")) {
               this.loadFromPackage(this._url);
+          }
+          else {
+              //internal
+              this._content.src = this._url;
+              this.updateLayout();
+          }
+      }
+      isSizeInValid() {
+          if (this._content.nativePanel.contentheight == 0 || this._content.nativePanel.contentwidth == 0) {
+              return true;
+          }
+          return false;
+      }
+      checkSourceSize() {
+          if (this.isSizeInValid()) {
+              if (!this._checkSourceSizeFuncTimer) {
+                  this._checkSourceSizeFuncTimer = $.Schedule(0.01, this._checkSourceSizeFunc);
+              }
+              return;
+          }
+          this._content.nativePanel.RemoveClass("FGUI_OutScreen");
+          this._checkSourceSizeFuncTimer = null;
+          this.sourceHeight = Math.floor(this._content.nativePanel.contentheight / this._content.nativePanel.actualuiscale_y);
+          this.sourceWidth = Math.floor(this._content.nativePanel.contentwidth / this._content.nativePanel.actualuiscale_x);
+          this.updateLayout();
       }
       loadFromPackage(itemURL) {
           this._contentItem = UIPackage.getItemByURL(itemURL);
@@ -14644,7 +14736,6 @@
               if (this._autoSize)
                   this.setSize(this.sourceWidth, this.sourceHeight);
               if (this._contentItem.type == PackageItemType.Image) {
-                  this._content.src = this._contentItem.file;
                   this._content.scale9Grid = this._contentItem.scale9Grid;
                   this._content.scaleByTile = this._contentItem.scaleByTile;
                   this._content.tileGridIndice = this._contentItem.tileGridIndice;
@@ -14652,6 +14743,7 @@
                       this._content.textureScale = new Vec2(this.sourceWidth, this.sourceHeight);
                   else
                       this._content.textureScale = new Vec2(this._contentItem.width / this.sourceWidth, this._contentItem.height / this.sourceHeight);
+                  this._content.src = this._contentItem.file;
                   this.updateLayout();
               }
               else if (this._contentItem.type == PackageItemType.MovieClip) {
@@ -14697,6 +14789,10 @@
                   this.setSize(50, 30);
                   this._updatingLayout = false;
               }
+              return;
+          }
+          if (this._content.src && this.isSizeInValid()) {
+              this._checkSourceSizeFunc();
               return;
           }
           let cw = this.sourceWidth;
@@ -15282,6 +15378,13 @@
           else
               super.handleGrayedChanged();
       }
+      handleTouchableChanged() {
+          if (!this.touchable) {
+              this._over = false;
+              this.setCurrentState();
+          }
+          super.handleTouchableChanged();
+      }
       getProp(index) {
           switch (index) {
               case ObjectPropID.Color:
@@ -15348,11 +15451,11 @@
           if (this._mode == ButtonMode.Common)
               this.setState("up");
           this.addEvent("removed_from_stage", this.__removeFromStage, this);
-          this.addEvent('onTouchBegin', this.__btnTouchBegin, this);
-          this.addEvent('onTouchEnd', this.__btnTouchEnd, this);
-          this.addEvent('onactivate', this.__click, this);
-          this.addEvent("onmouseover", this.__rollover, this);
-          this.addEvent("onmouseout", this.__rollout, this);
+          this.onEvent('onTouchBegin', this.__btnTouchBegin, this);
+          this.onEvent('onTouchEnd', this.__btnTouchEnd, this);
+          this.onEvent('onactivate', this.__click, this);
+          this.onEvent("onmouseover", this.__rollover, this);
+          this.onEvent("onmouseout", this.__rollout, this);
       }
       setup_afterAdd(buffer, beginPos) {
           super.setup_afterAdd(buffer, beginPos);
@@ -15444,13 +15547,9 @@
               this.__rollout();
       }
       __click() {
-          // if (this._sound) {
-          //     var pi: PackageItem = UIPackage.getItemByURL(this._sound);
-          //     if (pi)
-          //         GRoot.playOneShotSound(pi.file);
-          //     else
-          //         GRoot.playOneShotSound(this._sound);
-          // }
+          if (this._sound) {
+              Game.EmitSound(this._sound);
+          }
           if (this._mode == ButtonMode.Check) {
               if (this._changeStateOnClick) {
                   this.selected = !this._selected;
@@ -15834,7 +15933,7 @@
       __popupWinClosed() {
           this.setCurrentState();
       }
-      __clickItem(evt) {
+      __clickItem(sender, evt) {
           this.cancelDropdown();
           this._selectedIndex = -1;
           this.selectedIndex = this._list.getChildIndex(evt.data);
@@ -15851,6 +15950,12 @@
           if (this._down || this.dropdown && this.dropdown.parent)
               return;
           this.setCurrentState();
+      }
+      clearTouchEvent() {
+          super.clearTouchEvent();
+          if (this._dropdownShown == false && this.dropdown) {
+              this.dropdown.clearTouchEvent();
+          }
       }
   }
 
@@ -15994,8 +16099,8 @@
           if (this._gripObject) {
               this.onEvent('onTouchBegin', this.__gripTouchBegin, this);
               this.onEvent('onTouchMove', this.__gripTouchMove, this);
+              this.onEvent('onTouchEnd', this.__gripTouchEnd, this);
           }
-          this.onEvent('onTouchBegin', this.__barTouchBegin, this);
       }
       handleSizeChanged() {
           super.handleSizeChanged();
@@ -16033,6 +16138,10 @@
       __gripTouchMove() {
           if (!this.canDrag)
               return;
+          if (ScrollPane.draggingPane || (GObject.draggingObject && GObject.draggingObject != this)) {
+              return;
+          }
+          GObject.draggingObject = this;
           var gpos = GameUI.GetCursorPosition();
           var pt = this.globalToLocal(gpos[0], gpos[1], s_vec2$1);
           var deltaX = pt.x - this._clickPos.x;
@@ -16048,22 +16157,10 @@
               percent = this._clickPercent + deltaY / this._barMaxHeight;
           this.updateWithPercent(percent, true);
       }
-      __barTouchBegin() {
-          if (!this.changeOnClick)
-              return;
-          var gpos = GameUI.GetCursorPosition();
-          var pt = this._gripObject.globalToLocal(gpos[0], gpos[1], s_vec2$1);
-          var percent = clamp01((this._value - this._min) / (this._max - this._min));
-          var delta = 0;
-          if (this._barObjectH)
-              delta = (pt.x - this._gripObject.width / 2) / this._barMaxWidth;
-          if (this._barObjectV)
-              delta = (pt.y - this._gripObject.height / 2) / this._barMaxHeight;
-          if (this._reverse)
-              percent -= delta;
-          else
-              percent += delta;
-          this.updateWithPercent(percent, true);
+      __gripTouchEnd() {
+          if (GObject.draggingObject == this) {
+              GObject.draggingObject = null;
+          }
       }
   }
 
@@ -16288,29 +16385,34 @@
           }
           this._arrowButton1 = this.getChild("arrow1");
           this._arrowButton2 = this.getChild("arrow2");
-          // this._grip.setPanelEvent("onTouchBegin", ()=>{this.__gripTouchBegin();});
-          // this._grip.setPanelEvent("onTouchMove", ()=>{this.__gripTouchMove();});
-          // this._grip.setPanelEvent("onTouchEnd", ()=>{this.__gripTouchEnd();});
-          this.onEvent("onTouchBegin", this.__barTouchBegin, this);
+          this._grip.onEvent("onTouchBegin", this.__gripTouchBegin, this);
+          this._grip.onEvent("onTouchMove", this.__gripTouchMove, this);
+          this._grip.onEvent("onTouchEnd", this.__gripTouchEnd, this);
+          this.onEvent("onactivate", this.__barTouchBegin, this);
           if (this._arrowButton1)
-              this.onEvent("onTouchBegin", this.__arrowButton1Click, this);
+              this._arrowButton1.onEvent("onactivate", this.__arrowButton1Click, this);
           if (this._arrowButton2)
-              this.onEvent("onTouchBegin", this.__arrowButton2Click, this);
+              this._arrowButton2.onEvent("onactivate", this.__arrowButton2Click, this);
       }
-      __gripTouchBegin(evt) {
+      __gripTouchBegin() {
           if (this._bar == null)
               return;
-          evt.stopPropagation();
           this._gripDragging = true;
           this._target.updateScrollBarVisible();
-          this.globalToLocal(evt.input.x, evt.input.y, this._dragOffset);
+          var gpos = GameUI.GetCursorPosition();
+          this.globalToLocal(gpos[0], gpos[1], this._dragOffset);
           this._dragOffset.x -= this._grip.x;
           this._dragOffset.y -= this._grip.y;
       }
-      __gripTouchMove(evt) {
+      __gripTouchMove() {
           if (!this.onStage)
               return;
-          var pt = this.globalToLocal(evt.input.x, evt.input.y, s_vec2);
+          if (ScrollPane.draggingPane || (GObject.draggingObject && GObject.draggingObject != this)) {
+              return;
+          }
+          GObject.draggingObject = this;
+          var gpos = GameUI.GetCursorPosition();
+          var pt = this.globalToLocal(gpos[0], gpos[1], s_vec2);
           if (this._vertical) {
               let curY = pt.y - this._dragOffset.y;
               let diff = this._bar.height - this._grip.height;
@@ -16328,27 +16430,28 @@
                   this._target.percX = (curX - this._bar.x) / (this._bar.width - this._grip.width);
           }
       }
-      __gripTouchEnd(evt) {
+      __gripTouchEnd() {
+          if (GObject.draggingObject == this) {
+              GObject.draggingObject = null;
+          }
           this._gripDragging = false;
           this._target.updateScrollBarVisible();
       }
-      __arrowButton1Click(evt) {
-          evt.stopPropagation();
+      __arrowButton1Click() {
           if (this._vertical)
               this._target.scrollUp();
           else
               this._target.scrollLeft();
       }
-      __arrowButton2Click(evt) {
-          evt.stopPropagation();
+      __arrowButton2Click() {
           if (this._vertical)
               this._target.scrollDown();
           else
               this._target.scrollRight();
       }
-      __barTouchBegin(evt) {
-          evt.stopPropagation();
-          var pt = this._grip.globalToLocal(evt.input.x, evt.input.y, s_vec2);
+      __barTouchBegin() {
+          var cpos = GameUI.GetCursorPosition();
+          var pt = this._grip.globalToLocal(cpos[0], cpos[1], s_vec2);
           if (this._vertical) {
               if (pt.y < 0)
                   this._target.scrollUp(4);
@@ -16849,8 +16952,7 @@
                   obj.emit(eventType);
           }
       }
-      __clickItem(evt) {
-          var sender = evt.data;
+      __clickItem(sender, evt) {
           if (this._scrollPane && this._scrollPane.isDragged)
               return;
           this.setSelectionOnEvent(sender);
@@ -18385,11 +18487,15 @@
   var s_n = 0;
 
   class GTreeNode {
-      constructor(isFolder, resURL) {
+      constructor(isFolder, resURL, addIndent) {
           this._expanded = false;
           this._level = 0;
+          this._indentLevel = 0;
           this._isFolder = isFolder;
-          this._resURL = resURL;
+          if (resURL)
+              this._resURL = resURL;
+          if (addIndent)
+              this._addIndent = addIndent;
           this._children = [];
       }
       set expanded(value) {
@@ -18449,26 +18555,36 @@
           return this._cell;
       }
       set cell(value) {
-          if (this._cell)
+          if (this._cell) {
               this._cell._treeNode = null;
+              let cc = this._cell.getController("expanded");
+              if (cc)
+                  cc.off("status_changed", this.__expandedStateChanged, this);
+              let btn = this._cell.getChild("expandButton");
+              if (btn)
+                  btn.off("click", this.__clickExpandButton, this);
+              this._cell.off("pointer_down", this.__cellMouseDown, this);
+          }
           this._cell = value;
           this._cellFromPool = false;
-          if (!this._cell)
-              return;
-          this._cell._treeNode = this;
-          this._indentObj = this._cell.getChild("indent");
-          if (this._tree && this._indentObj)
-              this._indentObj.width = (this._level - 1) * this._tree.indent;
-          var cc;
-          cc = this._cell.getController("expanded");
-          if (cc) {
-              cc.on.call(cc, "status_changed", this.__expandedStateChanged, this);
-              cc.selectedIndex = this.expanded ? 1 : 0;
+          if (this._cell) {
+              this._cell._treeNode = this;
+              this._indentObj = this._cell.getChild("indent");
+              if (this._tree && this._indentObj)
+                  this._indentObj.width = Math.max(this._indentLevel - 1, 0) * this._tree.indent;
+              let cc = this._cell.getController("expanded");
+              if (cc) {
+                  cc.on("status_changed", this.__expandedStateChanged, this);
+                  cc.selectedIndex = this.expanded ? 1 : 0;
+              }
+              let btn = this._cell.getChild("expandButton");
+              if (btn)
+                  btn.on("click", this.__clickExpandButton, this);
+              this._leafController = this._cell.getController("leaf");
+              if (this._leafController)
+                  this._leafController.selectedIndex = this.isFolder ? 0 : 1;
+              this._cell.on("pointer_down", this.__cellMouseDown, this);
           }
-          this._leafController = this._cell.getController("leaf");
-          if (this._leafController)
-              this._leafController.selectedIndex = this.isFolder ? 0 : 1;
-          this._cell.onEvent("onTouchBegin", this.__cellMouseDown, this);
       }
       createCell() {
           if (this._cell)
@@ -18505,6 +18621,7 @@
                       this._leafController.selectedIndex = 0;
                   child._parent = this;
                   child._level = this._level + 1;
+                  child._indentLevel = this._indentLevel + 1 + (child._addIndent != null ? child._addIndent : 0);
                   child._setTree(this._tree);
                   if (this._tree && this == this._tree.rootNode || this._cell && this._cell.parent && this._expanded)
                       this._tree._afterInserted(child);
@@ -18621,13 +18738,14 @@
       _setTree(value) {
           this._tree = value;
           if (this._tree && this._indentObj)
-              this._indentObj.width = (this._level - 1) * this._tree.indent;
+              this._indentObj.width = Math.max(this._indentLevel - 1, 0) * this._tree.indent;
           if (this._tree && this._tree.treeNodeWillExpand && this._expanded)
               this._tree.treeNodeWillExpand(this, true);
           var cnt = this._children.length;
           for (var i = 0; i < cnt; i++) {
               var node = this._children[i];
               node._level = this._level + 1;
+              node._indentLevel = this._indentLevel + 1 + (node._addIndent != null ? node._addIndent : 0);
               node._setTree(value);
           }
       }
@@ -18638,6 +18756,10 @@
       __cellMouseDown(evt) {
           if (this._tree && this.isFolder)
               this._tree._expandedStatusInEvt = this._expanded;
+      }
+      __clickExpandButton(evt) {
+          //dont set selection if click on the expand button
+          // evt.stopPropagation();
       }
   }
 
@@ -18766,7 +18888,7 @@
           if (this.treeNodeWillExpand)
               this.treeNodeWillExpand(node, true);
           if (node.onExpanded)
-              node.onExpanded();
+              node.onExpanded(true);
           if (node.cell == null)
               return;
           if (this.treeNodeRender)
@@ -18782,6 +18904,8 @@
           }
           if (this.treeNodeWillExpand)
               this.treeNodeWillExpand(node, false);
+          if (node.onExpanded)
+              node.onExpanded(false);
           if (node.cell == null)
               return;
           if (this.treeNodeRender)
@@ -19267,8 +19391,8 @@
       SpawnHeroInScenePanelByHeroId(unknown1, unknown2, unknown3) {
           return this.scenePanel.SpawnHeroInScenePanelByHeroId(unknown1, unknown2, unknown3);
       }
-      SetScenePanelToPlayerHero(unknown1, unknown2) {
-          return this.scenePanel.SetScenePanelToPlayerHero(unknown1, unknown2);
+      SetScenePanelToPlayerHero(heroName, player) {
+          return this.scenePanel.SetScenePanelToPlayerHero(heroName, player);
       }
       SetScenePanelToLocalHero(heroId) {
           return this.scenePanel.SetScenePanelToLocalHero(heroId);
@@ -19283,8 +19407,8 @@
       SetCustomPostProcessMaterial(material) {
           this.scenePanel.SetCustomPostProcessMaterial(material);
       }
-      SpawnHeroInScenePanelByPlayerSlotWithFullBodyView(unknown1, unknown2) {
-          return this.scenePanel.SpawnHeroInScenePanelByPlayerSlotWithFullBodyView(unknown1, unknown2);
+      SpawnHeroInScenePanelByPlayerSlotWithFullBodyView(heroName, player) {
+          return this.scenePanel.SpawnHeroInScenePanelByPlayerSlotWithFullBodyView(heroName, player);
       }
       LerpToCameraEntity(unknown1, unknown2) {
           this.scenePanel.LerpToCameraEntity(unknown1, unknown2);
@@ -19573,8 +19697,6 @@
        */
       static PrecachePackage(pkgName, binData) {
           if (!BinCache.cacheData.has(pkgName)) {
-              $.Msg(pkgName);
-              $.Msg(AbUtil.decode(binData));
               BinCache.cacheData.set(pkgName, AbUtil.decode(binData));
           }
       }
@@ -19598,6 +19720,110 @@
       }
   }
   BinCache.cacheData = new Map();
+
+  class PackageRegister {
+      constructor() {
+      }
+      static Init() {
+          BinCache.PrecachePackage("uipublic", "RkdVSQAAAAYAAAh3ZHJjZDhycAAIdWlwdWJsaWMAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAGgAAACIAAAMHAAAAAAAAAwkAAAAAAAEAAAABAAAABwAAAiMDAAIAAwAE//4BAAAAZAAAAGQMAAACCAgAAAAAIgAAAC8AAABlAAAB5gAAAecAAAH6AAAB/AAAAAAAAABkAAAAZAAAAAAAAAIAGAMBAAgACwAWAAUAAAIABgAHAAgACQAAAAAYAwEACAALABYACgAAAgAG//0ACP/9AAAAAAQAaAcBABAAPQBBAE0AAABZAGgE//7//gALAAz////x////8QEAAACEAAAAhAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAEACAAAAAABAAgAAf//BA4ADwADAAoAAA0AAAQAAAABAAAAAAAAAFoHAQAQAD0AQQBDAAAASwBaBP/+//4ADgAPAAAAAAAAAAABAAAAZAAAAGQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAf//Ag4ADwD//gAABAAAAAEAAAAAAAAAUQcBABAAPQBBAEMASwBRAFEJABAAAAARABIAAAAAAAAAAAEAAABkAAAAZAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAB//8CDgAPAP//AAAAAABkBwEAEAA9AEEATQAAAFUAZAT//v/+ABMAFAAAAAAAAAAAAQAAAGQAAABkAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAQAIAAABAAEACAAB//8CDgAPAAAVAAAEAAAAAQAAAAAAAAD//gH////+AAAAAAAAAAD//v/+AAAC//4/gAAAAD9MzM3//gAAAAAAGAAAFgAXABgAGQEAAABPAAAAUQAB//4AAAAAACwAABoAGwAYABwBAAAAFAAAABQBAAAABQAAAAUAAAAIAAAABwAAAAAB//4AAAAAABgAAB0AHgAYAB8BAAAA1AAAADwAAf/+AAAAAAAYAAAgACEAGAAiAQAAANEAAAA8AAH//gAAAAAAGAAAIwAkABgAJQEAAACgAAAAKAAB//4AAAAAABgAACYAJwAYACgBAAAAoAAAACgAAf/+AAAAAAAAACkACDR2MHZsZnE5AAlkb3RhcGFuZWwABWMybjcxAAhpdGVtY2VsbAAML2NvbXBvbmVudHMvAAZidXR0b24AATAAAnVwAAExAARkb3duAAVlbXB0eQAHbjVfYzJuNwACbjUAE3VpOi8vd2RyY2Q4cnBqcmw2MWcAB24zX2MybjcADXF1YWxpdHlMb2FkZXIABWs0MHY0AAduMl9jMm43AARpdGVtAAduNl9nb2FmAAJuNgASdWk6Ly80djB2bGZxOWRuM3Y3AAZqcmw2MWcAC2dnX2NoYXRfc2VsAAovdGV4dHVyZXMvAApqcmw2MWcucG5nAAVqcmw2OQAMZ2dfeGlhb2RpXzAxAAlqcmw2OS5wbmcABm5ocmUxbAAOU0tJTExfQ0FURV9PRkYACm5ocmUxbC5wbmcABm5ocmUxbQANU0tJTExfQ0FURV9PTgAKbmhyZTFtLnBuZwAGbmhyZTFuAAZZTl9vZmYACm5ocmUxbi5wbmcABm5ocmUxbwAFWU5fb24ACm5ocmUxby5wbmc=");
+          BinCache.PrecachePackage("test", "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AAAEAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAABAAAAAAAAAP8zmf//AABHBwEAEAA1ADkAOwBBAEcARwkALP/+ABwAMgAAACj////7AAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAABAAEBBgD//wAAAAAA//4B/////gAAAAAAAAAA//7//gAAAAAAAf/+AAAAAAkRAwAzADQANf/+AQAAB4AAAAQ4AAAACPYIAAAAACIAAAAvAAAAMQAACOAAAAjhAAAI9AAAAAAAAAAAAAAHgAAABDgAAAAAAAAAAAwBvAkBABQAQQBFAEcASABOAGMAZQB0Cv/+//4AEQASAAAAlQAAAfgBAAAA9AAAAcEAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAAAAAAAAAAAAAAAAAEAAAAAAgABAP//AQAAAAAAAP/+//7//v/+ADYAEgAQ//4AN//+//7//v/+AAAAAAAQ//4AOP/+//7//v/+AAAAAAAQ//4AOf/+//7//v/+AAAAAAAQ//4AOv/+//7//v/+AAAAAAAQ//4AO//+//7//v/+AAAAAAAQ//4APP/+//7//v/+AAAAAAAQ//4APf/+//7//v/+AAAAAAAQ//4APv/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAAAQ//7//v/+//7//v/+AAAAAABqBwEAEAA9AEEAQwAAAEQAaAb//v/+ABQAFQAAANsAAAG3AQAAAGQAAAAiAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//gAYAAAA/wAAAAMAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwG8CQEAFABBAEUARwBIAE4AYwBlAHQK//7//gAcAC4AAAIGAAAB+QEAAAD0AAABygAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAAIAAAAAAAAAAAAAAQAAAAACAAEA//8BAAAAAAAA//7//v/+//4ANgASABD//gBA//7//v/+//4AAAAAABD//gBB//7//v/+//4AAAAAABD//gBC//7//v/+//4AAAAAABD//gBD//7//v/+//4AAAAAABD//gBE//7//v/+//4AAAAAABD//gBF//7//v/+//4AAAAAABD//gBG//7//v/+//4AAAAAABD//gBH//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAAGoHAQAQAD0AQQBDAAAARABoBv/+//4AFgBIAAACSQAAAbkBAAAAZAAAACIAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP/+ABgAAAD/AAAAAwAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAABJAbwJAQAUAEEARQBHAEgATgBjAGUAdAr//v/+AEoASwAAA0sAAAHzAQAAAPQAAAHNAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAAAAgAAAAAAAAAAAAABAAAAAAIAAQD//wEAAAAAAAD//v/+//7//gA2ABIAEP/+AEz//v/+//7//gAAAAAAEP/+AE3//v/+//7//gAAAAAAEP/+AE7//v/+//7//gAAAAAAEP/+AE///v/+//7//gAAAAAAEP/+AFD//v/+//7//gAAAAAAEP/+AFH//v/+//7//gAAAAAAEP/+AFL//v/+//7//gAAAAAAEP/+AFP//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAcQcBABAAPQBBAEMAAABLAG8G//7/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AQADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHQAagcBABAAPQBBAEMAAABEAGgG//7//gBeAF8AAATBAAAChgEAAAEsAAAAkwAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAgADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHUAagcBABAAPQBBAEMAAABEAGgH//7//gBgAGEAAABsAAADJAEAAAJvAAAA3AAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABAgAAAAAAAAAAAAAAAAAAAAAAAAAAAHYA//4B/////gAAAAAAAAAA//7//gAA//4AAAAAA3wDAHcAeAA1//4BAAAHgAAABDgAAAADYQgAAAAAIgAAAC8AAABTAAADSwAAA0wAAANfAAAAAAAAAAAAAAeAAAAEOAAAAAAAAAEAIAMBAAgACwAeAHkAAAQACP/9AAr//QAM//0ADv/9AAAAAAgAWAcBABAANQA5ADsAPABCAEIJAAT//gARABIAAAErAAAA7AAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAev/+//7//gAAAAAA/////v/+AAAAWAcBABAANQA5ADsAPABCAEIJABj//gAUABUAAAE2AAABYQAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAe//+//7//gAAAAAA/////v/+AAAAWAcBABAANQA5ADsAPABCAEIJABj//gAcAC4AAAHbAAAB0AAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAfP/+//7//gAAAAAAAAAACv/+AAAAWAcBABAANQA5ADsAPABCAEIJABj//gAWAEgAAAKAAAAB0AAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAff/+//7//gAAAAAAAAAADP/+AAAAWAcBABAANQA5ADsAPABCAEIJABj//gBKAGwAAAMlAAAB0AAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAfv/+//7//gAAAAAAAAAADv/+AAAAWAcBABAANQA5ADsAPABCAEIJABj//gBUAFUAAAE2AAAB0AAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAf//+//7//gAAAAAAAAAACP/+AAAAfwcBABAAPQBBAEMARABKAEoJAID//gBvAIEAAAEuAAACqgEAAAHoAAAALAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAADQAEAAYAgv/+//4ABgCD//7//gAGAIT//v/+AAYAhf/+//4Ahv/+AAAAAAoA/////j+AAAAAVwcBABAAPQBBAEMARABKAEoJAC///gBXAIcAAAESAAADkAEAAAF5AAAACgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAADwAAADIAAABkAAAAAAD//gH////+AAAAAAAAAAD//v/+AAD//gAAAAAG+QMAiACJADX//gEAAAeAAAAEOAAAAAbeCAAAAAAiAAAALwAAADEAAAJGAAACRwAAAloAAAAAAAAAAAAAB4AAAAQ4AAAAAAAAAAAGAFsHAQAQAEYASgBMAAAATQBbA//+//4AEQASAAAAsAAAAKQBAAAAZAAAAGQAAAABPwAAAD8AAAABP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAFIHAQAQAD0AQQBDAAAARABSA//+//4AFAAVAAAAggAAARwBAAAAZAAAAGQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAFIHAQAQAD0AQQBDAAAARABSA//+//4AHAAuAAAAewAAAcwBAAAAZAAAAGQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAFsHAQAQAEYASgBMAAAATQBbA//+//4AFgBIAAAArQAAAsIBAAAAZAAAAGQAAAABPwAAAD8AAAABP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAFsHAQAQAEYASgBMAAAATQBbA//+//4ASgBsAAAA4gAAA2MBAAAAZAAAAGQAAAABP4AAAAAAAAABP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAFIHAQAQAD0AQQBDAAAARABSA//+//4AVABVAAAD4wAAAHcBAAAAZAAAAGQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAP/+Af////4AAAAAAAAAAP/+//4ABgBt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u4TlkIjmjInpkq4ADOe7hOWQiOaMiemSrgAFbmhyZW4AB2Ryb3BCb3gAAzExMQACMjIAAzMzMwAENDQ0NAAJ5LiL5ouJ5qGGAAZzbGlkZXIABW5ocmU0AA5UZXN0VHJhbnNpdGlvbgAGcm90YXRlAARtb3ZlAAVzY2FsZQAMc2NhbGVfY2VudGVyAAtzY2FsZV9yaWdodAAGZ3JvdXAxAAVuaHJlNgAKVGVzdE5hdGl2ZQAFazQwdjUADGFiaWxpdHlJbWFnZQAFazQwdjMAC2F2YXRhckltYWdlAAVrNDB2MQAGZWZmZWN0AAVrNDB2MgAJaGVyb0ltYWdlAAVrNDB2NAAJaXRlbUltYWdlAAVrNDB2MAAFbW9kZWwABWs0MHY2AAh1c2VyTmFtZQAFbmhyZWUAClRlc3RMb2FkZXIAE+ivu+WPlmZndWnotYTmupDvvJoAGuivu+WPlmRvdGEy5YaF6YOo6LWE5rqQ77yaAAdkbG9hZGVyAAhmbG9hZGVyMQAHbjZfeHUzZAAM6Ieq55Sx57yp5pS+AAhuMTRfeHUzZAAIZmxvYWRlcjQACG4xNV94dTNkAANuMTUACeaXoOi+ueahhgAIbjE3X3h1M2QACGZsb2FkZXI1AAhuMThfeHUzZAADbjE4AAzmmL7npLrlhajpg6gACG4yMF94dTNkAAhmbG9hZGVyNgAIbjIxX3h1M2QAA24yMQAM6Ieq5Yqo5aSn5bCPAAduOF94dTNkAAhmbG9hZGVyMgAHbjlfeHUzZAAM6YCC6YWN5a695bqmAAhuMTFfeHUzZAAIZmxvYWRlcjMACG4xMl94dTNkAAzpgILphY3pq5jluqYACG4yM194dTNkAANuMjMAEnVpOi8vd2RyY2Q4cnBqcmw2OQAIbjI0X3h1M2QAEHNjYWxlOWdpcmRsb2FkZXIABW5ocmVmAAxUZXN0UmVsYXRpb24AG+aIkeWFs+iBlOS6huW3pui+ueeahOWbvuW9ogACdDAACUNvbWJvQm94MQASdWk6Ly9rMGJrejZnMW5ocmVtAAVuaHJlcQAHVGVzdEh1ZAAHbjFfeHUzZAAHdGFiTGlzdA==");
+          BinCache.PrecachePackage("dotapanel", "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");
+      }
+  }
+
+  class uipublic_itemcell_data extends GButton {
+      onConstruct() {
+          this.panelName = "uipublic_itemcell";
+          this.button_c = this.getController("button");
+          this.empty_c = this.getController("empty");
+          this.n5_GLoader = (this.getChild("n5"));
+          this.qualityLoader_GLoader = (this.getChild("qualityLoader"));
+          this.item_GDOTAItemImage = (this.getChild("item"));
+          this.n6_GLoader = (this.getChild("n6"));
+      }
+  }
+
+  class uipublic_itemcell extends uipublic_itemcell_data {
+      constructor() {
+          super();
+          this.onEvent('onactivate', this.onCellClicked, this);
+      }
+      get itemname() {
+          return this._itemname;
+      }
+      set itemname(value) {
+          this._itemname = value;
+          if (value == "") {
+              this.empty_c.setSelectedIndex(1);
+          }
+          else {
+              this.empty_c.setSelectedIndex(0);
+              this.item_GDOTAItemImage.element.itemname = value;
+          }
+      }
+      onCellClicked() {
+      }
+      OnShow() {
+      }
+      OnClose() {
+      }
+  }
+
+  class ViewManager {
+      constructor() {
+          $.ViewManager = this;
+          this.allViews = new Map();
+          this.root = new GComponent("ViewRootComp");
+          this.root.SetNativeParent($('#ViewRoot'));
+          this.root.setFullScreen();
+          $.TraceBack = function () {
+              {
+                  $.Msg(new Error().stack);
+              }
+          };
+          PackageRegister.Init();
+          UIConfig.buttonSound = "General.ButtonClick";
+          //预载入 可提前到游戏载入阶段
+          BinCache.PreloadPackage("dotapanel");
+          BinCache.PreloadPackage("uipublic");
+          //注册一些自定义类型 后面复用这些控件的时候会自动匹配类型
+          $.UIObjectFactory.setExtensionWithPkg("uipublic", "itemcell", uipublic_itemcell);
+      }
+      static Get() {
+          if (ViewManager.inst == null) {
+              ViewManager.inst = new ViewManager();
+          }
+          return ViewManager.inst;
+      }
+      open(ctor, ...args) {
+          let clsType = ctor.name;
+          if (!this.allViews.has(clsType)) {
+              let view = new ctor();
+              view.viewName = clsType;
+              this.allViews.set(clsType, view);
+              this.addChild(view.root);
+          }
+          this.allViews.get(clsType).__OnShow(args);
+      }
+      close(name) {
+          if (this.allViews.has(name)) {
+              this.allViews.get(name).__OnClose();
+              this.allViews.delete(name);
+          }
+      }
+      closeAll() {
+          for (var name in this.allViews) {
+              this.allViews.get(name).__OnClose();
+          }
+          this.allViews.clear();
+      }
+      addChild(child) {
+          this.root.addChild(child);
+      }
+      clearTempNode() {
+          $('#HiddenRoot').RemoveAndDeleteChildren();
+      }
+  }
 
   class BaseView {
       constructor() {
@@ -19657,66 +19883,200 @@
       }
   }
 
-  class test_HeroSelectView_data extends BaseView {
+  class test_TestList_data extends BaseView {
       constructor() {
           super();
           this.package = "test";
-          this.packageItem = "HeroSelectView";
+          this.packageItem = "TestList";
           this.OnInit();
       }
       OnInit() {
           super.OnInit();
-          this.n9 = (this.getChild("n9"));
-          this.hero_list = (this.getChild("hero_list"));
-          this.n5 = (this.getChild("n5"));
-          this.title_text = (this.getChild("title_text"));
-          this.card_list = (this.getChild("card_list"));
-          this.select_btn = (this.getChild("select_btn"));
+          this.n0_GList = (this.getChild("n0"));
+          this.n1_GTextField = (this.getChild("n1"));
+          this.n2_GList = (this.getChild("n2"));
+          this.n3_GTextField = (this.getChild("n3"));
+          this.virtualList_GList = (this.getChild("virtualList"));
+          this.n5_GTextField = (this.getChild("n5"));
+          this.n7_GComponent = (this.getChild("n7"));
+          this.n8_GTextField = (this.getChild("n8"));
+          this.n9_GComponent = (this.getChild("n9"));
+          this.n10_GComponent = (this.getChild("n10"));
+          this.n11_GTextField = (this.getChild("n11"));
+          this.n12_GTextField = (this.getChild("n12"));
       }
   }
-
-  class PackageRegister {
-      constructor() {
-      }
-      static Init() {
-          BinCache.PrecachePackage("package1", "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AAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAANAAD//v/+AAAAAAoA/////j+AAAAAVwcBABAAPQBBAEMARABKAEoJAC7//gA+AD8AAABgAAACWwEAAAFZAAAACgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAADwAAADIAAABkAAAAAADACQEAFABBAEUARwBIAE4AYwBlAHQK//7//gBAAEEAAAQLAAAAhQEAAACBAAAA+AAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAAAAAAAFAAAAAAAAAAAAAAACAAEA//8BAAAAAAAA//7//v/+//4AQgAEABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAAP/+Af////4AAAAAAAAAAP/+//4AAP/+AAAAAAcBAwBDAEQAFP/+AQAAB4AAAAQ4AAAABuYIAAAAACIAAAAvAAAAMQAABtAAAAbRAAAG5AAAAAAAAAAAAAAHgAAABDgAAAAAAAAAABIAQgcBABAANQA5ADsAPABCAEIJAEUAAABGAEcAAAB5AAAAewAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAABKBwEAEAA9AEEAQwBEAEoASgkASAAAAEkASgAAAJ8AAAEaAQAAAGQAAABkAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAAASgcBABAAPQBBAEMARABKAEoJAEsAAAAMAEwAAACfAAABkgEAAABkAAAAZAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAEoHAQAQAD0AQQBDAEQASgBKCQBNAAAADgBOAAAAnwAAAgoBAAAAZAAAAGQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAABKBwEAEAA9AEEAQwBEAEoASgkATwAAAFAAUQAAAJ8AAAKCAQAAAGQAAABkAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAAASgcBABAAPQBBAEMARABKAEoJAFIAAABTAFQAAACfAAADcgEAAABkAAAAZAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAEIHAQAQADUAOQA7ADwAQgBCCQAC//4AVQBWAAADpQAAATwAAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAAAnwcBABAAPQBBAEMARABKAEoJADv//gBXAFgAAAOzAAABnwEAAACrAAAALwAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAADQAIAAYAWf/+//4ABgBa//7//gAGAFv//v/+AAYAXP/+//4ABgBd//7//gAGAF7//v/+AAYAX//+//4ABgBg//7//gBh//4AAAAACgD////+P4AAAAB3BwEAEAA9AEEAQwBEAFEAdQj//v/+AGIAYwAAA7kAAAHxAQAAALwAAAA+AAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAAAZP/+AAAAAAAAAAAB//4ADAAAAP8AAAADAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGUAagcBABAAPQBBAEMAAABEAGgH//7//gBmAGcAAALIAAACtAEAAAJ/AAAALQAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGABmmf8CAgADAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGgAagcBABAAPQBBAEMAAABEAGgG//7//gBpAGoAAAMsAAADqgEAAAIzAAAAdAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGABmmf8CAgADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGsAcgcBABAAPQBBAEMAAABEAHAG//7//gBsAG0AAAF0AAAA4gEAAAMFAAAAIgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGABmmf8CAAADAAAAAwAAAAAB/////z+AAAAAAAAAAAAAAAAAAAAAAAAAbgB4CQEAFABBAEUARwBIAE4AYwBlAHQK//7//gBvADcAAAWvAAAAgAEAAAEKAAABMAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAAAAAAAUAAAAAAAAAQAAAAACAAEA//8BAAAAAAAA//7//v/+//4AcAAAAFcHAQAQAD0AQQBDAEQASgBKCQAu//4AcQByAAACNQAAAfEBAAAA4wAAAAoAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAA8AAAAyAAAAZAAAAAAARwcBABAAPQBBAEMAAABEAEcAAHP//gB0AHUAAACmAAAAIgEAAABkAAAAZAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAAAAAAAFoHAQAQAEYASgBMAFQAWgBaCQB2AAAAdwB4AAAA2AAAAFQBAAAAZAAAAGQAAAABPwAAAD8AAAABP4AAAAAAAAABAQAAAP/+//7//wAAAQAAAgMACgD//wAAAAAAWgcBABAARgBKAEwAVABaAFoJAHYAAAB5AHoAAAC2AAAAvgEAAABkAAAAZAAAAAE/AAAAPwAAAAE/gAAAAAAAAAEAAAAA//7//v//AAABAAACAwAKAP//AAAAAABdBwEAEAA9AEEAQwBEAEoASgkAEv/+AHsAfAAAAWMAAAOVAQAAAXkAAAB5AAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAAOAAAAMgAAAGQAAAAA//4/gAAAAP/+Af////4AAAAAAAAAAP/+//4AAP/+AAAAAAQaAwB9AH4AFP/+AQAAB4AAAAQ4AAAAA/8IAAAAACIAAAAvAAAAMQAAAx4AAAMfAAADMgAAAAAAAAAAAAAHgAAABDgAAAAAAAAAAAUAZwcBABAANQA5ADsAPABCAEIJADv//gB/AIAAAADsAAAAxgAAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAA0AAgAGAIH//v/+AAYAgv/+//4Ag//+AAAAAAoA/////j+AAAAAVwcBABAAPQBBAEMARABKAEoJAC7//gA8AD0AAAEOAAABjwEAAAFPAAAACgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAADwAAADIAAABkAAAAAAGGCQEAFABBAEUARwBIAE4AYwBlAHQK//7//gCEAD8AAABwAAAByQEAAAFfAAABUQAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAAAAAAAFAAAAAAAAAQAAAAACAAEA//8BAAAAAAAA//7//v/+//4AcAAPABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAAFsHAQAQAEYASgBMAAAATQBbA//+//4AhQBBAAAC5AAAAioBAAAAZAAAAGQAAAABPwAAAD8AAAABP4AAAAAAAAABAQAAAP/+//7//wAAAAEAAAABAAAA//////8AAEIHAQAQADUAOQA7ADwAQgBCCQAC//4AhgCHAAACxgAAAysAAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAAA//4B/////gAAAAAAAAAA//7//gABAMkAiAAAAAAB/////wAAAAAABAAsBAEACgAUACAAJAUAAAAAAAP//gE+gAAABQAAAAAA//4AAAAAQrQAAAAAAAAALAQBAAoAFAAgACQFPoAAAAAD//4BPoAAAAUAAAAAAP/+QrQAAEM0AAAAAAAAACwEAQAKABQAIAAkBT8AAAAAA//+AT6AAAAFAAAAAAD//kM0AABDhwAAAAAAAAAsBAEACgAUACAAJAU/QAAAAAP//gE+gAAABQAAAAAA//5DhwAAQ7QAAAAAAAD//gAAAAACLAMAOwCJABT//gEAAABkAAAAFA0AAAIRCAAAAAAiAAAALwAAAFMAAAH5AAAB+gAAAg0AAAIPAAAAAAAAAGQAAAAUAAAAAAAAAQAgAwEACAALAB4ABQAABAAGAAcACAAJACYAJwAoACkAAAAABABjBwEAEAA9AEEATQAAAFUAYwP//v/+ACoACwAAAAAAAAAAAQAAAGQAAAAUAAAAAD+AAAAAAAAAAQAAAAD//v/+//8AAQAIAAAAAAEABgAB//8CDgAPAAEAAAAAAAAA//Dw8P8AAGMHAQAQAD0AQQBNAAAAVQBjA//+//4AMAAdAAAAAAAAAAABAAAAZAAAABQAAAAAP4AAAAAAAAABAAAAAP/+//7//wABAAgAAAAAAQAmAAH//wIOAA8AAQAAAAAAAAD/+vr6/wAAZQcBABAAPQBBAE8AAABXAGUD//7//gAxAA0AAAAAAAAAAAEAAABkAAAAFAAAAAA/gAAAAAAAAAEAAAAA//7//v//AAEACgAAAAACAAgAKAAB//8CDgAPAAEAAAAAAAAA/8zMzP8AAHEHAQAQAD0AQQBDAAAASwBvBv/+//4AKwAZAAAAAAAAAAABAAAAUAAAABQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAf//Ag4ADwD//gAMAAAA/wABAAMAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAD//gD//gH////+AAAAAAAAAAD//v/+AAAAiv/+AAAAAALsAwCLAIwAFP/+AQAAB4AAAAQ4AAAAAtEIAAAAACIAAAAvAAAAMQAAArsAAAK8AAACzwAAAAAAAAAAAAAHgAAABDgAAAAAAAAAAAYAagcBABAAPQBBAEMAAABEAGgG//7//gCNAAsAAAASAAAAaAEAAAK4AAAAaQAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI4AagcBABAAPQBBAEMAAABEAGgG//7//gCPAB0AAAATAAAA/AEAAAVEAAAAIgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAagcBABAAPQBBAEMAAABEAGgG//7//gCRAA0AAAARAAABkAEAAAKyAAAAhAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABAgAAAAAAAAAAAAAAAAAAAAAAAAAAAJIAagcBABAAPQBBAEMAAABEAGgG//7//gCTAA8AAAARAAACQQEAAAK7AAAAaQAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABAwAAAAAAAAAAAAAAAAAAAAAAAAAAAJQAagcBABAAPQBBAEMAAABEAGgG//7//gCVAJYAAAATAAAC8AEAAAKyAAAAaQAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABBAAAAAAAAAAAAAAAAAAAAAAAAAAAAJcAagcBABAAPQBBAEMAAABEAGgH//7//gCYABEAAAASAAADowEAAAQhAAAAWwAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AGAAAAP8AAAADAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJkA//4B/////gAAAAAAAAAA//7//gAA//4AAAAAABgAAJoAKACbAJwBAAAAGAAAABgAAf/+AAAAAAAYAABzACYABACdAQAAABgAAAAYAAH//gAAAAAAAACeAAg0djB2bGZxOQAJZG90YXBhbmVsAAVhdmc2egAJdGVzdGNvbXAyAAEvAAZidXR0b24AATAAAnVwAAExAARkb3duAAduMF9hdmc2AAJuMAAHbjJfazQwdgACbjIAB24zX2s0MHYAAm4zAAduNV9pZG9jAAJuNQAGZGY1cDEzAAxQcm9ncmVzc0JhcjEABy92aWV3cy8AB24wX2RmNXAAB24xX2RmNXAAA2JhcgAHbjJfZGY1cAAFdGl0bGUABWVsbG53AAh0ZXN0Y29tcAAHbjFfYXZnNgACbjEAB24yX2lkb2MABHJhbmsADOesrOS4gOWQje+8mgAHbjNfaWRvYwAEbmFtZQAJ5pe25YWJ5py6AAV1N3phbwAHQnV0dG9uMgABMgAEb3ZlcgABMwAMc2VsZWN0ZWRPdmVyAAduMF91N3phAAduM191N3phAAV1N3phcQAMU2xpZGVyMV9ncmlwAAV1N3phcgAHU2xpZGVyMQAHbjFfdTd6YQAHbjJfdTd6YQAEZ3JpcAAFdTd6YXQADkNvbWJvQm94MV9pdGVtAAV1N3phdQAPQ29tYm9Cb3gxX3BvcHVwAARsaXN0ABJ1aTovL3JidzF0djl0dTd6YXQABWZ2YWliAAdtYWluaHVkAAV1N3phdgAHbjdfZWxsbgACbjcAB244X2VsbG4AAm44AAduOV9lbGxuAAJuOQASdWk6Ly9yYncxdHY5dHU3emFvAAZrNDB2MTAABnRlc3R1aQAFazQwdjUAB24wX2s0MHYADGFiaWxpdHlJbWFnZQAFazQwdjMAB24xX2s0MHYAC2F2YXRhckltYWdlAAVrNDB2MgAJaGVyb0ltYWdlAAVrNDB2NAAJaXRlbUltYWdlAAVrNDB2NgAHbjRfazQwdgAIdXNlck5hbWUABWs0MHYwAAduNl9rNDB2AAVtb2RlbAAHbjlfazQwdgAMdG9nZ2xlQnV0dG9uAAhuMTBfazQwdgAIZHJvcGRvd24AAzMzMwADNDQ0AAI1NQADNjY2AAFhAAFiAAFjAAFkAAnkuIvmi4nmoYYACG4xMV9xMWRrAAVpbnB1dAAM6L6T5YWl5o+Q56S6AAcxMjMyMTMyAAhuMTJfcTFkawAHcmljaGJveACGMVtiXTIzWy9iXTIxMzJbaV0xMzEyWy9pXTMyMVtjb2xvcj0jMDBjYzk5XTIxW3VdMzIxWy91XTMyMVsvY29sb3JdW3NpemU9MzNdaGZnZGZbL3NpemVd5rSS5rC05aSn5omA5aSn5omAW2ltZ111aTovL3JidzF0djl0b2h4YW1bL2ltZ10ACG4xM19xMWRrAANuMTMAb+WViuWViuaSkuaSkuaJk+eul+Wlpeacr+Wkp+W4iOWkp+aJgOWkp+Wkp+aJgOWkp+aJgOWkmuWViuWViuaSkuaSkuaJk+eul+Wlpeacr+Wkp+W4iOWkp+aJgOWkp+Wkp+aJgOWkp+aJgOWkmuWVigAIbjE0X3ExZGsAA24xNAC05pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2Fk5pKS5pKS5omT566Xc2FkAAhuMTVfaWRvYwASdWk6Ly9yYncxdHY5dGVsbG53AAhuMTZfZGY1cAAGc2xpZGVyAAVvaHhhbQAIbjE3X2RmNXAAA24xNwAFazQwdjEAB241X2s0MHYABmVmZmVjdAAIbjE4X2RmNXAAB2VmZmVjdDIACG4xOV9kZjVwAAtwcm9ncmVzc0JhcgAFdTd6YXAABWxvZ2luAAduNl9lbGxuAAJuNgADMjIyAAMzMzMACTEyMzEyMzIxMwAHbjhfYXZnNgAHbjlfYXZnNgAIbjExX2F2ZzYAA24xMQACdDAACUNvbWJvQm94MQASdWk6Ly9yYncxdHY5dHU3emF1AAZ2NnQzMTIACWxhYmVsdGVzdAAHbjBfdjZ0MwFQ6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSnAAduMV92NnQzAKjpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKfpmL/mlq/pob/mkpLlpKfmiYDlpKcAB24yX3Y2dDMBUOmYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkp+mYv+aWr+mhv+aSkuWkp+aJgOWkpwAHbjNfdjZ0MwFQ6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSnAAduNF92NnQzAAJuNAFQ6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSn6Zi/5pav6aG/5pKS5aSn5omA5aSnAAduNV92NnQzAJHpmL/ovr7okKjovr5bYl3pmL/mlq/pob/mkpLml6ZbL2JdW2ld6Zi/5pav6aG/5pKS5pemWy9pXVt1XeaSkuWkp+WjsOWcsOaSklsvdV1baW1nXXVpOi8vcmJ3MXR2OXRvaHhhbVsvaW1nXVtjb2xvcj0jMDBmZjk5XemYv+iQqOW+t+Wkp+aJgFsvY29sb3JdAAZnMnU3MTQABC9wMi8ACmcydTcxNC5wbmcACW9oeGFtLnBuZw==");
-          BinCache.PrecachePackage("test", "RkdVSQAAAAYAAAh0dTJtcncweQAEdGVzdAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAaAAAAHgAAB0sAAAAAAAAHTQAAAAAAAAAAAAMAAAI2AwAAAAEAAv/+AAAAAGQAAAAUDAAAAhsIAAAAACIAAAAvAAAAUwAAAfkAAAH6AAACDQAAAg8AAAAAAAAAZAAAABQAAAAAAAABACADAQAIAAsAHgADAAAEAAQABQAGAAcACAAJAAoACwAAAAAEAGMHAQAQAD0AQQBNAAAAVQBjA//+//4ADAANAAAAAAAAAAABAAAAZAAAABQAAAAAP4AAAAAAAAABAAAAAP/+//7//wABAAgAAAAAAQAEAAH//wIOAA8AAQAAAAAAAAD/8PDw/wAAYwcBABAAPQBBAE0AAABVAGMD//7//gAOAA8AAAAAAAAAAAEAAABkAAAAFAAAAAA/gAAAAAAAAAEAAAAA//7//v//AAEACAAAAAABAAgAAf//Ag4ADwABAAAAAAAAAP/6+vr/AABlBwEAEAA9AEEATwAAAFcAZQP//v/+ABAAEQAAAAAAAAAAAQAAAGQAAAAUAAAAAD+AAAAAAAAAAQAAAAD//v/+//8AAQAKAAAAAAIABgAKAAH//wIOAA8AAQAAAAAAAAD/zMzM/wAAcQcBABAAPQBBAEMAAABLAG8G//7//gASABMAAAAAAAAAAAEAAABkAAAAFAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAB//8CDgAPAP/+ABgAAAD/AQEAAwAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAP/+AP/+Af////4AAAAAAAAAAP/+//4AAAD//j+AAAAAP0zMzf/+AAAAAAGNAwAUABUAFv/+AQAAB4AAAAQ4AAAAAXIIAAAAACIAAAAvAAAAMQAAAVwAAAFdAAABcAAAAAAAAAAAAAAHgAAABDgAAAAAAAAAAAMAUgcBABAAPQBBAEMAAABEAFID//7//gAOAA8AAAAAAAAAAAEAAAeAAAAEOAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAAAQAAAAEAAAD/MzMz/wAAcQcBABAAPQBBAEMAAABLAG8G//7//gAMABcAAAOGAAAAAAEAAAB0AAAASgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAB//8CAwAHAP/+ADgAAAD/AQAAAwAAAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAYAGAHAQAQAD0AQQBDAEQASgBKCQAA//4AEAAZAAAC7wAAAr4BAAABoQAAAK8AAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwAGv/+//7//gAAAAAA/////v/+AAAA//4B/////gAAAAAAAAAA//7//gAA//4AAAAAA1wDABsAHAAW//4BAAAHgAAABDgAAAADQQgAAAAAIgAAAC8AAAAxAAADKwAAAywAAAM/AAAAAAAAAAAAAAeAAAAEOAAAAAAAAAAABgBSBwEAEAA9AEEAQwAAAEQAUgP//v/+AB0AHgAAAG4AAAAAAQAABqQAAAQ4AAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAAABAAAAAQAAAP//////AAC2CQEAFABJAE0ATwBQAFYAawBtAHwK//7//gAfACAAAAFLAAAApAEAAAYzAAACUgABP0zMzT9MzM0AAD+AAAAAAAAAAQEAAAD//v/+//8AAAD//wAAAAACAAEBAAAAwQAAAAAAAAAAAAIAAQD//wAAAAAAAAD//v/+//7//gAhAAMAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAEP/+//7//v/+//7//gAAAAAAUgcBABAAPQBBAEMAAABEAFID//7//gAiACMAAAEmAAACqQEAAAU0AAAABgAAAAA/gAAAAAAAAAEAAAAA//7//v//AAAAAQAAAAAAAAD/zMzM/wAAagcBABAAPQBBAEMAAABEAGgG//7//gAkACUAAAMDAAAATwEAAAFfAAAAQgAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//4AMvRDNv8AAAADAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAACYAyAkBABQASQBNAE8AUABWAGsAbQB8Cv/+//4AJwAoAAAA1QAAApgBAAAHLwAAAgoAAT9MzM0/TMzNAAA/gAAAAAAAAAEBAAAA//7//v//AAAA//8AAAAAAgABAQAAAGoAAAAAAAAAAAACAAEA//8AAAAAAAAA//7//v/+//4AKQAEABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAABD//v/+//7//v/+//4AAAAAAGAHAQAQAD0AQQBDAEQASgBKCQAA//4AKgArAAAGbQAAA4ABAAABGAAAAGcAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAP//AAAAAAwALP/+//7//gAAAAAA/////v/+AAAA//4A/////gAAAAAAAAAA//7//gAA//4AAAAAAAAALQAFOGVkcTEAB0J1dHRvbjEAAS8ABmJ1dHRvbgABMAACdXAAATEABGRvd24AATIABG92ZXIAATMADHNlbGVjdGVkT3ZlcgAHbjBfOGVkcQACbjAAB24xXzhlZHEAAm4xAAduMl84ZWRxAAJuMgAHbjNfOGVkcQAFdGl0bGUABThlZHEwAAd2aXBWaWV3AAcvdmlld3MvAAp0aXRsZUxhYmVsAAbmoIfpopgAB3Rlc3RCdG4AD+Wlpeacr+Wkp+W4iOWkmgAFc3YwazIADkhlcm9TZWxlY3RWaWV3AAduOV9ybDVrAAJuOQAHbjBfcXZmYQAJaGVyb19saXN0ABJ1aTovL3Z5Z2lhaGFpZmZneTMAB241X3JsNWsAAm41AAduNl9ybDVrAAp0aXRsZV90ZXh0ABXor7fmjJHpgInkvaDnmoToi7Hpm4QAB244X3JsNWsACWNhcmRfbGlzdAASdWk6Ly80dms0dDZndXFiYnczAAhuMTBfa2VyYQAKc2VsZWN0X2J0bgAGMjIyMjIy");
-          BinCache.PrecachePackage("uipublic", "RkdVSQAAAAYAAAh3ZHJjZDhycAAIdWlwdWJsaWMAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAGgAAACIAAALPAAAAAAAAAtEAAAAAAAEAAAABAAAABQAAAiMDAAIAAwAE//4BAAAAZAAAAGQMAAACCAgAAAAAIgAAAC8AAABlAAAB5gAAAecAAAH6AAAB/AAAAAAAAABkAAAAZAAAAAAAAAIAGAMBAAgACwAWAAUAAAIABgAHAAgACQAAAAAYAwEACAALABYACgAAAgAG//0ACP/9AAAAAAQAaAcBABAAPQBBAE0AAABZAGgE//7//gALAAz////x////8QEAAACEAAAAhAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAEACAAAAAABAAgAAf//BA4ADwADAAoAAA0AAAQAAAABAAAAAAAAAFoHAQAQAD0AQQBDAAAASwBaBP/+//4ADgAPAAAAAAAAAAABAAAAZAAAAGQAAAAAP4AAAAAAAAABAQAAAP/+//7//wAAAf//Ag4ADwD//gAABAAAAAEAAAAAAAAAUQcBABAAPQBBAEMASwBRAFEJABAAAAARABIAAAAAAAAAAAEAAABkAAAAZAAAAAA/gAAAAAAAAAEBAAAA//7//v//AAAB//8CDgAPAP//AAAAAABkBwEAEAA9AEEATQAAAFUAZAT//v/+ABMAFAAAAAAAAAAAAQAAAGQAAABkAAAAAD+AAAAAAAAAAQEAAAD//v/+//8AAQAIAAABAAEACAAB//8CDgAPAAAVAAAEAAAAAQAAAAAAAAD//gH////+AAAAAAAAAAD//v/+AAAC//4/gAAAAD9MzM3//gAAAAAAGAAAFgAXABgAGQEAAABPAAAAUQAB//4AAAAAABgAABoAGwAYABwBAAAAUAAAAHwAAf/+AAAAAAAYAAAdAB4AGAAfAQAAAeAAAAFOAAH//gAAAAAALAAAIAAhABgAIgEAAAAUAAAAFAEAAAAFAAAABQAAAAoAAAAKAAAAAAH//gAAAAAAAAAjAAg0djB2bGZxOQAJZG90YXBhbmVsAAVjMm43MQAIaXRlbWNlbGwADC9jb21wb25lbnRzLwAGYnV0dG9uAAEwAAJ1cAABMQAEZG93bgAFZW1wdHkAB241X2MybjcAAm41ABN1aTovL3dkcmNkOHJwanJsNjFnAAduM19jMm43AA1xdWFsaXR5TG9hZGVyAAVrNDB2NAAHbjJfYzJuNwAEaXRlbQAHbjZfZ29hZgACbjYAEnVpOi8vNHYwdmxmcTlkbjN2NwAGanJsNjFnAAtnZ19jaGF0X3NlbAAKL3RleHR1cmVzLwAKanJsNjFnLnBuZwAGanJsNjFrAAtnZ19jbG9zZV8wMwAKanJsNjFrLnBuZwAFanJsNjYACmdnX3RzYmdfMDEACWpybDY2LnBuZwAFanJsNjkADGdnX3hpYW9kaV8wMQAJanJsNjkucG5n");
-          BinCache.PrecachePackage("dotapanel", "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");
-      }
-  }
-
-  class uipublic_itemcell_data extends GButton {
-      onConstruct() {
-          this.panelName = "uipublic_itemcell";
-          this.button_c = this.getController("button");
-          this.empty_c = this.getController("empty");
-          this.n5 = (this.getChild("n5"));
-          this.qualityLoader = (this.getChild("qualityLoader"));
-          this.item = (this.getChild("item"));
-          this.n6 = (this.getChild("n6"));
-      }
-  }
-
-  class uipublic_itemcell extends uipublic_itemcell_data {
+  class test_TestLabel_data extends BaseView {
       constructor() {
           super();
-          this.onEvent('onactivate', this.onCellClicked, this);
+          this.package = "test";
+          this.packageItem = "TestLabel";
+          this.OnInit();
       }
-      get itemname() {
-          return this._itemname;
+      OnInit() {
+          super.OnInit();
+          this.n0_GTextField = (this.getChild("n0"));
+          this.n1_GTextField = (this.getChild("n1"));
+          this.n2_GTextField = (this.getChild("n2"));
+          this.n3_GTextField = (this.getChild("n3"));
+          this.n4_GTextField = (this.getChild("n4"));
+          this.n5_GTextField = (this.getChild("n5"));
+          this.n6_GTextField = (this.getChild("n6"));
+          this.n7_GTextField = (this.getChild("n7"));
+          this.n8_GTextField = (this.getChild("n8"));
+          this.n9_GTextField = (this.getChild("n9"));
+          this.n10_GTextField = (this.getChild("n10"));
+          this.n11_GRichTextField = (this.getChild("n11"));
       }
-      set itemname(value) {
-          this._itemname = value;
-          if (value == "") {
-              this.empty_c.setSelectedIndex(1);
-          }
-          else {
-              this.empty_c.setSelectedIndex(0);
-              this.item.element.itemname = value;
-          }
+  }
+  class test_TestButton_data extends BaseView {
+      constructor() {
+          super();
+          this.package = "test";
+          this.packageItem = "TestButton";
+          this.OnInit();
       }
-      onCellClicked() {
+      OnInit() {
+          super.OnInit();
+          this.radioctrl_c = this.getController("radioctrl");
+          this.n0_GButton = (this.getChild("n0"));
+          this.n1_GButton = (this.getChild("n1"));
+          this.n2_GButton = (this.getChild("n2"));
+          this.n3_GButton = (this.getChild("n3"));
+          this.n4_GButton = (this.getChild("n4"));
+          this.n5_GButton = (this.getChild("n5"));
+          this.dropBox_GComboBox = (this.getChild("dropBox"));
+          this.slider_GSlider = (this.getChild("slider"));
+      }
+  }
+  class test_TestTransition_data extends BaseView {
+      constructor() {
+          super();
+          this.package = "test";
+          this.packageItem = "TestTransition";
+          this.OnInit();
+      }
+      OnInit() {
+          super.OnInit();
+          this.n0_GGraph = (this.getChild("n0"));
+          this.n1_GGraph = (this.getChild("n1"));
+          this.n2_GGraph = (this.getChild("n2"));
+          this.n3_GGraph = (this.getChild("n3"));
+          this.n4_GGraph = (this.getChild("n4"));
+          this.n5_GGraph = (this.getChild("n5"));
+          this.rotate_t = this.getTransition("rotate");
+          this.move_t = this.getTransition("move");
+          this.scale_t = this.getTransition("scale");
+          this.scale_center_t = this.getTransition("scale_center");
+          this.scale_right_t = this.getTransition("scale_right");
+          this.group1_t = this.getTransition("group1");
+      }
+  }
+  class test_TestNative_data extends BaseView {
+      constructor() {
+          super();
+          this.package = "test";
+          this.packageItem = "TestNative";
+          this.OnInit();
+      }
+      OnInit() {
+          super.OnInit();
+          this.abilityImage_GDOTAAbilityImage = (this.getChild("abilityImage"));
+          this.avatarImage_GDOTAAvatarImage = (this.getChild("avatarImage"));
+          this.effect_GDOTAScenePanel = (this.getChild("effect"));
+          this.heroImage_GDOTAHeroImage = (this.getChild("heroImage"));
+          this.itemImage_GDOTAItemImage = (this.getChild("itemImage"));
+          this.model_GDOTAScenePanel = (this.getChild("model"));
+          this.userName_GDOTAUserName = (this.getChild("userName"));
+      }
+  }
+  class test_TestLoader_data extends BaseView {
+      constructor() {
+          super();
+          this.package = "test";
+          this.packageItem = "TestLoader";
+          this.OnInit();
+      }
+      OnInit() {
+          super.OnInit();
+          this.n3_GTextField = (this.getChild("n3"));
+          this.n4_GTextField = (this.getChild("n4"));
+          this.dloader_GLoader = (this.getChild("dloader"));
+          this.floader1_GLoader = (this.getChild("floader1"));
+          this.n6_GTextField = (this.getChild("n6"));
+          this.floader4_GLoader = (this.getChild("floader4"));
+          this.n15_GTextField = (this.getChild("n15"));
+          this.floader5_GLoader = (this.getChild("floader5"));
+          this.n18_GTextField = (this.getChild("n18"));
+          this.floader6_GLoader = (this.getChild("floader6"));
+          this.n21_GTextField = (this.getChild("n21"));
+          this.floader2_GLoader = (this.getChild("floader2"));
+          this.n9_GTextField = (this.getChild("n9"));
+          this.floader3_GLoader = (this.getChild("floader3"));
+          this.n12_GTextField = (this.getChild("n12"));
+          this.n23_GLoader = (this.getChild("n23"));
+          this.scale9girdloader_GLoader = (this.getChild("scale9girdloader"));
+      }
+  }
+  class test_TestRelation_data extends BaseView {
+      constructor() {
+          super();
+          this.package = "test";
+          this.packageItem = "TestRelation";
+          this.OnInit();
+      }
+      OnInit() {
+          super.OnInit();
+          this.n0_GGraph = (this.getChild("n0"));
+          this.n1_GTextField = (this.getChild("n1"));
+          this.t0_t = this.getTransition("t0");
+      }
+  }
+  class test_TestHud_data extends BaseView {
+      constructor() {
+          super();
+          this.package = "test";
+          this.packageItem = "TestHud";
+          this.OnInit();
+      }
+      OnInit() {
+          super.OnInit();
+          this.n1_GGraph = (this.getChild("n1"));
+          this.tabList_GList = (this.getChild("tabList"));
+      }
+  }
+
+  class test_TestButton extends test_TestButton_data {
+      constructor() {
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
+      }
+      OnShow() {
+          this.dropBox_GComboBox.onEvent('status_changed', this.onDropdownUpdate, this);
+          this.slider_GSlider.onEvent('changed', this.onSliderUpdate, this);
+      }
+      onDropdownUpdate() {
+          // $.Msg(this.dropBox_GComboBox.selectedIndex);
+      }
+      OnClose() {
+      }
+      onSliderUpdate() {
+          // $.Msg(this.slider_GSlider.value);
+      }
+  }
+
+  class test_TestLabel extends test_TestLabel_data {
+      constructor() {
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
       }
       OnShow() {
       }
@@ -19724,73 +20084,154 @@
       }
   }
 
-  class ViewManager {
+  class test_TestList extends test_TestList_data {
       constructor() {
-          $.ViewManager = this;
-          this.allViews = new Map();
-          var rootPanel = $.GetContextPanel();
-          this.root = new GComponent("ViewRoot");
-          this.root.SetNativeParent(rootPanel);
-          this.root.setFullScreen();
-          $.TraceBack = function () {
-              {
-                  $.Msg(new Error().stack);
-              }
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
+      }
+      OnShow() {
+          this.virtualList_GList.setVirtual();
+          let listData = [];
+          for (let i = 0; i < 1000; i++) {
+              listData.push("时光机" + i);
+          }
+          this.virtualList_GList.itemRenderer = (index, obj) => {
+              let comp = obj;
+              comp.getChild('title').text = listData[index];
           };
-          PackageRegister.Init();
-          //预载入 可提前到游戏载入阶段
-          BinCache.PreloadPackage("dotapanel");
-          BinCache.PreloadPackage("uipublic");
-          //注册一些自定义类型 后面复用这些控件的时候会自动匹配类型
-          $.UIObjectFactory.setExtensionWithPkg("uipublic", "itemcell", uipublic_itemcell);
+          this.virtualList_GList.setVirtual();
+          this.virtualList_GList.numItems = listData.length;
       }
-      static Get() {
-          if (ViewManager.inst == null) {
-              ViewManager.inst = new ViewManager();
-          }
-          return ViewManager.inst;
+      OnClose() {
       }
-      open(ctor, ...args) {
-          let clsType = ctor.name;
-          if (!this.allViews.has(clsType)) {
-              let view = new ctor();
-              view.viewName = clsType;
-              this.allViews.set(clsType, view);
-              this.addChild(view.root);
-          }
-          this.allViews.get(clsType).__OnShow(args);
+  }
+
+  class test_TestLoader extends test_TestLoader_data {
+      constructor() {
+          super();
+          //add code to here
       }
-      close(name) {
-          if (this.allViews.has(name)) {
-              this.allViews.get(name).__OnClose();
-              this.allViews.delete(name);
-          }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
       }
-      closeAll() {
-          for (var name in this.allViews) {
-              this.allViews.get(name).__OnClose();
-          }
-          this.allViews.clear();
+      OnShow() {
+          let url = UIPackage.getItemAssetPath("uipublic", "SKILL_CATE_ON");
+          this.floader1_GLoader.url = url;
+          this.floader2_GLoader.url = url;
+          this.floader3_GLoader.url = url;
+          this.floader4_GLoader.url = url;
+          this.floader5_GLoader.url = url;
+          this.floader6_GLoader.url = url;
+          this.scale9girdloader_GLoader.url = "ui://wdrcd8rpjrl69";
+          this.dloader_GLoader.url = "file://{images}/banners/dw_mo.psd";
       }
-      addChild(child) {
-          this.root.addChild(child);
+      OnClose() {
       }
-      clearTempNode() {
-          $('#HiddenRoot').RemoveAndDeleteChildren();
-          $('#MeasureRoot').RemoveAndDeleteChildren();
+  }
+
+  class test_TestNative extends test_TestNative_data {
+      constructor() {
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
+      }
+      OnShow() {
+          var playerInfo = Game.GetPlayerInfo(Players.GetLocalPlayer());
+          var steamid = playerInfo.player_steamid;
+          this.avatarImage_GDOTAAvatarImage.element.steamid = steamid;
+          this.userName_GDOTAUserName.element.steamid = steamid;
+          this.heroImage_GDOTAHeroImage.element.heroname = "npc_dota_hero_wisp";
+          this.effect_GDOTAScenePanel.element.SetEffectWithParams("particles/ui/hud/autocasting_square.vpcf", true, 100);
+          this.model_GDOTAScenePanel.element.setModelWithParams("npc_dota_hero_wisp");
+          this.abilityImage_GDOTAAbilityImage.element.abilityname = "troll_warlord_whirling_axes_melee";
+          this.abilityImage_GDOTAAbilityImage.onEvent('onmouseover', this.onAbilityHover, this);
+          this.abilityImage_GDOTAAbilityImage.onEvent('onmouseout', this.onAbilityOut, this);
+      }
+      onAbilityHover() {
+          $.DispatchEvent("DOTAShowAbilityTooltipForEntityIndex", this.abilityImage_GDOTAAbilityImage.element.nativePanel, "troll_warlord_whirling_axes_melee", Players.GetLocalPlayerPortraitUnit());
+      }
+      onAbilityOut() {
+          $.DispatchEvent("DOTAHideAbilityTooltip", this.avatarImage_GDOTAAvatarImage.element.nativePanel);
+      }
+      OnClose() {
+      }
+  }
+
+  class test_TestRelation extends test_TestRelation_data {
+      constructor() {
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
+      }
+      OnShow() {
+      }
+      OnClose() {
+      }
+  }
+
+  class test_TestTransition extends test_TestTransition_data {
+      constructor() {
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
+      }
+      OnShow() {
+      }
+      OnClose() {
+      }
+  }
+
+  class test_TestHud extends test_TestHud_data {
+      constructor() {
+          super();
+          //add code to here
+      }
+      OnInit() {
+          this.isFullScreen = true;
+          super.OnInit();
+      }
+      OnShow() {
+          let listData = [test_TestButton, test_TestLabel, test_TestList, test_TestLoader, test_TestNative, test_TestRelation, test_TestTransition];
+          this.tabList_GList.itemRenderer = (index, obj) => {
+              let comp = obj;
+              comp.getChild('title').text = listData[index].name;
+          };
+          this.tabList_GList.onEvent('click_item', () => {
+              for (let i = 0; i < listData.length; i++) {
+                  if (i == this.tabList_GList.selectedIndex) {
+                      ViewManager.Get().open(listData[i]);
+                  }
+                  else {
+                      ViewManager.Get().close(listData[i].name);
+                  }
+              }
+          });
+          this.tabList_GList.setVirtual();
+          this.tabList_GList.numItems = listData.length;
+      }
+      OnClose() {
       }
   }
 
   class ExampleUI {
-      // ExampleUI constructor
       constructor(panel) {
           this.panel = panel;
           ViewManager.Get().clearTempNode();
-          // ViewManager.Get().open(package1_testui);
-          // ViewManager.Get().open(mainhud_mainhud);
-          ViewManager.Get().open(test_HeroSelectView_data);
-          // var panel = $.CreatePanel('Panel', $.GetContextPanel(), 'compile_helper');
-          // panel.BLoadLayout("file://{resources}/layout/custom_game/fgui/compile_helper.xml",false,false);
+          ViewManager.Get().open(test_TestHud);
       }
   }
   new ExampleUI($.GetContextPanel());

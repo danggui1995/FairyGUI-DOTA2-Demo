@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<packageDescription id="bfwrerz8">
-  <resources>
-    <component id="c2n70" name="mainhud.xml" path="/views/" exported="true"/>
-    <component id="c2n717y" name="FunctionIcon.xml" path="/components/"/>
-  </resources>
-  <publish name=""/>
-</packageDescription>

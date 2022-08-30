@@ -2,3 +2,7 @@ UIProject/.objs
 build
 dist
 node_modules
+content/maps/**
+content/models/**
+content/materials/**
+content/particles/**
