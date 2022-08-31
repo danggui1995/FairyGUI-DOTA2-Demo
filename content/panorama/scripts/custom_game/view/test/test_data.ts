@@ -121,12 +121,14 @@ export class test_TestTransition_data extends BaseView{
 	public n3_GGraph : fgui.GGraph;
 	public n4_GGraph : fgui.GGraph;
 	public n5_GGraph : fgui.GGraph;
+	public n6_GGraph : fgui.GGraph;
 	public rotate_t : fgui.Transition;
 	public move_t : fgui.Transition;
 	public scale_t : fgui.Transition;
 	public scale_center_t : fgui.Transition;
 	public scale_right_t : fgui.Transition;
 	public group1_t : fgui.Transition;
+	public color_t : fgui.Transition;
     constructor()
     {
         super();
@@ -145,12 +147,14 @@ export class test_TestTransition_data extends BaseView{
 		this.n3_GGraph = <fgui.GGraph><unknown>(this.getChild("n3"));
 		this.n4_GGraph = <fgui.GGraph><unknown>(this.getChild("n4"));
 		this.n5_GGraph = <fgui.GGraph><unknown>(this.getChild("n5"));
+		this.n6_GGraph = <fgui.GGraph><unknown>(this.getChild("n6"));
 		this.rotate_t = this.getTransition("rotate");
 		this.move_t = this.getTransition("move");
 		this.scale_t = this.getTransition("scale");
 		this.scale_center_t = this.getTransition("scale_center");
 		this.scale_right_t = this.getTransition("scale_right");
 		this.group1_t = this.getTransition("group1");
+		this.color_t = this.getTransition("color");
     }
 }
 

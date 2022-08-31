@@ -22,7 +22,7 @@
       <item/>
     </list>
     <text id="n1_nhre" name="n1" xy="219,439" size="100,34" fontSize="24" text="单选列表"/>
-    <list id="n2_nhre" name="n2" xy="518,505" size="244,458" selectionMode="multipleSingleClick" overflow="scroll" defaultItem="ui://k0bkz6g1nhreh">
+    <list id="n2_nhre" name="n2" xy="518,505" size="244,458" selectionMode="multipleSingleClick" overflow="scroll" scrollBarRes="ui://k0bkz6g1qrtpu," defaultItem="ui://k0bkz6g1nhreh">
       <item title="1"/>
       <item title="2"/>
       <item title="3"/>
@@ -43,7 +43,7 @@
       <item/>
     </list>
     <text id="n3_nhre" name="n3" xy="585,441" size="100,34" fontSize="24" text="多选列表"/>
-    <list id="n4_nhre" name="virtualList" xy="843,499" size="244,461" group="n6_nhre" selectionMode="multipleSingleClick" overflow="scroll" defaultItem="ui://k0bkz6g1nhreh">
+    <list id="n4_nhre" name="virtualList" xy="843,499" size="244,461" group="n6_nhre" selectionMode="multipleSingleClick" overflow="scroll" scrollBarRes="ui://k0bkz6g1qrtpu," defaultItem="ui://k0bkz6g1nhreh">
       <item title="1"/>
       <item title="2"/>
       <item title="3"/>
@@ -63,7 +63,7 @@
       <item/>
       <item/>
     </list>
-    <text id="n5_nhre" name="n5" xy="832,445" size="268,0" group="n6_nhre" fontSize="24" text="虚拟列表，节省大量资源">
+    <text id="n5_nhre" name="n5" xy="832,445" size="268,34" group="n6_nhre" fontSize="24" text="虚拟列表，节省大量资源">
       <relation target="n4_nhre" sidePair="center-center,bottom-top"/>
     </text>
     <group id="n6_nhre" name="n6" xy="832,445" size="268,515"/>

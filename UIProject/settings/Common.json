@@ -13,9 +13,9 @@
     "默认字体"
   ],
   "scrollBars": {
-    "horizontal": "",
-    "vertical": "",
-    "defaultDisplay": "visible"
+    "horizontal": "ui://k0bkz6g1qrtpy",
+    "vertical": "ui://k0bkz6g1qrtpu",
+    "defaultDisplay": "auto"
   },
   "tipsRes": "",
   "buttonClickSound": "",

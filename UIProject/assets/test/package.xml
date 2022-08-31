@@ -20,6 +20,14 @@
     <component id="nhreo" name="Slider1_grip.xml" path="/components/"/>
     <component id="nhrep" name="Slider1.xml" path="/components/"/>
     <component id="nhreq" name="TestHud.xml" path="/views/" exported="true"/>
+    <component id="qrtpr" name="ScrollBarV_arrow1.xml" path="/components/"/>
+    <component id="qrtps" name="ScrollBarV_arrow2.xml" path="/components/"/>
+    <component id="qrtpt" name="ScrollBarV_grip.xml" path="/components/"/>
+    <component id="qrtpu" name="ScrollBarV.xml" path="/components/" exported="true"/>
+    <component id="qrtpv" name="ScrollBarH_arrow1.xml" path="/components/"/>
+    <component id="qrtpw" name="ScrollBarH_arrow2.xml" path="/components/"/>
+    <component id="qrtpx" name="ScrollBarH_grip.xml" path="/components/"/>
+    <component id="qrtpy" name="ScrollBarH.xml" path="/components/" exported="true"/>
   </resources>
   <publish name=""/>
 </packageDescription>

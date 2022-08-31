@@ -7,6 +7,10 @@
     visibility: collapse;
 }
 
+.TouchHolder {}
+
+.TouchHolder:hover {}
+
 .FGUI_Gray {
     brightness: 0.2;
     saturation: 0;
