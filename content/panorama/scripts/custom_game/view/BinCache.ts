@@ -20,6 +20,14 @@ export class BinCache{
         }
     }
 
+    public static PrecachePackageWithArrayBuffer(pkgName : string, binData : ArrayBuffer)
+    {
+        if (!BinCache.cacheData.has(pkgName))
+        {
+            BinCache.cacheData.set(pkgName, binData);
+        }
+    }
+
     /**
      * GetPackageData
      */

@@ -145,9 +145,9 @@ local function genPackageRegister(exportPath, pkgName, str)
     local path = string.format("%s/../PackageRegister.ts", exportPath)
     local file = io.open(path, "r")
     local data = file:read("*a")
-    local findpattern = "BinCache%.PrecachePackage%(\"" .. pkgName .. "\","
-    local output = string.format("\tBinCache.PrecachePackage(\"%s\", \"%s\");\n", pkgName, str)
-    local pattern = "\tBinCache%.PrecachePackage%(\"" .. pkgName .. "\", \"(.-)\"%);\n"
+    local findpattern = "BinCache%.PrecachePackageWithArrayBuffer%(\"" .. pkgName .. "\","
+    local output = string.format("\tBinCache.PrecachePackageWithArrayBuffer(\"%s\", %s);\n", pkgName, str)
+    local pattern = "\tBinCache%.PrecachePackageWithArrayBuffer%(\"" .. pkgName .. "\", (.-)%);\n"
 
     --TODO 当包被删除时这里也要删除
     data = data:gsub("Init%(%)%s*{(.-)\t}", function (scope)
@@ -164,35 +164,20 @@ local function genPackageRegister(exportPath, pkgName, str)
     CS.System.IO.File.WriteAllText(path, data)
 end
 
-local function bin2hex(s)
-    s=string.gsub(s,"(.)",function (x) return string.format("%02X ",string.byte(x)) end)
-    return s
-end
+local function genBinaryStr(pkgName, path)
+    local xmlfile = io.open(path, "rb")
+    local bytes = xmlfile:read("*a")
+    local length = xmlfile:seek("end")
+    xmlfile:close()
 
-local h2b = {
-    ["0"] = 0,
-    ["1"] = 1,
-    ["2"] = 2,
-    ["3"] = 3,
-    ["4"] = 4,
-    ["5"] = 5,
-    ["6"] = 6,
-    ["7"] = 7,
-    ["8"] = 8,
-    ["9"] = 9,
-    ["A"] = 10,
-    ["B"] = 11,
-    ["C"] = 12,
-    ["D"] = 13,
-    ["E"] = 14,
-    ["F"] = 15
-}
+    local list = {}
+    for i = 1, length do
+        local byte = string.byte(bytes, i)
+        table.insert(list, byte)
+    end
 
-local function hex2bin( hexstr )
-    local s = string.gsub(hexstr, "(.)(.)%s", function ( h, l )
-         return string.char(h2b[h]*16+h2b[l])
-    end)
-    return s
+    local arrayStr = string.format("new Uint8Array([%s]).buffer", table.concat(list, ","))
+    return arrayStr
 end
 
 local function genBase64(handler, allClsData)
@@ -213,9 +198,11 @@ local function genBase64(handler, allClsData)
             local allClsStr = table.concat(allClsData, '\n')
             IO.File.WriteAllText(targetPath, string.format(template_data, allClsStr))
 
-            local bytes = IO.File.ReadAllBytes(path)
-            local str = CS.System.Convert.ToBase64String(bytes)
-            -- local str = bin2hex(bytes)
+            local str = genBinaryStr(pkgName, path)
+
+            -- local bytes = IO.File.ReadAllBytes(path)
+            -- local str = CS.System.Convert.ToBase64String(bytes)
+
             genPackageRegister(exportPath, pkgName, str)
         else
             fprint("File Not Found : " .. path)
