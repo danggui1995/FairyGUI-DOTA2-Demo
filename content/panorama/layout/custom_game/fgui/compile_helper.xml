@@ -3,7 +3,7 @@
     </styles>
     <scripts>
     </scripts>
-  <Panel hittest="true" class="CompileRoot" style="width:100%;height:100%;">
+  <Panel hittest="false" class="CompileRoot" style="width:100%;height:100%;">
 
   </Panel>
 </root>

@@ -237,6 +237,8 @@ export class test_TestLoader_data extends BaseView{
 export class test_TestRelation_data extends BaseView{
 	public n0_GGraph : fgui.GGraph;
 	public n1_GTextField : fgui.GTextField;
+	public n2_GGraph : fgui.GGraph;
+	public n3_GTextField : fgui.GTextField;
 	public t0_t : fgui.Transition;
     constructor()
     {
@@ -252,6 +254,8 @@ export class test_TestRelation_data extends BaseView{
         super.OnInit();
 		this.n0_GGraph = <fgui.GGraph><unknown>(this.getChild("n0"));
 		this.n1_GTextField = <fgui.GTextField><unknown>(this.getChild("n1"));
+		this.n2_GGraph = <fgui.GGraph><unknown>(this.getChild("n2"));
+		this.n3_GTextField = <fgui.GTextField><unknown>(this.getChild("n3"));
 		this.t0_t = this.getTransition("t0");
     }
 }
