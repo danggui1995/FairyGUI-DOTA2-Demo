@@ -1,0 +1,484 @@
+@keyframes 'rotate_n0_nhre_Rotation_k' {
+    0% {
+        transform: rotateZ(0deg);
+    }
+
+    100% {
+        transform: rotateZ(90deg);
+    }
+}
+
+@keyframes 'rotate_n0_nhre_Rotation_k' {
+    0% {
+        transform: rotateZ(90deg);
+    }
+
+    100% {
+        transform: rotateZ(180deg);
+    }
+}
+
+@keyframes 'move_n1_nhre_XY_k' {
+    0% {
+        transform: translate3d(130px, 284px, 0px);
+    }
+
+    100% {
+        transform: translate3d(675px, 284px, 0px);
+    }
+}
+
+@keyframes 'move_n1_nhre_XY_k' {
+    0% {
+        transform: translate3d(675px, 284px, 0px);
+    }
+
+    100% {
+        transform: translate3d(130px, 284px, 0px);
+    }
+}
+
+@keyframes 'scale_n2_nhre_Scale_k' {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    100% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+}
+
+@keyframes 'scale_n2_nhre_Scale_k' {
+    0% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+
+    100% {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes 'scale_center_n3_nhre_Scale_k' {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    100% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+}
+
+@keyframes 'scale_center_n3_nhre_Scale_k' {
+    0% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+
+    100% {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes 'scale_right_n4_nhre_Scale_k' {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    100% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+}
+
+@keyframes 'scale_right_n4_nhre_Scale_k' {
+    0% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+
+    100% {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes 'group1_n5_nhre_Alpha_k' {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes 'group1_n5_nhre_Color_k' {
+    0% {
+        background-color: #ffffff;
+    }
+
+    100% {
+        background-color: #00ccff;
+    }
+}
+
+@keyframes 'group1_n5_nhre_Rotation_k' {
+    0% {
+        transform: rotateZ(0deg);
+    }
+
+    100% {
+        transform: rotateZ(90deg);
+    }
+}
+
+@keyframes 'group1_n5_nhre_Scale_k' {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    100% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+}
+
+@keyframes 'group1_n5_nhre_XY_k' {
+    0% {
+        transform: translate3d(954px, 130px, 0px);
+    }
+
+    100% {
+        transform: translate3d(1537px, -px, 0px);
+    }
+}
+
+@keyframes 'group1_n5_nhre_Alpha_k' {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes 'group1_n5_nhre_Color_k' {
+    0% {
+        background-color: #00ccff;
+    }
+
+    100% {
+        background-color: #000000;
+    }
+}
+
+@keyframes 'group1_n5_nhre_Rotation_k' {
+    0% {
+        transform: rotateZ(90deg);
+    }
+
+    100% {
+        transform: rotateZ(180deg);
+    }
+}
+
+@keyframes 'group1_n5_nhre_Scale_k' {
+    0% {
+        transform: scale3d(0.2, 0.2, 1);
+    }
+
+    100% {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes 'group1_n5_nhre_XY_k' {
+    0% {
+        transform: translate3d(1537px, -px, 0px);
+    }
+
+    100% {
+        transform: translate3d(-px, 540px, 0px);
+    }
+}
+
+@keyframes 'color_n6_qrtp_Color_k' {
+    0% {
+        background-color: #ffffff;
+    }
+
+    100% {
+        background-color: #ff9966;
+    }
+}
+
+@keyframes 'color_n6_qrtp_Scale_k' {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    100% {
+        transform: scale3d(0.8, 0.8, 1);
+    }
+}
+
+@keyframes 'color_n6_qrtp_Skew_k' {
+    0% {
+        transform: rotate3d(0, 0, 0, 1deg);
+    }
+
+    100% {
+        transform: rotate3d(0, 0, 0, 1deg);
+    }
+}
+
+@keyframes 'color_n6_qrtp_XY_k' {
+    0% {
+        transform: translate3d(1051px, 617px, 0px);
+    }
+
+    100% {
+        transform: translate3d(902px, 617px, 0px);
+    }
+}
+
+@keyframes 'color_n6_qrtp_Scale_k' {
+    0% {
+        transform: scale3d(0.8, 0.8, 1);
+    }
+
+    100% {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes 't0_n0_nhre_XY_k' {
+    0% {
+        transform: translate3d(234px, 470px, 0px);
+    }
+
+    100% {
+        transform: translate3d(717px, 470px, 0px);
+    }
+}
+
+@keyframes 't0_n0_nhre_XY_k' {
+    0% {
+        transform: translate3d(717px, 470px, 0px);
+    }
+
+    100% {
+        transform: translate3d(717px, 211px, 0px);
+    }
+}
+.rotate_n0_nhre_Rotation {
+    animation-name: rotate_n0_nhre_Rotation_k;
+    animation-duration: 0.250000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.rotate_n0_nhre_Rotation {
+    animation-name: rotate_n0_nhre_Rotation_k;
+    animation-duration: 0.250000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.move_n1_nhre_XY {
+    animation-name: move_n1_nhre_XY_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.move_n1_nhre_XY {
+    animation-name: move_n1_nhre_XY_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.scale_n2_nhre_Scale {
+    animation-name: scale_n2_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.scale_n2_nhre_Scale {
+    animation-name: scale_n2_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.scale_center_n3_nhre_Scale {
+    animation-name: scale_center_n3_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.scale_center_n3_nhre_Scale {
+    animation-name: scale_center_n3_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.scale_right_n4_nhre_Scale {
+    animation-name: scale_right_n4_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.scale_right_n4_nhre_Scale {
+    animation-name: scale_right_n4_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Alpha {
+    animation-name: group1_n5_nhre_Alpha_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Color {
+    animation-name: group1_n5_nhre_Color_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Rotation {
+    animation-name: group1_n5_nhre_Rotation_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Scale {
+    animation-name: group1_n5_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_XY {
+    animation-name: group1_n5_nhre_XY_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Alpha {
+    animation-name: group1_n5_nhre_Alpha_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Color {
+    animation-name: group1_n5_nhre_Color_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Rotation {
+    animation-name: group1_n5_nhre_Rotation_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_Scale {
+    animation-name: group1_n5_nhre_Scale_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.group1_n5_nhre_XY {
+    animation-name: group1_n5_nhre_XY_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.color_n6_qrtp_Color {
+    animation-name: color_n6_qrtp_Color_k;
+    animation-duration: 0.800000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.color_n6_qrtp_Scale {
+    animation-name: color_n6_qrtp_Scale_k;
+    animation-duration: 0.400000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.color_n6_qrtp_Skew {
+    animation-name: color_n6_qrtp_Skew_k;
+    animation-duration: 0.400000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.color_n6_qrtp_XY {
+    animation-name: color_n6_qrtp_XY_k;
+    animation-duration: 0.800000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.color_n6_qrtp_Scale {
+    animation-name: color_n6_qrtp_Scale_k;
+    animation-duration: 0.400000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+
+}
+
+.t0_n0_nhre_XY {
+    animation-name: t0_n0_nhre_XY_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}
+
+.t0_n0_nhre_XY {
+    animation-name: t0_n0_nhre_XY_k;
+    animation-duration: 0.500000s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+
+}

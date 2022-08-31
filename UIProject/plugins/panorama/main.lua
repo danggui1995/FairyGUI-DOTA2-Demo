@@ -16,6 +16,167 @@ local function split( str, sep )
     return fields
 end
 
+local keyframePattern = [[
+@keyframes '%s' {
+    0%% {
+        %s
+    }
+
+    100%% {
+        %s
+    }
+}
+]]
+
+local classPattern = [[
+.%s {
+    animation-name: %s;
+%s
+}
+]]
+local tweenPattern = [[
+    animation-duration: %fs;
+    animation-iteration-count: %s;
+    animation-timing-function: %s;
+]]
+
+local function genCss_One(handler, xmlPath, kfList, classList)
+    local xmlfile = io.open(xmlPath, "r")
+    local xmlstring = xmlfile:read("*a")
+    local xml = CS.FairyGUI.Utils.XML(xmlstring)
+    local iter = xml:GetEnumerator("transition")
+    while iter:MoveNext() do
+        local transition = iter.Current
+        local autoPlayRepeat = transition:GetAttributeInt("autoPlayRepeat")
+        local autoPlay = transition:GetAttribute("autoPlay")
+        local frameRate = transition:GetAttributeInt("frameRate", 24)
+        local itemIter = transition:GetEnumerator("item")
+        while itemIter:MoveNext() do
+            local item = itemIter.Current
+            local t_type = item:GetAttribute("type")
+            local t_target = item:GetAttribute("target")
+            local t_tween = item:GetAttributeBool("tween")
+            local t_duration = tonumber(item:GetAttribute("duration")) / frameRate
+            local t_startValue_s = item:GetAttribute("startValue")
+            local tweenStr
+            if t_startValue_s then
+                --需要插值
+                local t_startValue = split(t_startValue_s, ",")
+                local t_endValue = split(item:GetAttribute("endValue"), ",")
+                
+                local keyframe1, keyframe2
+                if t_type == "XY" then
+                    keyframe1 = string.format("transform: translate3d(%spx, %spx, 0px);", t_startValue[1], t_startValue[2])
+                    keyframe2 = string.format("transform: translate3d(%spx, %spx, 0px);", t_endValue[1], t_endValue[2])
+                elseif t_type == "Alpha" then
+                    keyframe1 = string.format("opacity: %s;", t_startValue[1])
+                    keyframe2 = string.format("opacity: %s;", t_endValue[1])
+                elseif t_type == "Color" then
+                    keyframe1 = string.format("background-color: %s;", t_startValue[1])
+                    keyframe2 = string.format("background-color: %s;", t_endValue[1])
+                elseif t_type == "Rotation" then
+                    keyframe1 = string.format("transform: rotateZ(%sdeg);", t_startValue[1])
+                    keyframe2 = string.format("transform: rotateZ(%sdeg);", t_endValue[1])
+                elseif t_type == "Scale" then
+                    keyframe1 = string.format("transform: scale3d(%s, %s, 1);", t_startValue[1], t_startValue[2])
+                    keyframe2 = string.format("transform: scale3d(%s, %s, 1);", t_endValue[1], t_endValue[2])
+                elseif t_type == "Skew" then
+                    keyframe1 = string.format("transform: rotate3d(%s, %s, 0, 1deg);", t_startValue[1], t_startValue[2])
+                    keyframe2 = string.format("transform: rotate3d(%s, %s, 0, 1deg);", t_endValue[1], t_endValue[2])
+                end
+                
+                local transition_uniqueName = string.format("%s_%s_%s_k", transition:GetAttribute("name"), t_target, t_type)
+                local kf = string.format(keyframePattern, transition_uniqueName, keyframe1, keyframe2)
+                table.insert(kfList, kf)
+
+                local repeatCount
+                if autoPlayRepeat <= 0 then
+                    repeatCount = "infinite"
+                else
+                    repeatCount = tostring(repeatCount)
+                end
+                local easeType
+                local fease = item:GetAttribute("ease")
+                if fease then
+                    if fease == "Linear" then
+                        easeType = "linear"
+                    elseif fease == "Custom" then
+                        easeType = "linear"
+                    elseif fease:find("%.InOut") then
+                        easeType = "ease-in-out"
+                    elseif fease:find("%.In") then
+                        easeType = "ease-in"
+                    else
+                        easeType = "ease-out"
+                    end
+                else
+                    easeType = "ease-out"
+                end
+                tweenStr = string.format(tweenPattern, t_duration, repeatCount, easeType)
+            else
+                -- 静态关键帧
+                tweenStr = ""
+            end
+            local class_uniqueName = string.format("%s_%s_%s", transition:GetAttribute("name"), t_target, t_type)
+            
+            local classStr = string.format(classPattern, class_uniqueName, class_uniqueName .. "_k", tweenStr)
+            table.insert(classList, classStr)
+        end
+        -- print(transition_uniqueName .. " / " .. cssPath)
+    end
+end
+
+local function genCss(handler)
+    local pkgDir = handler.pkg.basePath:gsub("\\", "/")
+    
+    local packagexmlPath = string.format("%s/package.xml", pkgDir)
+    local xmlfile = io.open(packagexmlPath, "r")
+    local xmlstring = xmlfile:read("*a")
+    local xml = CS.FairyGUI.Utils.XML(xmlstring)
+    local resources = (xml:GetNode("resources"))
+    local iter = resources:GetEnumerator("component")
+    local kfList = {}
+    local classList = {}
+    while iter:MoveNext() do
+        local component = iter.Current
+        local imageSrcDir = component:GetAttribute("path")
+        local imageSrcName = component:GetAttribute("name")
+        local componentPath = pkgDir .. imageSrcDir .. imageSrcName
+
+        genCss_One(handler, componentPath, kfList, classList)
+    end
+
+    --gen pkg css
+    do
+        local cssDir = handler.exportPath:gsub("\\", "/"):gsub("/scripts/", "/styles/")
+        local cssPath = cssDir .. "/" .. handler.pkg.name .. ".css"
+        if (not IO.Directory.Exists(cssDir)) then
+            IO.Directory.CreateDirectory(cssDir)
+        end
+        local file = io.open(cssPath, "w")
+        file:write(table.concat(kfList, '\n') .. table.concat(classList, '\n'))
+        file:close()
+    end
+
+    --check autogen
+    do
+        local cssDir = handler.exportPath:gsub("\\", "/"):gsub("/scripts/", "/styles/")
+        local autogenPath = cssDir .. "/../autogen.css"
+        local file = io.open(autogenPath, "r")
+        local data = file:read("*a")
+        file:close()
+
+        local pkgCss = string.format("@import url(\"file://{resources}/styles/custom_game/fgui/%s.css\");", handler.pkg.name)
+        local findpattern = string.format("styles/custom_game/fgui/%s", handler.pkg.name)
+        if not data:find(findpattern) then
+            data = data .. pkgCss .. "\n"
+            local file = io.open(autogenPath, "w")
+            file:write(data)
+            file:close()
+        end
+    end
+end
+
 local function genScale9Grid(handler)
     local pkgDir = handler.pkg.basePath:gsub("\\", "/")
     local packagexmlPath = string.format("%s/package.xml", pkgDir)
@@ -209,6 +370,7 @@ local function genBase64(handler, allClsData)
         end
 
         genScale9Grid(handler)
+        genCss(handler)
         compileTextures(exportPath, pkgName)
     end)
 end
