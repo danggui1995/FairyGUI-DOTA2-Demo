@@ -18,12 +18,8 @@
 		transform: translate3d(0px, 0px, 0px);
     }
 
-    50% {
-		transform: translate3d(545px, 0px, 0px);
-    }
-
     100% {
-		transform: translate3d(0px, 0px, 0px);
+		transform: translate3d(545px, 0px, 0px);
     }
 
 }
@@ -76,28 +72,28 @@
 @keyframes 'TestTransition_group1_n5_nhre_k' {
     0% {
 		transform: rotateZ(0deg) scale3d(1, 1, 1) translate3d(-41px, 11px, 0px);
-		background-color: #ffffff;
 		opacity: 1;
+		background-color: #ffffff;
     }
 
     50% {
 		transform: rotateZ(90deg) scale3d(0.2, 1, 1) translate3d(542px, 11px, 0px);
-		background-color: #00ccff;
 		opacity: 0;
+		background-color: #00ccff;
     }
 
     100% {
 		transform: rotateZ(180deg) scale3d(1, 1, 1) translate3d(542px, 421px, 0px);
-		background-color: #000000;
 		opacity: 1;
+		background-color: #000000;
     }
 
 }
 
 @keyframes 'TestTransition_color_n6_qrtp_k' {
     0% {
-		background-color: #ffffff;
 		transform: scale3d(1, 1, 1) translate3d(0px, 0px, 0px);
+		background-color: #ffffff;
     }
 
     50% {
@@ -105,36 +101,58 @@
     }
 
     100% {
-		background-color: #ff9966;
 		transform: scale3d(1, 1, 1) translate3d(0px, 0px, 0px);
+		background-color: #ff9966;
     }
 
 }
 
 @keyframes 'TestTransition_round_n9_giof_k' {
     0% {
-		transform: translate3d(0px, 0px, 0px);
+		transform: skew(0deg, 0deg) translate3d(0px, 0px, 0px);
 		background-color: #ffffff;
     }
 
+    25% {
+		transform: skew(34.79deg, 0deg);
+    }
+
     50% {
-		transform: translate3d(645px, 0px, 0px);
+		transform: skew(0deg, 46.8deg) translate3d(645px, 0px, 0px);
 		background-color: #333333;
     }
 
     75% {
-		transform: translate3d(645px, 529px, 0px);
+		transform: skew(0deg, 0deg) translate3d(645px, 529px, 0px);
 		background-color: #0099ff;
     }
 
     87% {
-		transform: translate3d(-7px, 529px, 0px);
 		background-color: #ffcc00;
+		transform: translate3d(-7px, 529px, 0px);
     }
 
     100% {
-		transform: translate3d(-107px, 0px, 0px);
 		background-color: #993300;
+		transform: translate3d(-107px, 0px, 0px);
+    }
+
+}
+
+@keyframes 'TestTransition_size_n12_egn1_k' {
+    0% {
+		width: 100px;
+		height: 100px;
+    }
+
+    50% {
+		width: 286px;
+		height: 100px;
+    }
+
+    100% {
+		width: 286px;
+		height: 268px;
     }
 
 }
@@ -158,6 +176,7 @@
     animation-duration: 0.50s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_move_n1_nhre {
@@ -165,6 +184,7 @@
     animation-duration: 1.00s;
     animation-iteration-count: 1;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_scale_n2_nhre {
@@ -172,6 +192,7 @@
     animation-duration: 1.00s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_scale_center_n3_nhre {
@@ -179,6 +200,7 @@
     animation-duration: 1.00s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_scale_right_n4_nhre {
@@ -186,6 +208,7 @@
     animation-duration: 1.00s;
     animation-iteration-count: 1;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_group1_n5_nhre {
@@ -193,6 +216,7 @@
     animation-duration: 1.00s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_color_n6_qrtp {
@@ -200,6 +224,7 @@
     animation-duration: 2.00s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestTransition_round_n9_giof {
@@ -207,6 +232,15 @@
     animation-duration: 2.00s;
     animation-iteration-count: 2;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
+}
+
+.TestTransition_size_n12_egn1 {
+    animation-name: TestTransition_size_n12_egn1_k;
+    animation-duration: 1.00s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }
 
 .TestRelation_t0_n0_nhre {
@@ -214,4 +248,5 @@
     animation-duration: 1.00s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
+    animation-fill-mode: forwards;
 }

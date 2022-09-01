@@ -1,6 +1,18 @@
 # Note
 1.UIProject中的plugins目录是必须的，他会决定导出的ts代码格式以及界面数据。<BR>
-2.此项目目前没有上线项目的支撑，谨慎使用。
+2.支持的动效类型：由于接入了Panorama底层来提升帧率表现，目前支持的动效类型仅有：
+```
+enum ActionType {
+    XY = 0,
+    Size = 1,
+    Scale = 2,
+    Alpha = 4,
+    Rotation = 5,
+    Color = 6,
+    Skew = 13,
+}
+```
+3.九宫格：与Unity平台的有差异，插件会将图切成9份来还原九宫图的效果（无力吐槽这翻九倍的消耗）。
 
 
 # 建议
@@ -22,7 +34,7 @@ mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\tes
 
 # Q & A
 Q:如何编译导出的图片到vtex_c?<BR>
-A:在custom_ui_manifest.xml中引用compile_helper.xml，这个平时是不引用的，需要编译图片才开出来，这个编译需要运行当前mod才能生效。如果要离线生成，可以借助resourcecompiler.exe
+A:在custom_ui_manifest.xml中引用compile_helper.xml，这个平时是不引用的，需要编译图片才开出来，这个编译需要运行当前mod才能生效，可以自行删掉这里的数据，插件也会在导出后几秒内自动删掉。如果要离线生成，可以借助resourcecompiler.exe
 ```
 <Panel>
     <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/main.xml" />

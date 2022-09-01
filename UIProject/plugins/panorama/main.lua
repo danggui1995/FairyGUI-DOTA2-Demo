@@ -37,6 +37,7 @@ local tweenPattern = [[
     animation-duration: %.2fs;
     animation-iteration-count: %s;
     animation-timing-function: %s;
+    animation-fill-mode: forwards;
 ]]
 
 local ActionType = {
@@ -173,8 +174,16 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_startValue[1], t_startValue[2])}
                     frameMap[t_target][frame2Time][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_endValue[1], t_endValue[2])}
                 elseif t_type == ActionType.Skew then
-                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotate3d(%s, %s, 0, 1deg)", t_startValue[1], t_startValue[2])}
-                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("rotate3d(%s, %s, 0, 1deg)", t_endValue[1], t_endValue[2])}
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_startValue[1], t_startValue[2]), 2}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_endValue[1], t_endValue[2]), 2}
+                elseif t_type == ActionType.Size then
+                    frameMap[t_target][t_delay]["width"] = {"width", string.format("%dpx", t_startValue[1])}
+                    frameMap[t_target][t_delay]["height"] = {"height", string.format("%dpx", t_startValue[2])}
+
+                    frameMap[t_target][frame2Time]["width"] = {"width", string.format("%dpx", t_endValue[1])}
+                    frameMap[t_target][frame2Time]["height"] = {"height", string.format("%dpx", t_endValue[2])}
+                else
+                    print("error: this type is not support : " .. t_type)
                 end
             else
                 local t_startValue = split(item:GetAttribute("value"), ",")
@@ -194,7 +203,12 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                 elseif t_type == ActionType.Scale then
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_startValue[1], t_startValue[2]), 3}
                 elseif t_type == ActionType.Skew then
-                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotate3d(%s, %s, 0, 1deg)", t_startValue[1], t_startValue[2]), 2}
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_startValue[1], t_startValue[2]), 2}
+                elseif t_type == ActionType.Size then
+                    frameMap[t_target][t_delay]["width"] = {"width", string.format("%dpx", t_startValue[1])}
+                    frameMap[t_target][t_delay]["height"] = {"height", string.format("%dpx", t_startValue[2])}
+                else
+                    print("error: this type is not support : " .. t_type)
                 end
             end
         end

@@ -125,6 +125,9 @@ export class test_TestTransition_data extends BaseView{
 	public n5_GGraph : fgui.GGraph;
 	public n6_GGraph : fgui.GGraph;
 	public n9_GGraph : fgui.GGraph;
+	public testBtn_GButton : fgui.GButton;
+	public replayBtn_GButton : fgui.GButton;
+	public n12_GGraph : fgui.GGraph;
 	public rotate_t : fgui.Transition;
 	public move_t : fgui.Transition;
 	public scale_t : fgui.Transition;
@@ -133,6 +136,7 @@ export class test_TestTransition_data extends BaseView{
 	public group1_t : fgui.Transition;
 	public color_t : fgui.Transition;
 	public round_t : fgui.Transition;
+	public size_t : fgui.Transition;
     constructor()
     {
         super();
@@ -153,6 +157,9 @@ export class test_TestTransition_data extends BaseView{
 		this.n5_GGraph = <fgui.GGraph><unknown>(this.getChild("n5"));
 		this.n6_GGraph = <fgui.GGraph><unknown>(this.getChild("n6"));
 		this.n9_GGraph = <fgui.GGraph><unknown>(this.getChild("n9"));
+		this.testBtn_GButton = <fgui.GButton><unknown>(this.getChild("testBtn"));
+		this.replayBtn_GButton = <fgui.GButton><unknown>(this.getChild("replayBtn"));
+		this.n12_GGraph = <fgui.GGraph><unknown>(this.getChild("n12"));
 		this.rotate_t = this.getTransition("rotate");
 		this.move_t = this.getTransition("move");
 		this.scale_t = this.getTransition("scale");
@@ -161,6 +168,7 @@ export class test_TestTransition_data extends BaseView{
 		this.group1_t = this.getTransition("group1");
 		this.color_t = this.getTransition("color");
 		this.round_t = this.getTransition("round");
+		this.size_t = this.getTransition("size");
     }
 }
 

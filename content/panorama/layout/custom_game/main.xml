@@ -9,5 +9,6 @@
   <Panel hittest="false" class="Root">
     <Panel id="HiddenRoot" />
     <Panel id="ViewRoot"/>
+  <Panel id="test" />
   </Panel>
 </root>
