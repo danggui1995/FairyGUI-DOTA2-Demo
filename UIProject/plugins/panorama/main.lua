@@ -60,28 +60,21 @@ local ActionType = {
     Unknown = 16
 }
 
-local function findDisplayPivot(xmlstring, id)
-    local pivotx = 0
-    local pivoty = 0
-    local pattern = string.format("id=\"%s\".-pivot=\"([^\"]*)\"", id)
-    xmlstring:gsub(pattern, function(str)
-        local arr = split(str, ",")
-        pivotx = math.floor(tonumber(arr[1]) * 100)
-        pivoty = math.floor(tonumber(arr[2]) * 100)
-    end)
-    return pivotx, pivoty
-end
-
-local function findDisplayXY(xmlstring, id)
-    local x = 0
-    local y = 0
-    local pattern = string.format("id=\"%s\".-xy=\"([^\"]*)\"", id)
-    xmlstring:gsub(pattern, function(str)
-        local arr = split(str, ",")
-        x = tonumber(arr[1])
-        y = tonumber(arr[2])
-    end)
-    return x, y
+local function findDisplayXY(xml, id)
+    local iter = xml:GetEnumerator("displayList")
+    while iter:MoveNext() do
+        local displayList = iter.Current
+        local itemIter = displayList:GetEnumerator()
+        while itemIter:MoveNext() do
+            local item = itemIter.Current
+            local xmlid = item:GetAttribute("id")
+            if xmlid == id then
+                local xy = item:GetAttributeArray("xy")
+                return tonumber(xy[0]), tonumber(xy[1])
+            end
+        end
+    end
+    return 0, 0
 end
 
 local function getTranslateStr(arr, lastx, lasty, oldx, oldy)
@@ -148,7 +141,7 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     frameMap[t_target][frame2Time] = {}
                 end
                 if t_type == ActionType.XY then
-                    local oldx, oldy = findDisplayXY(xmlstring, t_target)
+                    local oldx, oldy = findDisplayXY(xml, t_target)
                     local newx, newy = getTranslateStr(t_startValue, lastx, lasty, oldx, oldy)
                     lastx = newx
                     lasty = newy
@@ -188,7 +181,7 @@ local function genCss_One(handler, xmlPath, kfList, classList)
             else
                 local t_startValue = split(item:GetAttribute("value"), ",")
                 if t_type == ActionType.XY then
-                    local oldx, oldy = findDisplayXY(xmlstring, t_target)
+                    local oldx, oldy = findDisplayXY(xml, t_target)
                     local newx, newy = getTranslateStr(t_startValue, lastx, lasty, oldx, oldy)
                     lastx = newx
                     lasty = newy
@@ -285,8 +278,6 @@ local function genCss_One(handler, xmlPath, kfList, classList)
             -- end
             local tweenStr = string.format(tweenPattern, maxFrame / frameRate, repeatCount, easeType)
             local class_uniqueName = string.format("%s_%s_%s", fileName, name, t_target)
-
-            -- local px, py = findDisplayPivot(xmlstring, t_target)
             local classStr = string.format(classPattern, class_uniqueName, class_uniqueName .. "_k", tweenStr)
             table.insert(classList, classStr)
         end
