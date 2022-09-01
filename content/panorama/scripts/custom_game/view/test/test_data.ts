@@ -90,6 +90,7 @@ export class test_TestButton_data extends BaseView{
 	public n5_GButton : fgui.GButton;
 	public dropBox_GComboBox : fgui.GComboBox;
 	public slider_GSlider : fgui.GSlider;
+	public color_t : fgui.Transition;
     constructor()
     {
         super();
@@ -111,6 +112,7 @@ export class test_TestButton_data extends BaseView{
 		this.n5_GButton = <fgui.GButton><unknown>(this.getChild("n5"));
 		this.dropBox_GComboBox = <fgui.GComboBox><unknown>(this.getChild("dropBox"));
 		this.slider_GSlider = <fgui.GSlider><unknown>(this.getChild("slider"));
+		this.color_t = this.getTransition("color");
     }
 }
 
@@ -122,6 +124,7 @@ export class test_TestTransition_data extends BaseView{
 	public n4_GGraph : fgui.GGraph;
 	public n5_GGraph : fgui.GGraph;
 	public n6_GGraph : fgui.GGraph;
+	public n9_GGraph : fgui.GGraph;
 	public rotate_t : fgui.Transition;
 	public move_t : fgui.Transition;
 	public scale_t : fgui.Transition;
@@ -129,6 +132,7 @@ export class test_TestTransition_data extends BaseView{
 	public scale_right_t : fgui.Transition;
 	public group1_t : fgui.Transition;
 	public color_t : fgui.Transition;
+	public round_t : fgui.Transition;
     constructor()
     {
         super();
@@ -148,6 +152,7 @@ export class test_TestTransition_data extends BaseView{
 		this.n4_GGraph = <fgui.GGraph><unknown>(this.getChild("n4"));
 		this.n5_GGraph = <fgui.GGraph><unknown>(this.getChild("n5"));
 		this.n6_GGraph = <fgui.GGraph><unknown>(this.getChild("n6"));
+		this.n9_GGraph = <fgui.GGraph><unknown>(this.getChild("n9"));
 		this.rotate_t = this.getTransition("rotate");
 		this.move_t = this.getTransition("move");
 		this.scale_t = this.getTransition("scale");
@@ -155,6 +160,7 @@ export class test_TestTransition_data extends BaseView{
 		this.scale_right_t = this.getTransition("scale_right");
 		this.group1_t = this.getTransition("group1");
 		this.color_t = this.getTransition("color");
+		this.round_t = this.getTransition("round");
     }
 }
 

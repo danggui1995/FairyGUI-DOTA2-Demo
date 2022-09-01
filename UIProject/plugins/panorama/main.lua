@@ -18,111 +18,264 @@ end
 
 local keyframePattern = [[
 @keyframes '%s' {
-    0%% {
-        %s
-    }
-
-    100%% {
-        %s
-    }
+%s
 }
+]]
+
+local keyframePattern2 = [[
+    %d%% {
+%s
+    }
 ]]
 
 local classPattern = [[
 .%s {
     animation-name: %s;
-%s
-}
+%s}
 ]]
 local tweenPattern = [[
-    animation-duration: %fs;
+    animation-duration: %.2fs;
     animation-iteration-count: %s;
     animation-timing-function: %s;
 ]]
+
+local ActionType = {
+    XY = 0,
+    Size = 1,
+    Scale = 2,
+    Pivot = 3,
+    Alpha = 4,
+    Rotation = 5,
+    Color = 6,
+    Animation = 7,
+    Visible = 8,
+    Sound = 9,
+    Transition = 10,
+    Shake = 11,
+    ColorFilter = 12,
+    Skew = 13,
+    Text = 14,
+    Icon = 15,
+    Unknown = 16
+}
+
+local function findDisplayPivot(xmlstring, id)
+    local pivotx = 0
+    local pivoty = 0
+    local pattern = string.format("id=\"%s\".-pivot=\"([^\"]*)\"", id)
+    xmlstring:gsub(pattern, function(str)
+        local arr = split(str, ",")
+        pivotx = math.floor(tonumber(arr[1]) * 100)
+        pivoty = math.floor(tonumber(arr[2]) * 100)
+    end)
+    return pivotx, pivoty
+end
+
+local function findDisplayXY(xmlstring, id)
+    local x = 0
+    local y = 0
+    local pattern = string.format("id=\"%s\".-xy=\"([^\"]*)\"", id)
+    xmlstring:gsub(pattern, function(str)
+        local arr = split(str, ",")
+        x = tonumber(arr[1])
+        y = tonumber(arr[2])
+    end)
+    return x, y
+end
+
+local function getTranslateStr(arr, lastx, lasty, oldx, oldy)
+    local newx, newy
+    if arr[1] == '-' then
+        newx = lastx or oldx
+    else
+        newx = tonumber(arr[1])
+    end
+    if arr[2] == '-' then
+        newy = lasty or oldy
+    else
+        newy = tonumber(arr[2])
+    end
+    return newx, newy
+end
+
+local sortWeight = {
+    rotateZ = 1,
+    rotate3d = 2,
+    scale3d = 3,
+    translate3d = 4,
+}
 
 local function genCss_One(handler, xmlPath, kfList, classList)
     local xmlfile = io.open(xmlPath, "r")
     local xmlstring = xmlfile:read("*a")
     local xml = CS.FairyGUI.Utils.XML(xmlstring)
     local iter = xml:GetEnumerator("transition")
+    local fileName = IO.Path.GetFileNameWithoutExtension(xmlPath)
     while iter:MoveNext() do
         local transition = iter.Current
-        local autoPlayRepeat = transition:GetAttributeInt("autoPlayRepeat")
+        local autoPlayRepeat = transition:GetAttributeInt("autoPlayRepeat", 1)
         local autoPlay = transition:GetAttribute("autoPlay")
         local frameRate = transition:GetAttributeInt("frameRate", 24)
         local itemIter = transition:GetEnumerator("item")
+        local name = transition:GetAttribute("name")
+        local frameMap = {}
+        local record = {}
+        local lastx, lasty
         while itemIter:MoveNext() do
+            --这里所有的都在同一个keyframe里面 panorama只支持一个
             local item = itemIter.Current
-            local t_type = item:GetAttribute("type")
+            local t_type = ActionType[item:GetAttribute("type")]
             local t_target = item:GetAttribute("target")
             local t_tween = item:GetAttributeBool("tween")
-            local t_duration = tonumber(item:GetAttribute("duration")) / frameRate
             local t_startValue_s = item:GetAttribute("startValue")
-            local tweenStr
+            local t_delay = item:GetAttributeInt("time", 0)
+
+            if not frameMap[t_target] then
+                frameMap[t_target] = {}
+            end
+            if not frameMap[t_target][t_delay] then
+                frameMap[t_target][t_delay] = {}
+            end
+
             if t_startValue_s then
                 --需要插值
                 local t_startValue = split(t_startValue_s, ",")
                 local t_endValue = split(item:GetAttribute("endValue"), ",")
-                
-                local keyframe1, keyframe2
-                if t_type == "XY" then
-                    keyframe1 = string.format("transform: translate3d(%spx, %spx, 0px);", t_startValue[1], t_startValue[2])
-                    keyframe2 = string.format("transform: translate3d(%spx, %spx, 0px);", t_endValue[1], t_endValue[2])
-                elseif t_type == "Alpha" then
-                    keyframe1 = string.format("opacity: %s;", t_startValue[1])
-                    keyframe2 = string.format("opacity: %s;", t_endValue[1])
-                elseif t_type == "Color" then
-                    keyframe1 = string.format("background-color: %s;", t_startValue[1])
-                    keyframe2 = string.format("background-color: %s;", t_endValue[1])
-                elseif t_type == "Rotation" then
-                    keyframe1 = string.format("transform: rotateZ(%sdeg);", t_startValue[1])
-                    keyframe2 = string.format("transform: rotateZ(%sdeg);", t_endValue[1])
-                elseif t_type == "Scale" then
-                    keyframe1 = string.format("transform: scale3d(%s, %s, 1);", t_startValue[1], t_startValue[2])
-                    keyframe2 = string.format("transform: scale3d(%s, %s, 1);", t_endValue[1], t_endValue[2])
-                elseif t_type == "Skew" then
-                    keyframe1 = string.format("transform: rotate3d(%s, %s, 0, 1deg);", t_startValue[1], t_startValue[2])
-                    keyframe2 = string.format("transform: rotate3d(%s, %s, 0, 1deg);", t_endValue[1], t_endValue[2])
+                local t_duration = item:GetAttributeInt("duration", 0)
+                local frame2Time = t_delay + t_duration
+                if not frameMap[t_target][frame2Time] then
+                    frameMap[t_target][frame2Time] = {}
                 end
-                
-                local transition_uniqueName = string.format("%s_%s_%s_k", transition:GetAttribute("name"), t_target, t_type)
-                local kf = string.format(keyframePattern, transition_uniqueName, keyframe1, keyframe2)
-                table.insert(kfList, kf)
-
-                local repeatCount
-                if autoPlayRepeat <= 0 then
-                    repeatCount = "infinite"
-                else
-                    repeatCount = tostring(repeatCount)
+                if t_type == ActionType.XY then
+                    local oldx, oldy = findDisplayXY(xmlstring, t_target)
+                    local newx, newy = getTranslateStr(t_startValue, lastx, lasty, oldx, oldy)
+                    lastx = newx
+                    lasty = newy
+                    local s = string.format("translate3d(%dpx, %dpx, 0px)", newx - oldx, newy - oldy)
+                    frameMap[t_target][t_delay][t_type] = {"transform", s, 4}
+                    
+                    local s2 = ""
+                    local newx, newy = getTranslateStr(t_endValue, lastx, lasty, oldx, oldy)
+                    lastx = newx
+                    lasty = newy
+                    local s = string.format("translate3d(%dpx, %dpx, 0px)", newx - oldx, newy - oldy)
+                    frameMap[t_target][frame2Time][t_type] = {"transform", s, 4}
+                elseif t_type == ActionType.Alpha then
+                    frameMap[t_target][t_delay][t_type] = {"opacity", string.format("%s", t_startValue[1])}
+                    frameMap[t_target][frame2Time][t_type] = {"opacity", string.format("%s", t_endValue[1])}
+                elseif t_type == ActionType.Color then
+                    frameMap[t_target][t_delay][t_type] = {"background-color", string.format("%s", t_startValue[1])}
+                    frameMap[t_target][frame2Time][t_type] = {"background-color", string.format("%s", t_endValue[1])}
+                elseif t_type == ActionType.Rotation then
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_startValue[1])}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_endValue[1])}
+                elseif t_type == ActionType.Scale then
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_startValue[1], t_startValue[2])}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_endValue[1], t_endValue[2])}
+                elseif t_type == ActionType.Skew then
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotate3d(%s, %s, 0, 1deg)", t_startValue[1], t_startValue[2])}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("rotate3d(%s, %s, 0, 1deg)", t_endValue[1], t_endValue[2])}
                 end
-                local easeType
-                local fease = item:GetAttribute("ease")
-                if fease then
-                    if fease == "Linear" then
-                        easeType = "linear"
-                    elseif fease == "Custom" then
-                        easeType = "linear"
-                    elseif fease:find("%.InOut") then
-                        easeType = "ease-in-out"
-                    elseif fease:find("%.In") then
-                        easeType = "ease-in"
-                    else
-                        easeType = "ease-out"
-                    end
-                else
-                    easeType = "ease-out"
-                end
-                tweenStr = string.format(tweenPattern, t_duration, repeatCount, easeType)
             else
-                -- 静态关键帧
-                tweenStr = ""
+                local t_startValue = split(item:GetAttribute("value"), ",")
+                if t_type == ActionType.XY then
+                    local oldx, oldy = findDisplayXY(xmlstring, t_target)
+                    local newx, newy = getTranslateStr(t_startValue, lastx, lasty, oldx, oldy)
+                    lastx = newx
+                    lasty = newy
+                    local s = string.format("translate3d(%dpx, %dpx, 0px)", newx - oldx, newy - oldy)
+                    frameMap[t_target][t_delay][t_type] = {"transform", s, 4}
+                elseif t_type == ActionType.Alpha then
+                    frameMap[t_target][t_delay][t_type] = {"opacity", string.format("%s", t_startValue[1])}
+                elseif t_type == ActionType.Color then
+                    frameMap[t_target][t_delay][t_type] = {"background-color", string.format("%s", t_startValue[1])}
+                elseif t_type == ActionType.Rotation then
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_startValue[1]), 1}
+                elseif t_type == ActionType.Scale then
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_startValue[1], t_startValue[2]), 3}
+                elseif t_type == ActionType.Skew then
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotate3d(%s, %s, 0, 1deg)", t_startValue[1], t_startValue[2]), 2}
+                end
             end
-            local class_uniqueName = string.format("%s_%s_%s", transition:GetAttribute("name"), t_target, t_type)
-            
+        end
+
+        --gen keyframe
+        for t_target, vv in pairs(frameMap) do
+            local frameList = {}
+            local maxFrame = 0
+            for frameTime, v in pairs(vv) do
+               
+                local record = {}
+                for t_type, styleList in pairs(v) do
+                    if not record[styleList[1]] then
+                        record[styleList[1]] = {}
+                    end
+                    table.insert(record[styleList[1]], {styleList[2], styleList[3] or 0})
+                end
+                local typelist = {}
+                
+                for tp, sarr in pairs(record) do
+                    if #sarr > 1 then
+                        table.sort(sarr, function(a,b)
+                            return a[2] < b[2]
+                        end)
+                    end
+                    local sortedSArr = {}
+                    for _, arr in ipairs(sarr) do
+                        table.insert(sortedSArr, arr[1])
+                    end
+                    table.insert(typelist, string.format("\t\t%s: %s;", tp, table.concat(sortedSArr, ' ')))
+                end
+                table.insert(frameList, {frameTime, typelist})
+                if frameTime > maxFrame then
+                    maxFrame = frameTime
+                end
+            end
+
+            table.sort(frameList, function(a,b)
+                return a[1] < b[1]
+            end)
+            local sortedList = {}
+            for _, v in ipairs(frameList) do
+                local s = string.format(keyframePattern2, math.floor(v[1] / maxFrame * 100), table.concat(v[2], '\n'))
+                table.insert(sortedList, s)
+            end
+            local transition_uniqueName = string.format("%s_%s_%s_k", fileName, name, t_target)
+            local kf = string.format(keyframePattern, transition_uniqueName, table.concat(sortedList, '\n'))
+            table.insert(kfList, kf)
+    
+    
+            --gen class
+            local repeatCount
+            if autoPlayRepeat <= 0 then
+                repeatCount = "infinite"
+            else
+                repeatCount = tostring(autoPlayRepeat)
+            end
+            local easeType = "ease"
+            -- local fease = item:GetAttribute("ease")
+            -- if fease then
+            --     if fease == "Linear" then
+            --         easeType = "linear"
+            --     elseif fease == "Custom" then
+            --         easeType = "linear"
+            --     elseif fease:find("%.InOut") then
+            --         easeType = "ease-in-out"
+            --     elseif fease:find("%.In") then
+            --         easeType = "ease-in"
+            --     else
+            --         easeType = "ease-out"
+            --     end
+            -- else
+            --     easeType = "ease-out"
+            -- end
+            local tweenStr = string.format(tweenPattern, maxFrame / frameRate, repeatCount, easeType)
+            local class_uniqueName = string.format("%s_%s_%s", fileName, name, t_target)
+
+            -- local px, py = findDisplayPivot(xmlstring, t_target)
             local classStr = string.format(classPattern, class_uniqueName, class_uniqueName .. "_k", tweenStr)
             table.insert(classList, classStr)
         end
-        -- print(transition_uniqueName .. " / " .. cssPath)
     end
 end
 

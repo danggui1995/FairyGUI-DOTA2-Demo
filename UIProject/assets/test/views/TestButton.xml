@@ -18,7 +18,7 @@
       <Button title="组合按钮" controller="radioctrl" page="3"/>
     </component>
     <component id="n5_nhre" name="n5" src="nhreb" fileName="components/ButtonCheck.xml" xy="310,464">
-      <Button title="组合按钮" controller="radioctrl" page="0"/>
+      <Button checked="true" title="组合按钮" controller="radioctrl" page="0"/>
     </component>
     <component id="n6_nhre" name="dropBox" src="nhren" fileName="components/ComboBox1.xml" xy="302,682" size="488,44">
       <ComboBox title="下拉框" visibleItemCount="10">
@@ -32,4 +32,5 @@
       <Slider value="50" max="100"/>
     </component>
   </displayList>
+  <transition name="color"/>
 </component>
