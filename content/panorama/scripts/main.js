@@ -483,6 +483,12 @@
       }
   }
 
+  function transformCompare(a, b) {
+      if (a[1] < b[1]) {
+          return -1;
+      }
+      return 1;
+  }
   class UIElement extends DotaPanel {
       constructor() {
           super();
@@ -501,10 +507,13 @@
           this._tabStop = false;
           this._tabStopChildren = false;
           this._gTouchable = undefined;
-          this.forbidStyleModify = false;
+          this._skew = new Vec2(0, 0);
+          this._tweenQueue = [];
+          this._tweenRunning = new Map;
+          this._tweenInit = false;
       }
       initElement() {
-          this.nativePanel = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.name);
       }
       get name() {
           return this.id;
@@ -525,11 +534,156 @@
           this.setPosition(this._pos.x, value);
       }
       setPosition(x, y) {
-          if (this._pos.x != x || this._pos.y != y) {
-              this._pos.set(x, y);
-              if (this.forbidStyleModify == false) {
-                  this.nativePanel.style.marginLeft = x + "px";
-                  this.nativePanel.style.marginTop = y + "px";
+          // if (this._pos.x != x || this._pos.y != y) {
+          this._pos.set(x, y);
+          this.nativePanel.style.marginLeft = x + "px";
+          this.nativePanel.style.marginTop = y + "px";
+          // }
+      }
+      appendTween(tween) {
+          if (this._tweenInit == false) {
+              this._tweenInit = true;
+              this.$owner.RegisterEventHandler('PropertyTransitionEnd', this.nativePanel, (_, propName) => {
+                  let runningTweens = this._tweenRunning.get(propName);
+                  if (runningTweens) {
+                      this._tweenRunning.delete(propName);
+                      for (let i = this._tweenQueue.length - 1; i >= 0; i--) {
+                          for (const rt of runningTweens) {
+                              if (rt == this._tweenQueue[i]) {
+                                  this.onTweenStop(rt);
+                                  this._tweenQueue.splice(i, 1);
+                                  break;
+                              }
+                          }
+                      }
+                      this.checkPlayTween();
+                  }
+              });
+          }
+          if (this._tweenRunning.has(tween.propType)) {
+              let runningTweens = this._tweenRunning.get(tween.propType);
+              for (const rt of runningTweens) {
+                  if (rt.priority == tween.priority && tween.startTime < rt.endTime - 0.05) {
+                      return;
+                  }
+              }
+          }
+          this._tweenQueue.push(tween);
+          this.checkPlayTween();
+      }
+      onTweenReset(actionType, startValue) {
+          switch (actionType) {
+              case ActionType.XY:
+                  {
+                      this.setPosition(startValue.x, startValue.y);
+                      break;
+                  }
+              case ActionType.Alpha:
+                  {
+                      this.alpha = startValue.x;
+                      break;
+                  }
+              case ActionType.Scale:
+                  {
+                      this.setScale(startValue.x, startValue.y);
+                      break;
+                  }
+              case ActionType.Rotation:
+                  {
+                      this.rotation = startValue.x;
+                      break;
+                  }
+              case ActionType.Size:
+                  {
+                      this.setSize(startValue.x, startValue.y);
+                      break;
+                  }
+              case ActionType.Skew:
+                  {
+                      this.setSkew(startValue.x, startValue.y);
+                      break;
+                  }
+          }
+      }
+      onTweenStart(tween) {
+          this.nativePanel.style.transition = null;
+          this.nativePanel.style.transform = null;
+          let tweener = tween.tweener;
+          this.onTweenReset(tweener.actionType, tweener.startValue);
+      }
+      onTweenStop(tween) {
+          this.nativePanel.style.transition = null;
+          this.nativePanel.style.transform = null;
+          let tweener = tween.tweener;
+          this.onTweenReset(tweener.actionType, tweener.endValue);
+      }
+      checkPlayTween() {
+          let keylist = [];
+          let valuemap = new Map;
+          //之前没播完的要加回来
+          for (let [propType, tweenArr] of this._tweenRunning) {
+              for (let i = tweenArr.length - 1; i >= 0; i--) {
+                  let tween = tweenArr[i];
+                  if (tween.duration > 0) {
+                      let propKey = `${propType} ${tween.duration}s ${tween.ease} 0s`;
+                      keylist.push(propKey);
+                      let valuemapArr = valuemap.get(propType);
+                      if (valuemapArr) {
+                          valuemapArr.push(tween.propValue);
+                      }
+                      else {
+                          valuemap.set(propType, [tween.propValue]);
+                      }
+                  }
+                  else {
+                      tweenArr.splice(i, 1);
+                  }
+              }
+          }
+          for (let i = 0; i < this._tweenQueue.length; i++) {
+              let tween = this._tweenQueue[i];
+              let propType = tween.propType;
+              let propKey = `${propType} ${tween.duration}s ${tween.ease} 0s`;
+              let propValue = tween.propValue;
+              let runningTweens = this._tweenRunning.get(propType);
+              if (!runningTweens) {
+                  this._tweenRunning.set(propType, [tween]);
+                  keylist.push(propKey);
+                  valuemap.set(propType, [propValue]);
+              }
+              else {
+                  let find = true;
+                  for (const t of runningTweens) {
+                      if (t.priority == tween.priority) {
+                          find = false;
+                          break;
+                      }
+                  }
+                  if (find) {
+                      runningTweens.push(tween);
+                      let valuemapArr = valuemap.get(propType);
+                      if (valuemapArr) {
+                          valuemapArr.push(propValue);
+                      }
+                      else {
+                          valuemap.set(propType, [propValue]);
+                      }
+                  }
+              }
+          }
+          if (keylist.length > 0) {
+              //归0
+              for (const [propType, rts] of this._tweenRunning) {
+                  for (const rt of rts) {
+                      this.onTweenStart(rt);
+                  }
+              }
+              this.nativePanel.style.transition = keylist.join(',');
+              for (let [k, v] of valuemap) {
+                  if (v.length > 1) {
+                      v.sort(transformCompare);
+                  }
+                  this.nativePanel.style[k] = v.join(' ');
               }
           }
       }
@@ -559,10 +713,8 @@
           }
       }
       onSizeChanged() {
-          if (this.forbidStyleModify == false) {
-              this.nativePanel.style.width = this._contentRect.width + "px";
-              this.nativePanel.style.height = this._contentRect.height + "px";
-          }
+          this.nativePanel.style.width = this._contentRect.width + "px";
+          this.nativePanel.style.height = this._contentRect.height + "px";
       }
       get pivotX() {
           return this._pivot.x;
@@ -579,10 +731,14 @@
       setPivot(xv, yv) {
           // if (this._pivot.x != xv || this._pivot.y != yv) {
           this._pivot.set(xv, yv);
-          if (this.forbidStyleModify == false) {
-              this.nativePanel.style.transformOrigin = `${this._pivot.x * 100}% ${this._pivot.y * 100}%`;
-          }
+          this.nativePanel.style.transformOrigin = `${this._pivot.x * 100}% ${this._pivot.y * 100}%`;
           // }
+      }
+      setSkew(x, y) {
+          if (this._skew.x != x || this._skew.y != y) {
+              this._skew.set(x, y);
+              this.nativePanel.style.transform = `skew(${x}deg, ${y}deg)`;
+          }
       }
       get flip() {
           if (this._flipX)
@@ -598,37 +754,16 @@
           if (a != this._flipX || b != this._flipY)
               this._flipX = a;
           this._flipY = b;
-          this.updateTransform();
+          if (this._flipX || this._flipY)
+              this.nativePanel.style.transformOrigin = "%50 %50";
+          else
+              this.nativePanel.style.transformOrigin = (this._pivot.x * 100) + "% " + (this._pivot.y * 100) + "%";
       }
       get cursor() {
           return this._cursor;
       }
       set cursor(value) {
           this._cursor = value;
-      }
-      updateTransform() {
-          let str = [];
-          if (this._scale.x != 1 || this._flipX || this._scale.y != 1 || this._flipY) {
-              str.push("scale3d(");
-              str.push("" + this._scale.x * (this._flipX ? -1 : 1));
-              str.push("," + this._scale.x * (this._flipX ? -1 : 1));
-              str.push(",1) ");
-          }
-          if (this._rot != 0) {
-              str.push("rotateZ(");
-              str.push("" + this._rot);
-              str.push("deg) ");
-          }
-          if (str.length > 0) {
-              this.nativePanel.style.transform = str.join("");
-              if (this._flipX || this._flipY)
-                  this.nativePanel.style.transformOrigin = "50% 50%";
-              else
-                  this.nativePanel.style.transformOrigin = (this._pivot.x * 100) + "% " + (this._pivot.y * 100) + "%";
-          }
-          else {
-              this.nativePanel.style.transform = "none";
-          }
       }
       updateFilters() {
           if (this._grayed)
@@ -651,7 +786,7 @@
       setScale(xv, yv) {
           if (this._scale.x != xv || this._scale.y != yv) {
               this._scale.set(xv, yv);
-              this.updateTransform();
+              this.nativePanel.style.preTransformScale2d = `${xv}, ${yv}`;
           }
       }
       get rotation() {
@@ -660,7 +795,7 @@
       set rotation(value) {
           if (this._rot != value) {
               this._rot = value;
-              this.updateTransform();
+              this.nativePanel.style.preTransformRotate2d = `${value}deg`;
           }
       }
       get parent() {
@@ -672,9 +807,7 @@
       set alpha(value) {
           if (this._alpha != value) {
               this._alpha = value;
-              if (this.forbidStyleModify == false) {
-                  this.nativePanel.style.opacity = this._alpha.toFixed(3);
-              }
+              this.nativePanel.style.opacity = this._alpha.toFixed(3);
           }
       }
       get touchable() {
@@ -895,6 +1028,9 @@
       }
       dispose() {
           this.nativePanel.RemoveAndDeleteChildren();
+          for (const evt of PanelEventSet) {
+              this.nativePanel.ClearPanelEvent(evt);
+          }
           this.nativePanel.DeleteAsync(1);
       }
       traverseVisible(callback) {
@@ -1081,6 +1217,59 @@
       EaseType[EaseType["BounceInOut"] = 30] = "BounceInOut";
       EaseType[EaseType["Custom"] = 31] = "Custom";
   })(EaseType || (EaseType = {}));
+  function getEasePanorama(easeType) {
+      switch (easeType) {
+          case EaseType.BackIn:
+          case EaseType.BounceIn:
+          case EaseType.CircIn:
+          case EaseType.CubicIn:
+          case EaseType.ElasticIn:
+          case EaseType.QuadIn:
+          case EaseType.QuartIn:
+          case EaseType.QuintIn:
+          case EaseType.SineIn:
+          case EaseType.ExpoIn:
+              {
+                  return "ease-in";
+              }
+          case EaseType.BackOut:
+          case EaseType.BounceOut:
+          case EaseType.CircOut:
+          case EaseType.CubicOut:
+          case EaseType.ElasticOut:
+          case EaseType.QuadOut:
+          case EaseType.QuartOut:
+          case EaseType.QuintOut:
+          case EaseType.SineOut:
+          case EaseType.ExpoOut:
+              {
+                  return "ease-out";
+              }
+          case EaseType.BackInOut:
+          case EaseType.BounceInOut:
+          case EaseType.CircInOut:
+          case EaseType.CubicInOut:
+          case EaseType.ElasticInOut:
+          case EaseType.QuadInOut:
+          case EaseType.QuartInOut:
+          case EaseType.QuintInOut:
+          case EaseType.SineInOut:
+          case EaseType.ExpoInOut:
+              {
+                  return "ease-in-out";
+              }
+          case EaseType.Linear:
+              {
+                  return "linear";
+              }
+          case EaseType.Custom:
+              {
+                  // return `cubic-bezier(${})`;
+                  //TODO 不知道这里怎么对应  后续有时间再看看
+                  return "ease";
+              }
+      }
+  }
 
   class GearBase {
       dispose() {
@@ -1518,6 +1707,26 @@
           this.x = this.y = this.z = this.w = 0;
       }
   }
+  var ActionType;
+  (function (ActionType) {
+      ActionType[ActionType["XY"] = 0] = "XY";
+      ActionType[ActionType["Size"] = 1] = "Size";
+      ActionType[ActionType["Scale"] = 2] = "Scale";
+      ActionType[ActionType["Pivot"] = 3] = "Pivot";
+      ActionType[ActionType["Alpha"] = 4] = "Alpha";
+      ActionType[ActionType["Rotation"] = 5] = "Rotation";
+      ActionType[ActionType["Color"] = 6] = "Color";
+      ActionType[ActionType["Animation"] = 7] = "Animation";
+      ActionType[ActionType["Visible"] = 8] = "Visible";
+      ActionType[ActionType["Sound"] = 9] = "Sound";
+      ActionType[ActionType["Transition"] = 10] = "Transition";
+      ActionType[ActionType["Shake"] = 11] = "Shake";
+      ActionType[ActionType["ColorFilter"] = 12] = "ColorFilter";
+      ActionType[ActionType["Skew"] = 13] = "Skew";
+      ActionType[ActionType["Text"] = 14] = "Text";
+      ActionType[ActionType["Icon"] = 15] = "Icon";
+      ActionType[ActionType["Unknown"] = 16] = "Unknown";
+  })(ActionType || (ActionType = {}));
 
   // Author: Daniele Giardini - http://www.demigiant.com
   const _PiOver2 = Math.PI * 0.5;
@@ -1673,6 +1882,106 @@
       return bounce_easeOut(time * 2 - duration, duration) * 0.5 + 0.5;
   }
 
+  class Color {
+      constructor(r = 1, g = 1, b = 1, a = 1) {
+          this.r = r;
+          this.g = g;
+          this.b = b;
+          this.a = a;
+      }
+      setRGB(rgb) {
+          this.r = ((rgb >> 16) & 0xFF) / 255;
+          this.g = ((rgb >> 8) & 0xFF) / 255;
+          this.b = (rgb & 0xFF) / 255;
+      }
+      copyTo(destObject) {
+          var destColor = destObject;
+          destColor.r = this.r;
+          destColor.g = this.g;
+          destColor.b = this.b;
+          destColor.a = this.a;
+      }
+      clone() {
+          var dest = new Color();
+          this.copyTo(dest);
+          return dest;
+      }
+      getHex() {
+          return (Math.round(this.r * 255) << 16) + (Math.round(this.g * 255) << 8) + Math.round(this.b * 255);
+      }
+      toHexString() {
+          return "#" + ('000000' + this.getHex().toString(16)).slice(-6);
+      }
+      toStyleString() {
+          if (this.a == 1)
+              return this.toHexString();
+          else
+              return "rgba(" + Math.round(this.r * 255) + "," + Math.round(this.g * 255) + "," + Math.round(this.b * 255) + "," + this.a + ")";
+      }
+      parseHexString(str) {
+          if (str.length < 1)
+              return Color.BLACK;
+          if (str.charAt(0) == "#")
+              str = str.substr(1);
+          let rgb;
+          let a = 255;
+          if (str.length == 8) {
+              a = parseInt(str.substr(0, 2), 16);
+              rgb = parseInt(str.substr(2), 16);
+          }
+          else
+              rgb = parseInt(str, 16);
+          this.r = ((rgb >> 16) & 0xFF) / 255;
+          this.g = ((rgb >> 8) & 0xFF) / 255;
+          this.b = (rgb & 0xFF) / 255;
+          this.a = a / 255;
+      }
+      static fromHexString(str) {
+          let c = new Color();
+          c.parseHexString(str);
+          return c;
+      }
+  }
+  Color.CLEAR = new Color(0, 0, 0, 0);
+  Color.RED = new Color(1, 0, 0, 1);
+  Color.GREEN = new Color(0, 1, 0, 1);
+  Color.BLUE = new Color(0, 0, 1, 1);
+  Color.YELLOW = new Color(1, 1, 0, 1);
+  Color.GRAY = new Color(0.5, 0.5, 0.5, 1);
+  Color.BLACK = new Color(0, 0, 0, 1);
+  Color.WHITE = new Color(1, 1, 1, 1);
+
+  const s_color$1 = new Color();
+  function convertToHtmlColor(rgb) {
+      s_color$1.setRGB(rgb);
+      return s_color$1.toStyleString();
+  }
+  function clamp(value, min, max) {
+      if (value < min)
+          value = min;
+      else if (value > max)
+          value = max;
+      return value;
+  }
+  function clamp01(value) {
+      if (isNaN(value))
+          value = 0;
+      else if (value > 1)
+          value = 1;
+      else if (value < 0)
+          value = 0;
+      return value;
+  }
+  function lerp(start, end, percent) {
+      return (start + percent * (end - start));
+  }
+  function repeat(t, length) {
+      return t - Math.floor(t / length) * length;
+  }
+  function distance(x1, y1, x2, y2) {
+      return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+  }
+
   var s_vec2$4 = new Vec2();
   class GTweener {
       constructor() {
@@ -1704,6 +2013,9 @@
           this._easeType = value;
           return this;
       }
+      get easeType() {
+          return this._easeType;
+      }
       setEasePeriod(value) {
           this._easePeriod = value;
           return this;
@@ -1732,6 +2044,9 @@
           this._target = value;
           this._propType = propType;
           return this;
+      }
+      setActionType(action) {
+          this.actionType = action;
       }
       get target() {
           return this._target;
@@ -1819,15 +2134,16 @@
           }
           this._killed = true;
       }
-      _to(start, end, duration) {
+      _to(start, end, duration, actonType) {
           this._valueSize = 1;
           this._startValue.x = start;
           this._endValue.x = end;
           this._value.x = start;
           this._duration = duration;
+          this.actionType = actonType;
           return this;
       }
-      _to2(start, start2, end, end2, duration) {
+      _to2(start, start2, end, end2, duration, actonType) {
           this._valueSize = 2;
           this._startValue.x = start;
           this._endValue.x = end;
@@ -1836,9 +2152,10 @@
           this._value.x = start;
           this._value.y = start2;
           this._duration = duration;
+          this.actionType = actonType;
           return this;
       }
-      _to3(start, start2, start3, end, end2, end3, duration) {
+      _to3(start, start2, start3, end, end2, end3, duration, actonType) {
           this._valueSize = 3;
           this._startValue.x = start;
           this._endValue.x = end;
@@ -1850,9 +2167,10 @@
           this._value.y = start2;
           this._value.z = start3;
           this._duration = duration;
+          this.actionType = actonType;
           return this;
       }
-      _to4(start, start2, start3, start4, end, end2, end3, end4, duration) {
+      _to4(start, start2, start3, start4, end, end2, end3, end4, duration, actonType) {
           this._valueSize = 4;
           this._startValue.x = start;
           this._endValue.x = end;
@@ -1867,22 +2185,25 @@
           this._value.z = start3;
           this._value.w = start4;
           this._duration = duration;
+          this.actionType = actonType;
           return this;
       }
-      _toColor(start, end, duration) {
+      _toColor(start, end, duration, actonType) {
           this._valueSize = 4;
           this._startValue.color = start;
           this._endValue.color = end;
           this._value.color = start;
           this._duration = duration;
+          this.actionType = actonType;
           return this;
       }
-      _shake(startX, startY, amplitude, duration) {
+      _shake(startX, startY, amplitude, duration, actonType) {
           this._valueSize = 5;
           this._startValue.x = startX;
           this._startValue.y = startY;
           this._startValue.w = amplitude;
           this._duration = duration;
+          this.actionType = actonType;
           return this;
       }
       _init() {
@@ -2072,16 +2393,95 @@
               }
           }
       }
+      playNative() {
+          if (this.target && this.target.element) {
+              let endx = this.endValue.x;
+              let endy = this.endValue.y;
+              let csstween;
+              switch (this.actionType) {
+                  case ActionType.XY:
+                      {
+                          let newx = endx - this.startValue.x;
+                          let newy = endy - this.startValue.y;
+                          csstween = new CssTween("transform", `translate3d(${newx}px, ${newy}px, 0px)`, 4);
+                          break;
+                      }
+                  case ActionType.Rotation:
+                      {
+                          csstween = new CssTween("pre-transform-rotate2d", `${endx}deg`, 0);
+                          break;
+                      }
+                  case ActionType.Scale:
+                      {
+                          csstween = new CssTween("pre-transform-scale2d", `${endx}, ${endy}`, 0);
+                          break;
+                      }
+                  case ActionType.Size:
+                      {
+                          let tween1 = new CssTween("width", `${endx}px`, 0);
+                          let tween2 = new CssTween("height", `${endy}px`, 0);
+                          this.target.element.appendTween(tween1);
+                          this.target.element.appendTween(tween2);
+                          break;
+                      }
+                  case ActionType.Alpha:
+                      {
+                          csstween = new CssTween("opacity", `${endx}px`, 0);
+                          break;
+                      }
+                  case ActionType.Color:
+                      {
+                          csstween = new CssTween("background-color", `${convertToHtmlColor(this.endValue.color)}`, 0);
+                          break;
+                      }
+                  case ActionType.Skew:
+                      {
+                          csstween = new CssTween("transform", `skew(${endx}deg, ${endy}deg)`, 0);
+                          break;
+                      }
+                  default:
+                      {
+                          $.Msg("unsupported tween type:" + ActionType[this.actionType]);
+                      }
+              }
+              if (csstween) {
+                  csstween.ease = getEasePanorama(this.easeType);
+                  csstween.delay = this.delay;
+                  csstween.duration = this.duration;
+                  csstween.tweener = this;
+                  this.target.element.appendTween(csstween);
+              }
+          }
+      }
+  }
+  class CssTween {
+      constructor(v1, v2, v6) {
+          this.propType = v1;
+          this.propValue = v2;
+          this.priority = v6;
+          this.delay = 0;
+      }
+      set duration(value) {
+          let currentTime = Game.Time();
+          this.endTime = currentTime + value + this.delay;
+          this.startTime = currentTime + this.delay;
+      }
+      ;
+      get duration() {
+          return this.endTime - Game.Time();
+      }
   }
 
   class TweenManager {
       static createTween() {
-          if (!_inited) {
-              Timers.addUpdate(TweenManager.update);
-              _inited = true;
-          }
           var tweener = _tweenerPool.borrow();
-          _activeTweens[_totalActiveTweens++] = tweener;
+          if (UIConfig.useNativeTransition == false) {
+              if (!_inited) {
+                  Timers.addUpdate(TweenManager.update);
+                  _inited = true;
+              }
+              _activeTweens[_totalActiveTweens++] = tweener;
+          }
           return tweener;
       }
       static isTweening(target, propType) {
@@ -2166,32 +2566,33 @@
           }
       }
   }
+  TweenManager._tmpTweens = [];
   var _activeTweens = new Array();
   var _tweenerPool = new Pool(GTweener, e => e._init(), e => e._reset());
   var _totalActiveTweens = 0;
   var _inited = false;
 
   class GTween {
-      static to(start, end, duration) {
-          return TweenManager.createTween()._to(start, end, duration);
+      static to(start, end, duration, actionType) {
+          return TweenManager.createTween()._to(start, end, duration, actionType);
       }
-      static to2(start, start2, end, end2, duration) {
-          return TweenManager.createTween()._to2(start, start2, end, end2, duration);
+      static to2(start, start2, end, end2, duration, actionType) {
+          return TweenManager.createTween()._to2(start, start2, end, end2, duration, actionType);
       }
-      static to3(start, start2, start3, end, end2, end3, duration) {
-          return TweenManager.createTween()._to3(start, start2, start3, end, end2, end3, duration);
+      static to3(start, start2, start3, end, end2, end3, duration, actionType) {
+          return TweenManager.createTween()._to3(start, start2, start3, end, end2, end3, duration, actionType);
       }
-      static to4(start, start2, start3, start4, end, end2, end3, end4, duration) {
-          return TweenManager.createTween()._to4(start, start2, start3, start4, end, end2, end3, end4, duration);
+      static to4(start, start2, start3, start4, end, end2, end3, end4, duration, actionType) {
+          return TweenManager.createTween()._to4(start, start2, start3, start4, end, end2, end3, end4, duration, actionType);
       }
-      static toColor(start, end, duration) {
-          return TweenManager.createTween()._toColor(start, end, duration);
+      static toColor(start, end, duration, actionType) {
+          return TweenManager.createTween()._toColor(start, end, duration, actionType);
       }
       static delayedCall(delay) {
           return TweenManager.createTween().setDelay(delay);
       }
-      static shake(startX, startY, amplitude, duration) {
-          return TweenManager.createTween()._shake(startX, startY, amplitude, duration);
+      static shake(startX, startY, amplitude, duration, actionType) {
+          return TweenManager.createTween()._shake(startX, startY, amplitude, duration, actionType);
       }
       static isTweening(target, propType) {
           return TweenManager.isTweening(target, propType);
@@ -3190,75 +3591,6 @@
       }
   }
 
-  class Color {
-      constructor(r = 1, g = 1, b = 1, a = 1) {
-          this.r = r;
-          this.g = g;
-          this.b = b;
-          this.a = a;
-      }
-      setRGB(rgb) {
-          this.r = ((rgb >> 16) & 0xFF) / 255;
-          this.g = ((rgb >> 8) & 0xFF) / 255;
-          this.b = (rgb & 0xFF) / 255;
-      }
-      copyTo(destObject) {
-          var destColor = destObject;
-          destColor.r = this.r;
-          destColor.g = this.g;
-          destColor.b = this.b;
-          destColor.a = this.a;
-      }
-      clone() {
-          var dest = new Color();
-          this.copyTo(dest);
-          return dest;
-      }
-      getHex() {
-          return (Math.round(this.r * 255) << 16) + (Math.round(this.g * 255) << 8) + Math.round(this.b * 255);
-      }
-      toHexString() {
-          return "#" + ('000000' + this.getHex().toString(16)).slice(-6);
-      }
-      toStyleString() {
-          if (this.a == 1)
-              return this.toHexString();
-          else
-              return "rgba(" + Math.round(this.r * 255) + "," + Math.round(this.g * 255) + "," + Math.round(this.b * 255) + "," + this.a + ")";
-      }
-      parseHexString(str) {
-          if (str.length < 1)
-              return Color.BLACK;
-          if (str.charAt(0) == "#")
-              str = str.substr(1);
-          let rgb;
-          let a = 255;
-          if (str.length == 8) {
-              a = parseInt(str.substr(0, 2), 16);
-              rgb = parseInt(str.substr(2), 16);
-          }
-          else
-              rgb = parseInt(str, 16);
-          this.r = ((rgb >> 16) & 0xFF) / 255;
-          this.g = ((rgb >> 8) & 0xFF) / 255;
-          this.b = (rgb & 0xFF) / 255;
-          this.a = a / 255;
-      }
-      static fromHexString(str) {
-          let c = new Color();
-          c.parseHexString(str);
-          return c;
-      }
-  }
-  Color.CLEAR = new Color(0, 0, 0, 0);
-  Color.RED = new Color(1, 0, 0, 1);
-  Color.GREEN = new Color(0, 1, 0, 1);
-  Color.BLUE = new Color(0, 0, 1, 1);
-  Color.YELLOW = new Color(1, 1, 0, 1);
-  Color.GRAY = new Color(0.5, 0.5, 0.5, 1);
-  Color.BLACK = new Color(0, 0, 0, 1);
-  Color.WHITE = new Color(1, 1, 1, 1);
-
   class UIConfig {
       static GetItemUrl(pkgName, fileName) {
           return UIConfig.ouputDir + fileName.replace(pkgName, pkgName + "/");
@@ -3314,6 +3646,7 @@
   UIConfig.defaultLinkClass = "fgui-link";
   UIConfig.scaleLevel = 0;
   UIConfig.ouputDir = "file://{resources}/scripts/custom_game/fgui/";
+  UIConfig.useNativeTransition = true;
   // let dpr = window.devicePixelRatio;
   // if (dpr > 3)
   //     UIConfig.scaleLevel = 3; //x4
@@ -3398,7 +3731,7 @@
           /** @internal */
           this._sizePercentInGroup = 0;
           this._id = "" + gInstanceCounter++;
-          this._name = "";
+          this._name = name;
           this.panelName = name;
           this.createElement();
           this._element.$owner = this;
@@ -3407,6 +3740,7 @@
           this.touchAction = 0;
           this._updateRegisted = false;
           this._pivotStr = "0% 0%";
+          this._registedEvents = new Map();
       }
       get id() {
           return this._id;
@@ -3435,8 +3769,8 @@
       set z(value) {
           this.setPosition(this._x, this._y, value);
       }
-      setPosition(xv, yv, zv) {
-          if (this._x != xv || this._y != yv) {
+      setPosition(xv, yv, zv, force) {
+          if (this._x != xv || this._y != yv || force) {
               var dx = xv - this._x;
               var dy = yv - this._y;
               this._x = xv;
@@ -3604,16 +3938,16 @@
       set pivotY(value) {
           this.setPivot(this._pivotX, value);
       }
-      setPivot(xv, yv, asAnchor, force) {
+      setPivot(xv, yv, asAnchor) {
           asAnchor = asAnchor || false;
-          if (this._pivotX != xv || this._pivotY != yv || this._pivotAsAnchor != asAnchor || force) {
-              this._pivotX = xv;
-              this._pivotY = yv;
-              this._pivotAsAnchor = asAnchor;
-              this._pivotStr = `${xv * 100}% ${yv * 100}%`;
-              this._element.setPivot(xv, yv);
-              this.handlePositionChanged();
-          }
+          // if (this._pivotX != xv || this._pivotY != yv || this._pivotAsAnchor != asAnchor) {
+          this._pivotX = xv;
+          this._pivotY = yv;
+          this._pivotAsAnchor = asAnchor;
+          this._pivotStr = `${xv * 100}% ${yv * 100}%`;
+          this._element.setPivot(xv, yv);
+          this.handlePositionChanged();
+          // }
       }
       getPivotPercent() {
           return this._pivotStr;
@@ -3652,6 +3986,12 @@
           return this._element.rotation;
       }
       set rotation(value) {
+          if (this._element.rotation != value) {
+              this._element.rotation = value;
+              this.updateGear(3);
+          }
+      }
+      setRotation(value) {
           if (this._element.rotation != value) {
               this._element.rotation = value;
               this.updateGear(3);
@@ -3856,6 +4196,11 @@
       }
       clearTouchEvent() {
           this.clearAllPanelEvent();
+          if (this.element) {
+              for (let [evt, any] of this._registedEvents) {
+                  this.UnregisterEventHandler(evt, this.element.nativePanel);
+              }
+          }
       }
       dispose() {
           this.clearTouchEvent();
@@ -4047,9 +4392,6 @@
               f2 = buffer.readFloat();
               this.setPivot(f1, f2, buffer.readBool());
           }
-          else {
-              this.setPivot(0, 0, false, true);
-          }
           f1 = buffer.readFloat();
           if (f1 != 1)
               this.alpha = f1;
@@ -4090,32 +4432,45 @@
               return this.element.nativePanel;
           }
       }
+      RegisterEventHandler(evt, panel, func) {
+          if (!this._registedEvents.has(evt)) {
+              var handler = $.RegisterEventHandler(evt, this.GetNativePanel(), func);
+              this._registedEvents.set(evt, handler);
+          }
+      }
+      UnregisterEventHandler(evt, panel) {
+          let handler = this._registedEvents.get(evt);
+          if (handler) {
+              $.UnregisterEventHandler(evt, panel, handler);
+              this._registedEvents.delete(evt);
+          }
+      }
       //drag support
       //-------------------------------------------------------------------
       initDrag() {
           var nativePanel = this.GetNativePanel();
           if (this._draggable) {
               nativePanel.SetDraggable(true);
-              $.RegisterEventHandler('DragEnter', nativePanel, (panelID, dragged) => {
+              this.RegisterEventHandler('DragEnter', nativePanel, (panelID, dragged) => {
                   this.emit.call(this, 'drag_enter');
                   return true;
               });
-              $.RegisterEventHandler('DragDrop', nativePanel, (panelID, dragged) => {
+              this.RegisterEventHandler('DragDrop', nativePanel, (panelID, dragged) => {
                   this.emit.call(this, 'drag_drop');
                   return true;
               });
-              $.RegisterEventHandler('DragLeave', nativePanel, (panelID, dragged) => {
+              this.RegisterEventHandler('DragLeave', nativePanel, (panelID, dragged) => {
                   this.emit.call(this, 'drag_leave');
                   return true;
               });
-              $.RegisterEventHandler('DragStart', nativePanel, (panelID, settings) => {
+              this.RegisterEventHandler('DragStart', nativePanel, (panelID, settings) => {
                   settings.displayPanel = nativePanel;
                   GObject.draggingObject = this;
                   this.data = settings;
                   this.emit.call(this, 'drag_start');
                   return true;
               });
-              $.RegisterEventHandler('DragEnd', nativePanel, (panelID, dragged) => {
+              this.RegisterEventHandler('DragEnd', nativePanel, (panelID, dragged) => {
                   this.data = dragged;
                   this.emit.call(this, 'drag_end');
                   GObject.draggingObject = null;
@@ -4124,7 +4479,11 @@
           }
           else {
               nativePanel.SetDraggable(false);
-              //TODO  不知道这里有没有释放绑定的function
+              this.UnregisterEventHandler('DragEnter', nativePanel);
+              this.UnregisterEventHandler('DragDrop', nativePanel);
+              this.UnregisterEventHandler('DragLeave', nativePanel);
+              this.UnregisterEventHandler('DragStart', nativePanel);
+              this.UnregisterEventHandler('DragEnd', nativePanel);
           }
       }
       setPanelEvent(evt, callback) {
@@ -4622,37 +4981,6 @@
       }
   }
 
-  const s_color$1 = new Color();
-  function convertToHtmlColor(rgb) {
-      s_color$1.setRGB(rgb);
-      return s_color$1.toStyleString();
-  }
-  function clamp(value, min, max) {
-      if (value < min)
-          value = min;
-      else if (value > max)
-          value = max;
-      return value;
-  }
-  function clamp01(value) {
-      if (isNaN(value))
-          value = 0;
-      else if (value > 1)
-          value = 1;
-      else if (value < 0)
-          value = 0;
-      return value;
-  }
-  function lerp(start, end, percent) {
-      return (start + percent * (end - start));
-  }
-  function repeat(t, length) {
-      return t - Math.floor(t / length) * length;
-  }
-  function distance(x1, y1, x2, y2) {
-      return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-  }
-
   class Shape extends UIElement {
       constructor() {
           super();
@@ -4671,8 +4999,7 @@
           if (this._color != value) {
               if (this._type != 0) {
                   this._color = value;
-                  if (this.forbidStyleModify == false)
-                      this.nativePanel.style.backgroundColor = convertToHtmlColor(value);
+                  this.nativePanel.style.backgroundColor = convertToHtmlColor(value);
               }
           }
       }
@@ -4736,6 +5063,20 @@
       onSizeChanged() {
           this.nativePanel.style.width = this._contentRect.width + "px";
           this.nativePanel.style.height = this._contentRect.height + "px";
+      }
+      onTweenStart(tween) {
+          switch (tween.tweener.actionType) {
+              case ActionType.Color:
+                  {
+                      this.color = tween.tweener.startValue.color;
+                      break;
+                  }
+              default:
+                  {
+                      super.onTweenStart(tween);
+                      break;
+                  }
+          }
       }
   }
 
@@ -4807,6 +5148,7 @@
               super.setProp(index, value);
       }
       setup_beforeAdd(buffer, beginPos) {
+          this.setPivot(0, 0);
           super.setup_beforeAdd(buffer, beginPos);
           buffer.seek(beginPos, 5);
           let type = buffer.readByte();
@@ -4992,7 +5334,7 @@
           this._scale9Panels = [];
       }
       init() {
-          this.nativePanel = $.CreatePanel("Image", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("Image", $('#HiddenRoot'), this.$owner.name);
       }
       get src() {
           return this._src;
@@ -5637,8 +5979,8 @@
       }
       init() {
           super.init();
-          this._container = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.panelName);
-          this._label = $.CreatePanel("Label", this._container, this.$owner.panelName);
+          this._container = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.name);
+          this._label = $.CreatePanel("Label", this._container, this.$owner.name);
           this.nativePanel = this._container;
       }
       get textFormat() {
@@ -10278,7 +10620,7 @@
       }
       init() {
           super.init();
-          this._input = $.CreatePanel("TextEntry", $('#HiddenRoot'), this.$owner.panelName);
+          this._input = $.CreatePanel("TextEntry", $('#HiddenRoot'), this.$owner.name);
           if (this._singleLine) {
               this._input.style.whiteSpace = "nowrap";
           }
@@ -12664,16 +13006,7 @@
           this._endTime = endTime || -1;
           this._playing = true;
           this._paused = false;
-          this._onComplete = () => {
-              if (onComplete) {
-                  onComplete();
-              }
-              if (this._items.length > 0) {
-                  let item = this._items[0];
-                  if (item.target && item.target.element)
-                      item.target.element.forbidStyleModify = false;
-              }
-          };
+          this._onComplete = onComplete;
           var cnt = this._items.length;
           for (var i = 0; i < cnt; i++) {
               var item = this._items[i];
@@ -12714,15 +13047,17 @@
               }
           }
           if (cnt > 0) {
-              let item = this._items[0];
-              let transitionClassName = `${item.fileName}_${item.name}_${item.targetId}`;
-              item.target.AddClass(transitionClassName);
-              item.target.element.forbidStyleModify = true;
-              //这里更新Fgui的信息 实际不作展示
-              if (delay == 0)
-                  this.onDelayedPlay();
-              else
-                  GTween.delayedCall(delay).setTarget(this).onComplete(this.onDelayedPlay, this);
+              if (UIConfig.useNativeTransition == true) {
+                  let item = this._items[0];
+                  let transitionClassName = `${item.fileName}_${item.name}_${item.targetId}`;
+                  item.target.AddClass(transitionClassName);
+              }
+              else {
+                  if (delay == 0)
+                      this.onDelayedPlay();
+                  else
+                      GTween.delayedCall(delay).setTarget(this).onComplete(this.onDelayedPlay, this);
+              }
           }
       }
       stop(setToComplete, processCallback) {
@@ -13132,7 +13467,8 @@
                       .setTarget(item)
                       .onStart(this.onTweenStart, this)
                       .onUpdate(this.onTweenUpdate, this)
-                      .onComplete(this.onTweenComplete, this);
+                      .onComplete(this.onTweenComplete, this)
+                      .setActionType(item.type);
                   if (this._endTime >= 0)
                       item.tweener.setBreakpoint(this._endTime - time);
                   this._totalTasks++;
@@ -13513,7 +13849,7 @@
               buffer.seek(curPos, 0);
               var item = new Item(buffer.readByte());
               item.name = this.name;
-              item.fileName = this._owner.panelName;
+              item.fileName = this._owner.name;
               this._items[i] = item;
               item.time = buffer.readFloat();
               var targetId = buffer.readShort();
@@ -13628,26 +13964,6 @@
           }
       }
   }
-  var ActionType;
-  (function (ActionType) {
-      ActionType[ActionType["XY"] = 0] = "XY";
-      ActionType[ActionType["Size"] = 1] = "Size";
-      ActionType[ActionType["Scale"] = 2] = "Scale";
-      ActionType[ActionType["Pivot"] = 3] = "Pivot";
-      ActionType[ActionType["Alpha"] = 4] = "Alpha";
-      ActionType[ActionType["Rotation"] = 5] = "Rotation";
-      ActionType[ActionType["Color"] = 6] = "Color";
-      ActionType[ActionType["Animation"] = 7] = "Animation";
-      ActionType[ActionType["Visible"] = 8] = "Visible";
-      ActionType[ActionType["Sound"] = 9] = "Sound";
-      ActionType[ActionType["Transition"] = 10] = "Transition";
-      ActionType[ActionType["Shake"] = 11] = "Shake";
-      ActionType[ActionType["ColorFilter"] = 12] = "ColorFilter";
-      ActionType[ActionType["Skew"] = 13] = "Skew";
-      ActionType[ActionType["Text"] = 14] = "Text";
-      ActionType[ActionType["Icon"] = 15] = "Icon";
-      ActionType[ActionType["Unknown"] = 16] = "Unknown";
-  })(ActionType || (ActionType = {}));
   class Item {
       constructor(type) {
           this.type = type;
@@ -15524,7 +15840,7 @@
               this._icon = this._iconObject.icon;
           if (this._mode == ButtonMode.Common)
               this.setState("up");
-          this.addEvent("removed_from_stage", this.__removeFromStage, this);
+          this.onEvent("removed_from_stage", this.__removeFromStage, this);
           this.onEvent('onTouchBegin', this.__btnTouchBegin, this);
           this.onEvent('onTouchEnd', this.__btnTouchEnd, this);
           this.onEvent('onactivate', this.__click, this);
@@ -19133,7 +19449,7 @@
           super();
       }
       init() {
-          this.nativePanel = $.CreatePanel("DOTAAbilityImage", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("DOTAAbilityImage", $('#HiddenRoot'), this.$owner.name);
       }
       get abilityname() {
           return this._abilityname;
@@ -19174,7 +19490,7 @@
           super();
       }
       init() {
-          this.nativePanel = $.CreatePanel("DOTAAvatarImage", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("DOTAAvatarImage", $('#HiddenRoot'), this.$owner.name);
       }
       SetAccountID(accountid) {
           this.nativePanel.SetAccountID(accountid);
@@ -19218,7 +19534,7 @@
           super();
       }
       init() {
-          this.nativePanel = $.CreatePanel("DOTAItemImage", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("DOTAItemImage", $('#HiddenRoot'), this.$owner.name);
       }
       get itemname() {
           return this._itemname;
@@ -19259,7 +19575,7 @@
           super();
       }
       init() {
-          this.nativePanel = $.CreatePanel("DOTAHeroImage", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("DOTAHeroImage", $('#HiddenRoot'), this.$owner.name);
       }
       get heroid() {
           return this._heroid;
@@ -19309,7 +19625,7 @@
           super();
       }
       init() {
-          this.nativePanel = $.CreatePanel("DOTAUserName", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("DOTAUserName", $('#HiddenRoot'), this.$owner.name);
       }
       get steamid() {
           return this._steamid;
@@ -19377,9 +19693,9 @@
        */
       SetEffectWithParams(effectPath, squarePixels, height, fov) {
           if (this.effectPanel != undefined) {
-              this.effectPanel.DeleteAsync(0);
+              this.effectPanel.DeleteAsync(1);
           }
-          this.effectPanel = $.CreatePanelWithProperties('DOTAParticleScenePanel', this.nativePanel, this.$owner.panelName, {
+          this.effectPanel = $.CreatePanelWithProperties('DOTAParticleScenePanel', this.nativePanel, this.$owner.name, {
               particleName: effectPath,
               startActive: true,
               cameraOrigin: "0 0 " + ((height != undefined) ? height : this.width),
@@ -19418,9 +19734,9 @@
        */
       setModelWithParams(unitName) {
           if (this.scenePanel != undefined) {
-              this.scenePanel.DeleteAsync(0);
+              this.scenePanel.DeleteAsync(1);
           }
-          this.scenePanel = $.CreatePanelWithProperties('DOTAScenePanel', this.nativePanel, this.$owner.panelName, {
+          this.scenePanel = $.CreatePanelWithProperties('DOTAScenePanel', this.nativePanel, this.$owner.name, {
               light: this.light,
               antialias: this.antialias,
               renderdeferred: this.renderdeferred,
@@ -19442,7 +19758,7 @@
           // this.scenePanel.style.marginTop = -this.height / 2 + "px";
       }
       init() {
-          this.nativePanel = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.panelName);
+          this.nativePanel = $.CreatePanel("Panel", $('#HiddenRoot'), this.$owner.name);
       }
       FireEntityInput(entityID, inputName, value) {
           this.scenePanel.FireEntityInput(entityID, inputName, value);
@@ -19804,7 +20120,7 @@
       constructor() {
       }
       static Init() {
-          BinCache.PrecachePackageWithArrayBuffer("test", new Uint8Array([70, 71, 85, 73, 0, 0, 0, 6, 0, 0, 8, 107, 48, 98, 107, 122, 54, 103, 49, 0, 4, 116, 101, 115, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 26, 0, 0, 0, 38, 0, 0, 72, 166, 0, 0, 0, 0, 0, 0, 72, 168, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 27, 0, 0, 1, 238, 3, 0, 4, 0, 5, 0, 6, 255, 254, 0, 0, 0, 0, 212, 0, 0, 0, 60, 12, 0, 0, 1, 211, 8, 0, 0, 0, 0, 34, 0, 0, 0, 56, 0, 0, 0, 92, 0, 0, 1, 177, 0, 0, 1, 178, 0, 0, 1, 197, 0, 0, 1, 199, 0, 0, 0, 0, 0, 0, 0, 212, 0, 0, 0, 60, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 80, 7, 1, 0, 16, 0, 53, 0, 57, 0, 69, 0, 0, 0, 77, 0, 80, 0, 0, 16, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 19, 0, 2, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 10, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 169, 7, 1, 0, 16, 0, 61, 0, 65, 0, 123, 0, 0, 0, 131, 0, 167, 6, 255, 254, 255, 254, 0, 22, 0, 23, 0, 0, 0, 86, 0, 0, 0, 13, 1, 0, 0, 0, 40, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 54, 4, 0, 0, 0, 3, 0, 10, 255, 255, 255, 255, 0, 0, 0, 255, 0, 12, 0, 204, 0, 255, 0, 0, 0, 255, 0, 14, 255, 153, 51, 255, 0, 0, 0, 255, 1, 0, 0, 0, 255, 0, 0, 0, 255, 1, 5, 62, 153, 153, 154, 0, 0, 0, 0, 1, 255, 255, 2, 3, 0, 10, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 2, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 230, 3, 0, 24, 0, 25, 0, 6, 255, 254, 0, 0, 0, 0, 160, 0, 0, 0, 40, 12, 0, 0, 1, 203, 8, 0, 0, 0, 0, 34, 0, 0, 0, 56, 0, 0, 0, 92, 0, 0, 1, 169, 0, 0, 1, 170, 0, 0, 1, 189, 0, 0, 1, 191, 0, 0, 0, 0, 0, 0, 0, 160, 0, 0, 0, 40, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 26, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 8, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 82, 7, 1, 0, 16, 0, 53, 0, 57, 0, 71, 0, 0, 0, 79, 0, 82, 0, 0, 27, 0, 2, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 159, 7, 1, 0, 16, 0, 61, 0, 65, 0, 113, 0, 0, 0, 121, 0, 157, 6, 255, 254, 255, 254, 0, 28, 0, 23, 0, 0, 0, 75, 0, 0, 0, 3, 1, 0, 0, 0, 10, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 44, 4, 0, 0, 0, 2, 0, 10, 102, 102, 102, 255, 0, 0, 0, 255, 0, 14, 153, 153, 153, 255, 0, 0, 0, 255, 1, 0, 0, 0, 255, 0, 0, 0, 255, 1, 5, 62, 153, 153, 154, 0, 0, 0, 0, 1, 255, 255, 2, 3, 0, 10, 0, 255, 254, 0, 24, 153, 153, 153, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 1, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 232, 3, 0, 29, 0, 30, 0, 6, 255, 254, 0, 0, 0, 0, 160, 0, 0, 0, 40, 12, 0, 0, 1, 205, 8, 0, 0, 0, 0, 34, 0, 0, 0, 56, 0, 0, 0, 92, 0, 0, 1, 171, 0, 0, 1, 172, 0, 0, 1, 191, 0, 0, 1, 193, 0, 0, 0, 0, 0, 0, 0, 160, 0, 0, 0, 40, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 26, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 8, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 27, 0, 2, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 10, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 159, 7, 1, 0, 16, 0, 61, 0, 65, 0, 113, 0, 0, 0, 121, 0, 157, 6, 255, 254, 255, 254, 0, 28, 0, 23, 0, 0, 0, 75, 0, 0, 0, 3, 1, 0, 0, 0, 10, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 44, 4, 0, 0, 0, 2, 0, 10, 102, 102, 102, 255, 0, 0, 0, 255, 0, 14, 153, 153, 153, 255, 0, 0, 0, 255, 1, 0, 0, 0, 255, 0, 0, 0, 255, 1, 5, 62, 153, 153, 154, 0, 0, 0, 0, 1, 255, 255, 2, 3, 0, 10, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 188, 3, 0, 31, 0, 32, 0, 6, 255, 254, 0, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 0, 161, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 124, 0, 0, 0, 125, 0, 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 71, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 71, 0, 0, 33, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 144, 0, 0, 1, 144, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 188, 3, 0, 34, 0, 35, 0, 6, 255, 254, 0, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 0, 161, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 124, 0, 0, 0, 125, 0, 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 71, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 71, 0, 0, 33, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 144, 0, 0, 1, 144, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 1, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 188, 3, 0, 36, 0, 37, 0, 6, 255, 254, 0, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 0, 161, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 124, 0, 0, 0, 125, 0, 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 71, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 71, 0, 0, 33, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 144, 0, 0, 1, 144, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 1, 209, 3, 0, 38, 0, 39, 0, 6, 255, 254, 0, 0, 0, 0, 100, 0, 0, 0, 30, 12, 0, 0, 1, 182, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 148, 0, 0, 1, 149, 0, 0, 1, 168, 0, 0, 1, 170, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 51, 153, 255, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 28, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 67, 3, 0, 40, 0, 41, 0, 6, 255, 254, 0, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 1, 40, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 13, 0, 0, 1, 19, 0, 0, 1, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 1, 160, 160, 160, 255, 240, 240, 240, 255, 0, 0, 125, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 77, 0, 83, 0, 104, 0, 106, 0, 121, 10, 255, 254, 255, 254, 0, 20, 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 14, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 0, 43, 0, 0, 1, 0, 1, 1, 15, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 44, 0, 45, 0, 6, 255, 254, 0, 0, 0, 0, 10, 0, 0, 0, 19, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 96, 3, 0, 47, 0, 48, 0, 6, 255, 254, 0, 0, 0, 0, 50, 0, 0, 0, 10, 15, 0, 0, 1, 69, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 43, 0, 0, 1, 44, 0, 0, 1, 63, 0, 0, 1, 65, 0, 0, 0, 0, 0, 0, 0, 50, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 50, 0, 0, 0, 10, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 1, 160, 160, 160, 255, 240, 240, 240, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 20, 0, 49, 0, 0, 0, 5, 0, 0, 0, 3, 1, 0, 0, 0, 40, 0, 0, 0, 4, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 51, 153, 255, 255, 0, 0, 71, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 65, 0, 71, 0, 71, 9, 0, 44, 255, 254, 0, 28, 0, 50, 0, 0, 0, 40, 255, 255, 255, 251, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 0, 1, 1, 6, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 0, 0, 1, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 51, 0, 52, 0, 6, 255, 254, 0, 0, 0, 0, 17, 0, 0, 0, 20, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 56, 0, 57, 0, 6, 255, 254, 0, 0, 0, 0, 17, 0, 0, 0, 20, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 203, 3, 0, 58, 0, 59, 0, 6, 255, 254, 0, 0, 0, 0, 17, 0, 0, 0, 20, 12, 0, 0, 0, 176, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 142, 0, 0, 0, 143, 0, 0, 0, 162, 0, 0, 0, 164, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 255, 153, 51, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 60, 0, 61, 0, 6, 255, 254, 0, 0, 0, 0, 20, 0, 0, 0, 17, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 62, 0, 63, 0, 6, 255, 254, 0, 0, 0, 0, 20, 0, 0, 0, 17, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 203, 3, 0, 64, 0, 65, 0, 6, 255, 254, 0, 0, 0, 0, 20, 0, 0, 0, 17, 12, 0, 0, 0, 176, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 142, 0, 0, 0, 143, 0, 0, 0, 162, 0, 0, 0, 164, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 255, 153, 51, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 9, 17, 3, 0, 66, 0, 67, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 8, 246, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 8, 224, 0, 0, 8, 225, 0, 0, 8, 244, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 12, 1, 188, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 72, 0, 78, 0, 99, 0, 101, 0, 116, 10, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 149, 0, 0, 1, 248, 1, 0, 0, 0, 244, 0, 0, 1, 193, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 0, 69, 0, 18, 0, 16, 255, 254, 0, 70, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 71, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 72, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 73, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 74, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 75, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 76, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 77, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 219, 0, 0, 1, 183, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 78, 1, 188, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 72, 0, 78, 0, 99, 0, 101, 0, 116, 10, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 2, 6, 0, 0, 1, 249, 1, 0, 0, 0, 244, 0, 0, 1, 202, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0, 79, 255, 254, 255, 254, 255, 254, 0, 69, 0, 18, 0, 16, 255, 254, 0, 80, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 81, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 82, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 83, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 84, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 85, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 86, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 87, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 2, 73, 0, 0, 1, 185, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 89, 1, 188, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 72, 0, 78, 0, 99, 0, 101, 0, 116, 10, 255, 254, 255, 254, 0, 90, 0, 91, 0, 0, 3, 75, 0, 0, 1, 243, 1, 0, 0, 0, 244, 0, 0, 1, 205, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0, 79, 255, 254, 255, 254, 255, 254, 0, 69, 0, 18, 0, 16, 255, 254, 0, 92, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 93, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 94, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 95, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 96, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 97, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 98, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 99, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 100, 0, 101, 0, 0, 3, 64, 0, 0, 1, 189, 1, 0, 0, 1, 12, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 0, 4, 2, 3, 0, 11, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 31, 255, 254, 0, 103, 0, 104, 0, 0, 5, 84, 0, 0, 0, 253, 1, 0, 0, 1, 211, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 105, 0, 106, 0, 0, 5, 221, 0, 0, 0, 211, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 107, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 36, 255, 254, 0, 108, 0, 109, 0, 0, 5, 87, 0, 0, 2, 45, 1, 0, 0, 1, 211, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 34, 255, 254, 0, 110, 0, 111, 0, 0, 5, 81, 0, 0, 3, 52, 1, 0, 0, 1, 205, 0, 0, 0, 221, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 112, 0, 113, 0, 0, 5, 222, 0, 0, 2, 3, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 115, 0, 116, 0, 0, 5, 214, 0, 0, 3, 10, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 117, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 5, 116, 3, 0, 118, 0, 119, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 5, 89, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 5, 67, 0, 0, 5, 68, 0, 0, 5, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 105, 0, 0, 0, 220, 1, 0, 0, 2, 208, 0, 0, 0, 46, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 105, 0, 0, 1, 26, 1, 0, 0, 5, 212, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 121, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 105, 0, 0, 1, 97, 1, 0, 0, 2, 217, 0, 0, 0, 99, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 122, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 0, 105, 0, 0, 1, 232, 1, 0, 0, 2, 231, 0, 0, 0, 39, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 123, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 90, 0, 124, 0, 0, 0, 105, 0, 0, 2, 44, 1, 0, 0, 2, 231, 0, 0, 0, 39, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 125, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 100, 0, 101, 0, 0, 0, 105, 0, 0, 2, 135, 1, 0, 0, 1, 44, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 127, 0, 128, 0, 0, 0, 105, 0, 0, 2, 189, 1, 0, 0, 1, 44, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 129, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 103, 0, 104, 0, 0, 0, 105, 0, 0, 2, 247, 1, 0, 0, 1, 44, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 130, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 105, 0, 106, 0, 0, 1, 205, 0, 0, 2, 134, 1, 0, 0, 1, 44, 0, 0, 0, 147, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 131, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 108, 0, 109, 0, 0, 3, 62, 0, 0, 2, 134, 1, 0, 0, 1, 44, 0, 0, 0, 147, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 132, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 110, 0, 111, 0, 0, 4, 193, 0, 0, 2, 134, 1, 0, 0, 1, 44, 0, 0, 0, 147, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 2, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 133, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 7, 255, 254, 255, 254, 0, 112, 0, 113, 0, 0, 0, 108, 0, 0, 3, 36, 1, 0, 0, 2, 111, 0, 0, 0, 220, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 134, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 3, 143, 3, 0, 135, 0, 136, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 3, 116, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 3, 75, 0, 0, 3, 76, 0, 0, 3, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 137, 0, 0, 4, 0, 8, 255, 253, 0, 10, 255, 253, 0, 12, 255, 253, 0, 14, 255, 253, 0, 0, 0, 0, 8, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 4, 255, 254, 0, 17, 0, 18, 0, 0, 1, 43, 0, 0, 0, 236, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 138, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 20, 0, 21, 0, 0, 1, 54, 0, 0, 1, 97, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 139, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 28, 0, 46, 0, 0, 1, 219, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 140, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 10, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 22, 0, 88, 0, 0, 2, 128, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 141, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 12, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 90, 0, 124, 0, 0, 3, 37, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 142, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 14, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 100, 0, 101, 0, 0, 1, 54, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 143, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 8, 255, 254, 0, 1, 0, 127, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 144, 255, 254, 0, 127, 0, 145, 0, 0, 1, 46, 0, 0, 2, 170, 1, 0, 0, 1, 232, 0, 0, 0, 44, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 13, 0, 4, 0, 6, 0, 146, 255, 254, 255, 254, 0, 6, 0, 147, 255, 254, 255, 254, 0, 6, 0, 148, 255, 254, 255, 254, 0, 6, 0, 149, 255, 254, 255, 254, 0, 150, 255, 254, 0, 0, 0, 0, 10, 0, 255, 255, 255, 254, 63, 128, 0, 0, 0, 87, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 47, 255, 254, 0, 103, 0, 151, 0, 0, 1, 18, 0, 0, 3, 144, 1, 0, 0, 1, 121, 0, 0, 0, 10, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 15, 0, 0, 0, 50, 0, 0, 0, 100, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 1, 0, 17, 0, 152, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 12, 112, 3, 0, 153, 0, 154, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 12, 85, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 3, 255, 0, 0, 4, 0, 0, 0, 4, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 176, 0, 0, 0, 164, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 130, 0, 0, 1, 28, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 123, 0, 0, 1, 204, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 0, 173, 0, 0, 2, 194, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 90, 0, 124, 0, 0, 0, 226, 0, 0, 3, 99, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 100, 0, 101, 0, 0, 3, 227, 0, 0, 0, 119, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 155, 0, 128, 0, 0, 4, 27, 0, 0, 2, 105, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 156, 0, 109, 0, 0, 2, 186, 0, 0, 1, 74, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 4, 255, 254, 0, 157, 0, 158, 0, 0, 2, 144, 0, 0, 1, 209, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 159, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 4, 255, 254, 0, 160, 0, 161, 0, 0, 2, 146, 0, 0, 2, 52, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 162, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 163, 0, 116, 0, 0, 5, 128, 0, 0, 2, 102, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 9, 0, 109, 0, 164, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 0, 0, 0, 0, 0, 0, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 66, 180, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 62, 128, 0, 0, 0, 0, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 66, 180, 0, 0, 67, 52, 0, 0, 0, 0, 0, 0, 0, 77, 0, 165, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 1, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 61, 139, 67, 150, 62, 134, 167, 240, 1, 1, 1, 62, 180, 57, 88, 62, 134, 167, 240, 1, 0, 0, 0, 0, 0, 125, 0, 166, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 2, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 62, 76, 204, 205, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 2, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 125, 0, 167, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 3, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 62, 76, 204, 205, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 3, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 125, 0, 168, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 4, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 62, 76, 204, 205, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 4, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 2, 9, 0, 169, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 10, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 4, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 255, 255, 255, 0, 204, 255, 255, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 66, 180, 0, 0, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 63, 128, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 110, 128, 0, 67, 2, 0, 0, 0, 1, 0, 68, 192, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 4, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 204, 255, 255, 0, 0, 0, 255, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 66, 180, 0, 0, 67, 52, 0, 0, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 0, 68, 192, 32, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 68, 7, 0, 0, 0, 0, 0, 0, 0, 1, 8, 0, 152, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 5, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 0, 0, 0, 0, 0, 6, 255, 254, 1, 64, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 255, 255, 255, 255, 153, 102, 255, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 6, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 63, 76, 204, 205, 63, 76, 204, 205, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 6, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 131, 96, 0, 68, 26, 64, 0, 0, 1, 1, 68, 90, 0, 0, 68, 26, 64, 0, 0, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 128, 0, 0, 0, 6, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 76, 204, 205, 63, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 31, 4, 1, 0, 10, 0, 0, 0, 20, 0, 0, 0, 64, 0, 0, 0, 0, 6, 255, 254, 0, 1, 1, 68, 131, 96, 0, 68, 26, 64, 0, 0, 2, 103, 0, 170, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 11, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 0, 0, 0, 0, 0, 7, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 255, 255, 255, 51, 51, 51, 255, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 13, 0, 0, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 66, 11, 40, 246, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 7, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 46, 128, 0, 67, 165, 0, 0, 0, 1, 1, 68, 167, 224, 0, 67, 165, 0, 0, 0, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 13, 63, 0, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 66, 11, 40, 246, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 66, 59, 51, 51, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 128, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 51, 51, 51, 255, 0, 153, 255, 255, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 13, 63, 128, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 0, 0, 0, 0, 66, 59, 51, 51, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 128, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 167, 224, 0, 67, 165, 0, 0, 0, 1, 1, 68, 167, 224, 0, 68, 86, 192, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 192, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 153, 255, 255, 255, 204, 0, 255, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 192, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 167, 224, 0, 68, 86, 192, 0, 0, 1, 1, 68, 44, 192, 0, 68, 86, 192, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 224, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 204, 0, 255, 153, 51, 0, 255, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 224, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 44, 192, 0, 68, 86, 192, 0, 0, 1, 1, 68, 19, 192, 0, 67, 165, 0, 0, 0, 0, 0, 0, 0, 0, 133, 0, 171, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 1, 0, 0, 0, 0, 0, 10, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 66, 200, 0, 0, 66, 200, 0, 0, 1, 1, 67, 143, 0, 0, 66, 200, 0, 0, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 1, 63, 0, 0, 0, 0, 10, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 67, 143, 0, 0, 66, 200, 0, 0, 1, 1, 67, 143, 0, 0, 67, 134, 0, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 2, 80, 3, 0, 172, 0, 173, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 2, 53, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 2, 31, 0, 0, 2, 32, 0, 0, 2, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 174, 0, 0, 0, 22, 0, 175, 0, 0, 0, 85, 0, 0, 1, 124, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 176, 0, 0, 0, 90, 0, 177, 0, 0, 0, 97, 0, 0, 2, 56, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 178, 0, 0, 0, 100, 0, 179, 0, 0, 1, 236, 0, 0, 2, 42, 1, 0, 0, 1, 216, 0, 0, 1, 208, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 180, 0, 0, 0, 127, 0, 181, 0, 0, 2, 76, 0, 0, 1, 91, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 182, 0, 0, 0, 103, 0, 183, 0, 0, 4, 20, 0, 0, 1, 81, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 184, 0, 0, 0, 105, 0, 185, 0, 0, 4, 178, 0, 0, 2, 20, 1, 0, 0, 2, 24, 0, 0, 1, 241, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 186, 0, 0, 0, 108, 0, 187, 0, 0, 0, 97, 0, 0, 3, 4, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 6, 193, 3, 0, 188, 0, 189, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 6, 166, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 6, 144, 0, 0, 6, 145, 0, 0, 6, 164, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 17, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 0, 82, 0, 0, 2, 79, 1, 0, 0, 0, 168, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 190, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 90, 0, 124, 0, 0, 0, 9, 0, 0, 3, 93, 1, 0, 0, 0, 240, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 191, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 100, 0, 192, 0, 0, 1, 43, 0, 0, 3, 33, 1, 0, 0, 1, 85, 0, 0, 0, 198, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 28, 0, 193, 0, 0, 1, 44, 0, 0, 2, 35, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 194, 0, 128, 0, 0, 1, 40, 0, 0, 1, 242, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 195, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 196, 0, 197, 0, 0, 3, 139, 0, 0, 1, 55, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 198, 0, 199, 0, 0, 3, 135, 0, 0, 1, 6, 1, 0, 0, 0, 76, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 201, 0, 202, 0, 0, 5, 51, 0, 0, 2, 40, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 203, 0, 204, 0, 0, 5, 47, 0, 0, 1, 247, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 205, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 206, 0, 207, 0, 0, 6, 5, 0, 0, 2, 53, 1, 0, 0, 0, 209, 0, 0, 0, 60, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 208, 0, 209, 0, 0, 6, 1, 0, 0, 2, 4, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 210, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 211, 0, 212, 0, 0, 1, 252, 0, 0, 2, 25, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 213, 0, 109, 0, 0, 1, 248, 0, 0, 1, 232, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 214, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 215, 0, 216, 0, 0, 2, 208, 0, 0, 2, 25, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 217, 0, 116, 0, 0, 2, 204, 0, 0, 1, 232, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 218, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 219, 0, 220, 0, 0, 3, 247, 0, 0, 3, 75, 1, 0, 0, 1, 18, 0, 0, 0, 146, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 221, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 222, 0, 223, 0, 0, 5, 70, 0, 0, 3, 70, 1, 0, 0, 1, 18, 0, 0, 0, 146, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 2, 125, 3, 0, 224, 0, 225, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 2, 98, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 193, 0, 0, 1, 194, 0, 0, 1, 213, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 234, 0, 0, 1, 214, 1, 0, 0, 1, 60, 0, 0, 1, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 2, 82, 0, 0, 1, 199, 1, 0, 0, 0, 30, 0, 0, 1, 54, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 0, 0, 2, 10, 0, 2, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 226, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 227, 0, 46, 0, 0, 1, 91, 0, 0, 3, 113, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 228, 0, 88, 0, 0, 1, 125, 0, 0, 3, 146, 1, 0, 0, 0, 32, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 0, 2, 2, 3, 0, 10, 0, 255, 254, 0, 24, 0, 0, 0, 255, 1, 1, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 229, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 1, 0, 137, 0, 230, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 67, 106, 0, 0, 67, 235, 0, 0, 0, 1, 1, 68, 51, 64, 0, 67, 235, 0, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 0, 0, 0, 0, 0, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 51, 64, 0, 67, 235, 0, 0, 0, 1, 1, 68, 51, 64, 0, 67, 83, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 2, 44, 3, 0, 144, 0, 231, 0, 6, 255, 254, 1, 0, 0, 0, 100, 0, 0, 0, 30, 13, 0, 0, 2, 17, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 249, 0, 0, 1, 250, 0, 0, 2, 13, 0, 0, 2, 15, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 4, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 22, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 80, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 232, 255, 254, 0, 0, 0, 0, 1, 57, 3, 0, 233, 0, 234, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 1, 30, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 8, 0, 0, 1, 9, 0, 0, 1, 28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 235, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 153, 153, 153, 255, 0, 0, 127, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 79, 0, 85, 0, 106, 0, 108, 0, 123, 10, 255, 254, 255, 254, 0, 17, 0, 236, 0, 0, 0, 149, 0, 0, 0, 54, 1, 0, 0, 6, 85, 0, 0, 0, 88, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 3, 0, 7, 0, 255, 255, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 20, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 0, 69, 0, 0, 0, 255, 254, 0, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 1, 233, 3, 0, 237, 0, 238, 0, 6, 255, 254, 1, 0, 0, 0, 17, 0, 0, 0, 200, 16, 0, 0, 1, 206, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 183, 0, 0, 1, 184, 0, 0, 1, 203, 0, 0, 1, 205, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 86, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 73, 0, 86, 3, 255, 254, 255, 254, 0, 54, 0, 49, 0, 0, 0, 0, 0, 0, 0, 20, 1, 0, 0, 0, 17, 0, 0, 0, 160, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 15, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 51, 255, 254, 0, 55, 0, 239, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 71, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 65, 0, 71, 0, 71, 9, 0, 56, 255, 254, 0, 240, 0, 241, 0, 0, 0, 0, 0, 0, 0, 180, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 13, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 58, 255, 254, 0, 242, 0, 50, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 0, 0, 0, 0, 1, 233, 3, 0, 243, 0, 244, 0, 6, 255, 254, 1, 0, 0, 0, 200, 0, 0, 0, 17, 16, 0, 0, 1, 206, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 183, 0, 0, 1, 184, 0, 0, 1, 203, 0, 0, 1, 205, 0, 0, 0, 0, 0, 0, 0, 200, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 200, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 86, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 73, 0, 86, 3, 255, 254, 255, 254, 0, 54, 0, 49, 0, 0, 0, 20, 0, 0, 0, 0, 1, 0, 0, 0, 160, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 14, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 60, 255, 254, 0, 55, 0, 239, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 71, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 65, 0, 71, 0, 71, 9, 0, 62, 255, 254, 0, 240, 0, 241, 0, 0, 0, 180, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 6, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 64, 255, 254, 0, 242, 0, 50, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 0, 0, 0, 0, 0, 0, 0, 245, 0, 8, 52, 118, 48, 118, 108, 102, 113, 57, 0, 9, 100, 111, 116, 97, 112, 97, 110, 101, 108, 0, 8, 119, 100, 114, 99, 100, 56, 114, 112, 0, 8, 117, 105, 112, 117, 98, 108, 105, 99, 0, 5, 110, 104, 114, 101, 55, 0, 7, 66, 117, 116, 116, 111, 110, 49, 0, 12, 47, 99, 111, 109, 112, 111, 110, 101, 110, 116, 115, 47, 0, 6, 98, 117, 116, 116, 111, 110, 0, 1, 48, 0, 2, 117, 112, 0, 1, 49, 0, 4, 100, 111, 119, 110, 0, 1, 50, 0, 4, 111, 118, 101, 114, 0, 1, 51, 0, 12, 115, 101, 108, 101, 99, 116, 101, 100, 79, 118, 101, 114, 0, 6, 110, 104, 114, 101, 49, 108, 0, 7, 110, 48, 95, 110, 104, 114, 101, 0, 2, 110, 48, 0, 6, 110, 104, 114, 101, 49, 109, 0, 7, 110, 49, 95, 110, 104, 114, 101, 0, 2, 110, 49, 0, 7, 110, 51, 95, 110, 104, 114, 101, 0, 5, 116, 105, 116, 108, 101, 0, 5, 110, 104, 114, 101, 98, 0, 11, 66, 117, 116, 116, 111, 110, 67, 104, 101, 99, 107, 0, 6, 110, 104, 114, 101, 49, 110, 0, 6, 110, 104, 114, 101, 49, 111, 0, 7, 110, 50, 95, 110, 104, 114, 101, 0, 5, 110, 104, 114, 101, 104, 0, 12, 66, 117, 116, 116, 111, 110, 83, 105, 110, 103, 108, 101, 0, 5, 110, 104, 114, 101, 105, 0, 14, 83, 99, 114, 111, 108, 108, 67, 111, 109, 112, 70, 114, 101, 101, 0, 5, 106, 114, 108, 54, 57, 0, 5, 110, 104, 114, 101, 106, 0, 11, 83, 99, 114, 111, 108, 108, 67, 111, 109, 112, 86, 0, 5, 110, 104, 114, 101, 107, 0, 11, 83, 99, 114, 111, 108, 108, 67, 111, 109, 112, 72, 0, 5, 110, 104, 114, 101, 108, 0, 14, 67, 111, 109, 98, 111, 66, 111, 120, 49, 95, 105, 116, 101, 109, 0, 5, 110, 104, 114, 101, 109, 0, 15, 67, 111, 109, 98, 111, 66, 111, 120, 49, 95, 112, 111, 112, 117, 112, 0, 4, 108, 105, 115, 116, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 110, 104, 114, 101, 108, 0, 5, 110, 104, 114, 101, 111, 0, 12, 83, 108, 105, 100, 101, 114, 49, 95, 103, 114, 105, 112, 0, 2, 110, 50, 0, 5, 110, 104, 114, 101, 112, 0, 7, 83, 108, 105, 100, 101, 114, 49, 0, 3, 98, 97, 114, 0, 4, 103, 114, 105, 112, 0, 5, 113, 114, 116, 112, 114, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 95, 97, 114, 114, 111, 119, 49, 0, 7, 110, 48, 95, 113, 114, 116, 112, 0, 7, 110, 49, 95, 113, 114, 116, 112, 0, 7, 110, 50, 95, 113, 114, 116, 112, 0, 5, 113, 114, 116, 112, 115, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 95, 97, 114, 114, 111, 119, 50, 0, 5, 113, 114, 116, 112, 116, 0, 15, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 95, 103, 114, 105, 112, 0, 5, 113, 114, 116, 112, 118, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72, 95, 97, 114, 114, 111, 119, 49, 0, 5, 113, 114, 116, 112, 119, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72, 95, 97, 114, 114, 111, 119, 50, 0, 5, 113, 114, 116, 112, 120, 0, 15, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72, 95, 103, 114, 105, 112, 0, 5, 110, 104, 114, 101, 48, 0, 8, 84, 101, 115, 116, 76, 105, 115, 116, 0, 7, 47, 118, 105, 101, 119, 115, 47, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 110, 104, 114, 101, 104, 0, 1, 49, 0, 1, 50, 0, 1, 51, 0, 1, 52, 0, 1, 53, 0, 1, 54, 0, 1, 55, 0, 1, 56, 0, 12, 229, 141, 149, 233, 128, 137, 229, 136, 151, 232, 161, 168, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 113, 114, 116, 112, 117, 0, 1, 49, 0, 1, 50, 0, 1, 51, 0, 1, 52, 0, 1, 53, 0, 1, 54, 0, 1, 55, 0, 1, 56, 0, 2, 110, 51, 0, 12, 229, 164, 154, 233, 128, 137, 229, 136, 151, 232, 161, 168, 0, 7, 110, 52, 95, 110, 104, 114, 101, 0, 11, 118, 105, 114, 116, 117, 97, 108, 76, 105, 115, 116, 0, 1, 49, 0, 1, 50, 0, 1, 51, 0, 1, 52, 0, 1, 53, 0, 1, 54, 0, 1, 55, 0, 1, 56, 0, 7, 110, 53, 95, 110, 104, 114, 101, 0, 2, 110, 53, 0, 33, 232, 153, 154, 230, 139, 159, 229, 136, 151, 232, 161, 168, 239, 188, 140, 232, 138, 130, 231, 156, 129, 229, 164, 167, 233, 135, 143, 232, 181, 132, 230, 186, 144, 0, 7, 110, 55, 95, 110, 104, 114, 101, 0, 2, 110, 55, 0, 7, 110, 56, 95, 110, 104, 114, 101, 0, 2, 110, 56, 0, 12, 232, 135, 170, 231, 148, 177, 230, 187, 154, 229, 138, 168, 0, 7, 110, 57, 95, 110, 104, 114, 101, 0, 2, 110, 57, 0, 8, 110, 49, 48, 95, 110, 104, 114, 101, 0, 3, 110, 49, 48, 0, 8, 110, 49, 49, 95, 110, 104, 114, 101, 0, 3, 110, 49, 49, 0, 12, 230, 176, 180, 229, 185, 179, 230, 187, 154, 229, 138, 168, 0, 8, 110, 49, 50, 95, 110, 104, 114, 101, 0, 3, 110, 49, 50, 0, 12, 229, 158, 130, 231, 155, 180, 230, 187, 154, 229, 138, 168, 0, 5, 110, 104, 114, 101, 49, 0, 9, 84, 101, 115, 116, 76, 97, 98, 101, 108, 2, 52, 229, 155, 186, 229, 174, 154, 229, 174, 189, 233, 171, 152, 230, 150, 135, 230, 156, 172, 239, 188, 154, 232, 163, 129, 229, 137, 170, 229, 164, 154, 229, 135, 186, 229, 142, 187, 231, 154, 132, 233, 131, 168, 229, 136, 134, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 186, 232, 135, 170, 229, 138, 168, 229, 174, 189, 233, 171, 152, 230, 150, 135, 230, 156, 172, 239, 188, 154, 232, 135, 170, 229, 138, 168, 233, 128, 130, 229, 186, 148, 229, 174, 189, 229, 186, 166, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 201, 232, 135, 170, 229, 138, 168, 233, 171, 152, 229, 186, 166, 230, 150, 135, 230, 156, 172, 239, 188, 154, 229, 155, 186, 229, 174, 154, 229, 174, 189, 229, 186, 166, 239, 188, 140, 232, 135, 170, 229, 138, 168, 233, 128, 130, 229, 186, 148, 233, 171, 152, 229, 186, 166, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 195, 232, 135, 170, 229, 138, 168, 230, 148, 182, 231, 188, 169, 230, 150, 135, 230, 156, 172, 239, 188, 154, 229, 155, 186, 229, 174, 154, 229, 174, 189, 233, 171, 152, 239, 188, 140, 230, 150, 135, 229, 173, 151, 231, 188, 169, 230, 148, 190, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 2, 110, 52, 0, 198, 231, 156, 129, 231, 149, 165, 229, 143, 183, 230, 150, 135, 230, 156, 172, 239, 188, 154, 229, 155, 186, 229, 174, 154, 229, 174, 189, 233, 171, 152, 239, 188, 140, 232, 182, 133, 229, 135, 186, 233, 131, 168, 229, 136, 134, 231, 156, 129, 231, 149, 165, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 15, 229, 183, 166, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 7, 110, 54, 95, 110, 104, 114, 101, 0, 2, 110, 54, 0, 18, 228, 184, 173, 233, 151, 180, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 15, 229, 143, 179, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 45, 233, 161, 182, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 233, 161, 182, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 233, 161, 182, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 60, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 57, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 1, 18, 229, 175, 140, 230, 150, 135, 230, 156, 172, 229, 175, 140, 91, 98, 93, 230, 150, 135, 230, 156, 172, 229, 175, 140, 91, 47, 98, 93, 230, 150, 135, 230, 156, 172, 91, 117, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 117, 93, 91, 105, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 105, 93, 91, 99, 111, 108, 111, 114, 61, 35, 48, 48, 102, 102, 54, 54, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 99, 111, 108, 111, 114, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 115, 105, 122, 101, 61, 53, 53, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 115, 105, 122, 101, 93, 91, 105, 109, 103, 93, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 57, 91, 47, 105, 109, 103, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 105, 109, 103, 93, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 49, 103, 91, 47, 105, 109, 103, 93, 10, 91, 98, 93, 114, 105, 99, 104, 116, 101, 120, 116, 228, 184, 173, 230, 150, 135, 228, 184, 141, 230, 148, 175, 230, 140, 129, 229, 138, 160, 231, 178, 151, 10, 91, 47, 98, 93, 91, 105, 93, 114, 105, 99, 104, 116, 101, 120, 116, 228, 184, 173, 230, 150, 135, 228, 184, 141, 230, 148, 175, 230, 140, 129, 230, 150, 156, 228, 189, 147, 91, 47, 105, 93, 0, 5, 110, 104, 114, 101, 50, 0, 10, 84, 101, 115, 116, 66, 117, 116, 116, 111, 110, 0, 9, 114, 97, 100, 105, 111, 99, 116, 114, 108, 0, 12, 230, 153, 174, 233, 128, 154, 230, 140, 137, 233, 146, 174, 0, 12, 229, 164, 141, 233, 128, 137, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 5, 110, 104, 114, 101, 110, 0, 7, 100, 114, 111, 112, 66, 111, 120, 0, 3, 49, 49, 49, 0, 2, 50, 50, 0, 3, 51, 51, 51, 0, 4, 52, 52, 52, 52, 0, 9, 228, 184, 139, 230, 139, 137, 230, 161, 134, 0, 6, 115, 108, 105, 100, 101, 114, 0, 5, 99, 111, 108, 111, 114, 0, 5, 110, 104, 114, 101, 52, 0, 14, 84, 101, 115, 116, 84, 114, 97, 110, 115, 105, 116, 105, 111, 110, 0, 7, 110, 54, 95, 113, 114, 116, 112, 0, 7, 110, 57, 95, 103, 105, 111, 102, 0, 8, 110, 49, 48, 95, 103, 105, 111, 102, 0, 7, 116, 101, 115, 116, 66, 116, 110, 0, 27, 229, 138, 168, 230, 149, 136, 230, 146, 173, 229, 174, 140, 229, 144, 142, 232, 174, 190, 231, 189, 174, 228, 189, 141, 231, 189, 174, 0, 8, 110, 49, 49, 95, 103, 105, 111, 102, 0, 9, 114, 101, 112, 108, 97, 121, 66, 116, 110, 0, 12, 233, 135, 141, 230, 150, 176, 230, 146, 173, 230, 148, 190, 0, 8, 110, 49, 50, 95, 101, 103, 110, 49, 0, 6, 114, 111, 116, 97, 116, 101, 0, 4, 109, 111, 118, 101, 0, 5, 115, 99, 97, 108, 101, 0, 12, 115, 99, 97, 108, 101, 95, 99, 101, 110, 116, 101, 114, 0, 11, 115, 99, 97, 108, 101, 95, 114, 105, 103, 104, 116, 0, 6, 103, 114, 111, 117, 112, 49, 0, 5, 114, 111, 117, 110, 100, 0, 4, 115, 105, 122, 101, 0, 5, 110, 104, 114, 101, 54, 0, 10, 84, 101, 115, 116, 78, 97, 116, 105, 118, 101, 0, 5, 107, 52, 48, 118, 53, 0, 12, 97, 98, 105, 108, 105, 116, 121, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 51, 0, 11, 97, 118, 97, 116, 97, 114, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 49, 0, 6, 101, 102, 102, 101, 99, 116, 0, 5, 107, 52, 48, 118, 50, 0, 9, 104, 101, 114, 111, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 52, 0, 9, 105, 116, 101, 109, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 48, 0, 5, 109, 111, 100, 101, 108, 0, 5, 107, 52, 48, 118, 54, 0, 8, 117, 115, 101, 114, 78, 97, 109, 101, 0, 5, 110, 104, 114, 101, 101, 0, 10, 84, 101, 115, 116, 76, 111, 97, 100, 101, 114, 0, 19, 232, 175, 187, 229, 143, 150, 102, 103, 117, 105, 232, 181, 132, 230, 186, 144, 239, 188, 154, 0, 26, 232, 175, 187, 229, 143, 150, 100, 111, 116, 97, 50, 229, 134, 133, 233, 131, 168, 232, 181, 132, 230, 186, 144, 239, 188, 154, 0, 7, 100, 108, 111, 97, 100, 101, 114, 0, 8, 102, 108, 111, 97, 100, 101, 114, 49, 0, 7, 110, 54, 95, 120, 117, 51, 100, 0, 12, 232, 135, 170, 231, 148, 177, 231, 188, 169, 230, 148, 190, 0, 8, 110, 49, 52, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 52, 0, 8, 110, 49, 53, 95, 120, 117, 51, 100, 0, 3, 110, 49, 53, 0, 9, 230, 151, 160, 232, 190, 185, 230, 161, 134, 0, 8, 110, 49, 55, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 53, 0, 8, 110, 49, 56, 95, 120, 117, 51, 100, 0, 3, 110, 49, 56, 0, 12, 230, 152, 190, 231, 164, 186, 229, 133, 168, 233, 131, 168, 0, 8, 110, 50, 48, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 54, 0, 8, 110, 50, 49, 95, 120, 117, 51, 100, 0, 3, 110, 50, 49, 0, 12, 232, 135, 170, 229, 138, 168, 229, 164, 167, 229, 176, 143, 0, 7, 110, 56, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 50, 0, 7, 110, 57, 95, 120, 117, 51, 100, 0, 12, 233, 128, 130, 233, 133, 141, 229, 174, 189, 229, 186, 166, 0, 8, 110, 49, 49, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 51, 0, 8, 110, 49, 50, 95, 120, 117, 51, 100, 0, 12, 233, 128, 130, 233, 133, 141, 233, 171, 152, 229, 186, 166, 0, 8, 110, 50, 51, 95, 120, 117, 51, 100, 0, 3, 110, 50, 51, 0, 18, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 57, 0, 8, 110, 50, 52, 95, 120, 117, 51, 100, 0, 16, 115, 99, 97, 108, 101, 57, 103, 105, 114, 100, 108, 111, 97, 100, 101, 114, 0, 5, 110, 104, 114, 101, 102, 0, 12, 84, 101, 115, 116, 82, 101, 108, 97, 116, 105, 111, 110, 0, 27, 230, 136, 145, 229, 133, 179, 232, 129, 148, 228, 186, 134, 229, 183, 166, 232, 190, 185, 231, 154, 132, 229, 155, 190, 229, 189, 162, 0, 7, 110, 50, 95, 114, 105, 111, 112, 0, 7, 110, 51, 95, 114, 105, 111, 112, 0, 2, 50, 50, 0, 2, 116, 48, 0, 9, 67, 111, 109, 98, 111, 66, 111, 120, 49, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 110, 104, 114, 101, 109, 0, 5, 110, 104, 114, 101, 113, 0, 7, 84, 101, 115, 116, 72, 117, 100, 0, 7, 110, 49, 95, 120, 117, 51, 100, 0, 7, 116, 97, 98, 76, 105, 115, 116, 0, 5, 113, 114, 116, 112, 117, 0, 10, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 0, 6, 97, 114, 114, 111, 119, 49, 0, 7, 110, 51, 95, 113, 114, 116, 112, 0, 6, 97, 114, 114, 111, 119, 50, 0, 7, 110, 52, 95, 113, 114, 116, 112, 0, 5, 113, 114, 116, 112, 121, 0, 10, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72]).buffer);
+          BinCache.PrecachePackageWithArrayBuffer("test", new Uint8Array([70, 71, 85, 73, 0, 0, 0, 6, 0, 0, 8, 107, 48, 98, 107, 122, 54, 103, 49, 0, 4, 116, 101, 115, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 26, 0, 0, 0, 38, 0, 0, 71, 108, 0, 0, 0, 0, 0, 0, 71, 110, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 27, 0, 0, 1, 238, 3, 0, 4, 0, 5, 0, 6, 255, 254, 0, 0, 0, 0, 212, 0, 0, 0, 60, 12, 0, 0, 1, 211, 8, 0, 0, 0, 0, 34, 0, 0, 0, 56, 0, 0, 0, 92, 0, 0, 1, 177, 0, 0, 1, 178, 0, 0, 1, 197, 0, 0, 1, 199, 0, 0, 0, 0, 0, 0, 0, 212, 0, 0, 0, 60, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 80, 7, 1, 0, 16, 0, 53, 0, 57, 0, 69, 0, 0, 0, 77, 0, 80, 0, 0, 16, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 19, 0, 2, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 10, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 169, 7, 1, 0, 16, 0, 61, 0, 65, 0, 123, 0, 0, 0, 131, 0, 167, 6, 255, 254, 255, 254, 0, 22, 0, 23, 0, 0, 0, 86, 0, 0, 0, 13, 1, 0, 0, 0, 40, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 54, 4, 0, 0, 0, 3, 0, 10, 255, 255, 255, 255, 0, 0, 0, 255, 0, 12, 0, 204, 0, 255, 0, 0, 0, 255, 0, 14, 255, 153, 51, 255, 0, 0, 0, 255, 1, 0, 0, 0, 255, 0, 0, 0, 255, 1, 5, 62, 153, 153, 154, 0, 0, 0, 0, 1, 255, 255, 2, 3, 0, 10, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 2, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 230, 3, 0, 24, 0, 25, 0, 6, 255, 254, 0, 0, 0, 0, 160, 0, 0, 0, 40, 12, 0, 0, 1, 203, 8, 0, 0, 0, 0, 34, 0, 0, 0, 56, 0, 0, 0, 92, 0, 0, 1, 169, 0, 0, 1, 170, 0, 0, 1, 189, 0, 0, 1, 191, 0, 0, 0, 0, 0, 0, 0, 160, 0, 0, 0, 40, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 26, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 8, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 82, 7, 1, 0, 16, 0, 53, 0, 57, 0, 71, 0, 0, 0, 79, 0, 82, 0, 0, 27, 0, 2, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 159, 7, 1, 0, 16, 0, 61, 0, 65, 0, 113, 0, 0, 0, 121, 0, 157, 6, 255, 254, 255, 254, 0, 28, 0, 23, 0, 0, 0, 75, 0, 0, 0, 3, 1, 0, 0, 0, 10, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 44, 4, 0, 0, 0, 2, 0, 10, 102, 102, 102, 255, 0, 0, 0, 255, 0, 14, 153, 153, 153, 255, 0, 0, 0, 255, 1, 0, 0, 0, 255, 0, 0, 0, 255, 1, 5, 62, 153, 153, 154, 0, 0, 0, 0, 1, 255, 255, 2, 3, 0, 10, 0, 255, 254, 0, 24, 153, 153, 153, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 1, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 232, 3, 0, 29, 0, 30, 0, 6, 255, 254, 0, 0, 0, 0, 160, 0, 0, 0, 40, 12, 0, 0, 1, 205, 8, 0, 0, 0, 0, 34, 0, 0, 0, 56, 0, 0, 0, 92, 0, 0, 1, 171, 0, 0, 1, 172, 0, 0, 1, 191, 0, 0, 1, 193, 0, 0, 0, 0, 0, 0, 0, 160, 0, 0, 0, 40, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 26, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 8, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 84, 7, 1, 0, 16, 0, 53, 0, 57, 0, 73, 0, 0, 0, 81, 0, 84, 0, 0, 27, 0, 2, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 12, 0, 0, 0, 0, 3, 0, 10, 0, 12, 0, 14, 0, 1, 255, 255, 2, 3, 0, 10, 0, 0, 0, 0, 0, 159, 7, 1, 0, 16, 0, 61, 0, 65, 0, 113, 0, 0, 0, 121, 0, 157, 6, 255, 254, 255, 254, 0, 28, 0, 23, 0, 0, 0, 75, 0, 0, 0, 3, 1, 0, 0, 0, 10, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 44, 4, 0, 0, 0, 2, 0, 10, 102, 102, 102, 255, 0, 0, 0, 255, 0, 14, 153, 153, 153, 255, 0, 0, 0, 255, 1, 0, 0, 0, 255, 0, 0, 0, 255, 1, 5, 62, 153, 153, 154, 0, 0, 0, 0, 1, 255, 255, 2, 3, 0, 10, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 188, 3, 0, 31, 0, 32, 0, 6, 255, 254, 0, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 0, 161, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 124, 0, 0, 0, 125, 0, 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 71, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 71, 0, 0, 33, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 144, 0, 0, 1, 144, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 188, 3, 0, 34, 0, 35, 0, 6, 255, 254, 0, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 0, 161, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 124, 0, 0, 0, 125, 0, 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 71, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 71, 0, 0, 33, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 144, 0, 0, 1, 144, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 1, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 188, 3, 0, 36, 0, 37, 0, 6, 255, 254, 0, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 0, 161, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 124, 0, 0, 0, 125, 0, 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 200, 0, 0, 0, 200, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 71, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 71, 0, 0, 33, 0, 2, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 144, 0, 0, 1, 144, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 1, 209, 3, 0, 38, 0, 39, 0, 6, 255, 254, 0, 0, 0, 0, 100, 0, 0, 0, 30, 12, 0, 0, 1, 182, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 148, 0, 0, 1, 149, 0, 0, 1, 168, 0, 0, 1, 170, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 51, 153, 255, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 28, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 67, 3, 0, 40, 0, 41, 0, 6, 255, 254, 0, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 1, 40, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 13, 0, 0, 1, 19, 0, 0, 1, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 1, 160, 160, 160, 255, 240, 240, 240, 255, 0, 0, 125, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 77, 0, 83, 0, 104, 0, 106, 0, 121, 10, 255, 254, 255, 254, 0, 20, 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 150, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 14, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 0, 43, 0, 0, 1, 0, 1, 1, 15, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 44, 0, 45, 0, 6, 255, 254, 0, 0, 0, 0, 10, 0, 0, 0, 19, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0, 19, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 96, 3, 0, 47, 0, 48, 0, 6, 255, 254, 0, 0, 0, 0, 50, 0, 0, 0, 10, 15, 0, 0, 1, 69, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 43, 0, 0, 1, 44, 0, 0, 1, 63, 0, 0, 1, 65, 0, 0, 0, 0, 0, 0, 0, 50, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 50, 0, 0, 0, 10, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 1, 160, 160, 160, 255, 240, 240, 240, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 20, 0, 49, 0, 0, 0, 5, 0, 0, 0, 3, 1, 0, 0, 0, 40, 0, 0, 0, 4, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 51, 153, 255, 255, 0, 0, 71, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 65, 0, 71, 0, 71, 9, 0, 44, 255, 254, 0, 28, 0, 50, 0, 0, 0, 40, 255, 255, 255, 251, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 0, 1, 1, 6, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 0, 0, 1, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 51, 0, 52, 0, 6, 255, 254, 0, 0, 0, 0, 17, 0, 0, 0, 20, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 56, 0, 57, 0, 6, 255, 254, 0, 0, 0, 0, 17, 0, 0, 0, 20, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 203, 3, 0, 58, 0, 59, 0, 6, 255, 254, 0, 0, 0, 0, 17, 0, 0, 0, 20, 12, 0, 0, 0, 176, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 142, 0, 0, 0, 143, 0, 0, 0, 162, 0, 0, 0, 164, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 255, 153, 51, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 60, 0, 61, 0, 6, 255, 254, 0, 0, 0, 0, 20, 0, 0, 0, 17, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 1, 195, 3, 0, 62, 0, 63, 0, 6, 255, 254, 0, 0, 0, 0, 20, 0, 0, 0, 17, 12, 0, 0, 1, 168, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 134, 0, 0, 1, 135, 0, 0, 1, 154, 0, 0, 1, 156, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 3, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 169, 219, 246, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 54, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 55, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 203, 3, 0, 64, 0, 65, 0, 6, 255, 254, 0, 0, 0, 0, 20, 0, 0, 0, 17, 12, 0, 0, 0, 176, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 142, 0, 0, 0, 143, 0, 0, 0, 162, 0, 0, 0, 164, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 255, 153, 51, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 9, 17, 3, 0, 66, 0, 67, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 8, 246, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 8, 224, 0, 0, 8, 225, 0, 0, 8, 244, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 12, 1, 188, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 72, 0, 78, 0, 99, 0, 101, 0, 116, 10, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 149, 0, 0, 1, 248, 1, 0, 0, 0, 244, 0, 0, 1, 193, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 0, 69, 0, 18, 0, 16, 255, 254, 0, 70, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 71, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 72, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 73, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 74, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 75, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 76, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 77, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 219, 0, 0, 1, 183, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 78, 1, 188, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 72, 0, 78, 0, 99, 0, 101, 0, 116, 10, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 2, 6, 0, 0, 1, 249, 1, 0, 0, 0, 244, 0, 0, 1, 202, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0, 79, 255, 254, 255, 254, 255, 254, 0, 69, 0, 18, 0, 16, 255, 254, 0, 80, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 81, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 82, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 83, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 84, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 85, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 86, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 87, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 2, 73, 0, 0, 1, 185, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 89, 1, 188, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 72, 0, 78, 0, 99, 0, 101, 0, 116, 10, 255, 254, 255, 254, 0, 90, 0, 91, 0, 0, 3, 75, 0, 0, 1, 243, 1, 0, 0, 0, 244, 0, 0, 1, 205, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0, 79, 255, 254, 255, 254, 255, 254, 0, 69, 0, 18, 0, 16, 255, 254, 0, 92, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 93, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 94, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 95, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 96, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 97, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 98, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 0, 99, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 16, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 100, 0, 101, 0, 0, 3, 64, 0, 0, 1, 189, 1, 0, 0, 1, 12, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 0, 4, 2, 3, 0, 11, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 31, 255, 254, 0, 103, 0, 104, 0, 0, 5, 84, 0, 0, 0, 253, 1, 0, 0, 1, 211, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 105, 0, 106, 0, 0, 5, 221, 0, 0, 0, 211, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 107, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 36, 255, 254, 0, 108, 0, 109, 0, 0, 5, 87, 0, 0, 2, 45, 1, 0, 0, 1, 211, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 34, 255, 254, 0, 110, 0, 111, 0, 0, 5, 81, 0, 0, 3, 52, 1, 0, 0, 1, 205, 0, 0, 0, 221, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 112, 0, 113, 0, 0, 5, 222, 0, 0, 2, 3, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 115, 0, 116, 0, 0, 5, 214, 0, 0, 3, 10, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 117, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 5, 116, 3, 0, 118, 0, 119, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 5, 89, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 5, 67, 0, 0, 5, 68, 0, 0, 5, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 105, 0, 0, 0, 220, 1, 0, 0, 2, 208, 0, 0, 0, 46, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 105, 0, 0, 1, 26, 1, 0, 0, 5, 212, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 121, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 105, 0, 0, 1, 97, 1, 0, 0, 2, 217, 0, 0, 0, 99, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 122, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 0, 105, 0, 0, 1, 232, 1, 0, 0, 2, 231, 0, 0, 0, 39, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 123, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 90, 0, 124, 0, 0, 0, 105, 0, 0, 2, 44, 1, 0, 0, 2, 231, 0, 0, 0, 39, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 125, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 100, 0, 101, 0, 0, 0, 105, 0, 0, 2, 135, 1, 0, 0, 1, 44, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 127, 0, 128, 0, 0, 0, 105, 0, 0, 2, 189, 1, 0, 0, 1, 44, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 129, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 103, 0, 104, 0, 0, 0, 105, 0, 0, 2, 247, 1, 0, 0, 1, 44, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 130, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 105, 0, 106, 0, 0, 1, 205, 0, 0, 2, 134, 1, 0, 0, 1, 44, 0, 0, 0, 147, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 131, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 108, 0, 109, 0, 0, 3, 62, 0, 0, 2, 134, 1, 0, 0, 1, 44, 0, 0, 0, 147, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 132, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 110, 0, 111, 0, 0, 4, 193, 0, 0, 2, 134, 1, 0, 0, 1, 44, 0, 0, 0, 147, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 2, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 133, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 7, 255, 254, 255, 254, 0, 112, 0, 113, 0, 0, 0, 108, 0, 0, 3, 36, 1, 0, 0, 2, 111, 0, 0, 0, 220, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 134, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 3, 143, 3, 0, 135, 0, 136, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 3, 116, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 3, 75, 0, 0, 3, 76, 0, 0, 3, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 137, 0, 0, 4, 0, 8, 255, 253, 0, 10, 255, 253, 0, 12, 255, 253, 0, 14, 255, 253, 0, 0, 0, 0, 8, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 4, 255, 254, 0, 17, 0, 18, 0, 0, 1, 43, 0, 0, 0, 236, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 138, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 20, 0, 21, 0, 0, 1, 54, 0, 0, 1, 97, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 139, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 28, 0, 46, 0, 0, 1, 219, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 140, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 10, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 22, 0, 88, 0, 0, 2, 128, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 141, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 12, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 90, 0, 124, 0, 0, 3, 37, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 142, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 14, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 24, 255, 254, 0, 100, 0, 101, 0, 0, 1, 54, 0, 0, 1, 208, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 143, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 8, 255, 254, 0, 1, 0, 127, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 144, 255, 254, 0, 127, 0, 145, 0, 0, 1, 46, 0, 0, 2, 170, 1, 0, 0, 1, 232, 0, 0, 0, 44, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 13, 0, 4, 0, 6, 0, 146, 255, 254, 255, 254, 0, 6, 0, 147, 255, 254, 255, 254, 0, 6, 0, 148, 255, 254, 255, 254, 0, 6, 0, 149, 255, 254, 255, 254, 0, 150, 255, 254, 0, 0, 0, 0, 10, 0, 255, 255, 255, 254, 63, 128, 0, 0, 0, 87, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 47, 255, 254, 0, 103, 0, 151, 0, 0, 1, 18, 0, 0, 3, 144, 1, 0, 0, 1, 121, 0, 0, 0, 10, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 15, 0, 0, 0, 50, 0, 0, 0, 100, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 1, 0, 17, 0, 152, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 12, 112, 3, 0, 153, 0, 154, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 12, 85, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 3, 255, 0, 0, 4, 0, 0, 0, 4, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 176, 0, 0, 0, 164, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 130, 0, 0, 1, 28, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 123, 0, 0, 1, 204, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 0, 173, 0, 0, 2, 194, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 90, 0, 124, 0, 0, 0, 226, 0, 0, 3, 99, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 100, 0, 101, 0, 0, 3, 227, 0, 0, 0, 119, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 91, 7, 1, 0, 16, 0, 70, 0, 74, 0, 76, 0, 0, 0, 77, 0, 91, 3, 255, 254, 255, 254, 0, 155, 0, 128, 0, 0, 4, 27, 0, 0, 2, 105, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 1, 63, 0, 0, 0, 63, 0, 0, 0, 1, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 156, 0, 109, 0, 0, 2, 186, 0, 0, 1, 74, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 4, 255, 254, 0, 157, 0, 158, 0, 0, 2, 144, 0, 0, 1, 209, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 159, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 88, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 4, 255, 254, 0, 160, 0, 161, 0, 0, 2, 146, 0, 0, 2, 52, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 12, 0, 162, 255, 254, 255, 254, 255, 254, 0, 0, 0, 0, 0, 255, 255, 255, 254, 255, 254, 0, 0, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 163, 0, 116, 0, 0, 5, 128, 0, 0, 2, 102, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 9, 0, 109, 0, 164, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 0, 0, 0, 0, 0, 0, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 66, 180, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 62, 128, 0, 0, 0, 0, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 66, 180, 0, 0, 67, 52, 0, 0, 0, 0, 0, 0, 0, 77, 0, 165, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 1, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 61, 139, 67, 150, 62, 134, 167, 240, 1, 1, 1, 62, 180, 57, 88, 62, 134, 167, 240, 1, 0, 0, 0, 0, 0, 125, 0, 166, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 2, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 62, 76, 204, 205, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 2, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 125, 0, 167, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 3, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 62, 76, 204, 205, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 3, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 125, 0, 168, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 4, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 62, 76, 204, 205, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 4, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 2, 9, 0, 169, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 10, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 4, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 255, 255, 255, 0, 204, 255, 255, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 66, 180, 0, 0, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 62, 76, 204, 205, 63, 128, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 110, 128, 0, 67, 2, 0, 0, 0, 1, 0, 68, 192, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 4, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 204, 255, 255, 0, 0, 0, 255, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 5, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 66, 180, 0, 0, 67, 52, 0, 0, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 62, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 0, 0, 0, 0, 5, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 0, 68, 192, 32, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 68, 7, 0, 0, 0, 0, 0, 0, 0, 1, 8, 0, 152, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 5, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 0, 0, 0, 0, 0, 6, 255, 254, 1, 64, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 255, 255, 255, 255, 153, 102, 255, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 0, 0, 0, 0, 0, 6, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 128, 0, 0, 63, 128, 0, 0, 63, 76, 204, 205, 63, 76, 204, 205, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 6, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 131, 96, 0, 68, 26, 64, 0, 0, 1, 1, 68, 90, 0, 0, 68, 26, 64, 0, 0, 0, 0, 0, 0, 0, 52, 4, 1, 0, 10, 0, 20, 0, 32, 0, 40, 2, 63, 128, 0, 0, 0, 6, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 63, 76, 204, 205, 63, 76, 204, 205, 63, 128, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 0, 31, 4, 1, 0, 10, 0, 0, 0, 20, 0, 0, 0, 64, 0, 0, 0, 0, 6, 255, 254, 0, 1, 1, 68, 131, 96, 0, 68, 26, 64, 0, 0, 2, 103, 0, 170, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 11, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 0, 0, 0, 0, 0, 7, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 255, 255, 255, 51, 51, 51, 255, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 13, 0, 0, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 66, 11, 40, 246, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 7, 255, 254, 1, 63, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 46, 128, 0, 67, 165, 0, 0, 0, 1, 1, 68, 167, 224, 0, 67, 165, 0, 0, 0, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 13, 63, 0, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 66, 11, 40, 246, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 66, 59, 51, 51, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 128, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 51, 51, 51, 255, 0, 153, 255, 255, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 13, 63, 128, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 0, 0, 0, 0, 66, 59, 51, 51, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 128, 0, 0, 0, 7, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 167, 224, 0, 67, 165, 0, 0, 0, 1, 1, 68, 167, 224, 0, 68, 86, 192, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 192, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 0, 153, 255, 255, 255, 204, 0, 255, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 192, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 167, 224, 0, 68, 86, 192, 0, 0, 1, 1, 68, 44, 192, 0, 68, 86, 192, 0, 0, 0, 0, 0, 0, 0, 44, 4, 1, 0, 10, 0, 20, 0, 32, 0, 36, 6, 63, 224, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 255, 204, 0, 255, 153, 51, 0, 255, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 63, 224, 0, 0, 0, 7, 255, 254, 1, 62, 128, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 44, 192, 0, 68, 86, 192, 0, 0, 1, 1, 68, 19, 192, 0, 67, 165, 0, 0, 0, 0, 0, 0, 0, 0, 133, 0, 171, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 1, 0, 0, 0, 0, 0, 10, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 66, 200, 0, 0, 66, 200, 0, 0, 1, 1, 67, 143, 0, 0, 66, 200, 0, 0, 0, 0, 0, 0, 0, 56, 4, 1, 0, 10, 0, 20, 0, 32, 0, 42, 1, 63, 0, 0, 0, 0, 10, 255, 254, 1, 63, 0, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 67, 143, 0, 0, 66, 200, 0, 0, 1, 1, 67, 143, 0, 0, 67, 134, 0, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 2, 80, 3, 0, 172, 0, 173, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 2, 53, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 2, 31, 0, 0, 2, 32, 0, 0, 2, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 174, 0, 0, 0, 22, 0, 175, 0, 0, 0, 85, 0, 0, 1, 124, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 176, 0, 0, 0, 90, 0, 177, 0, 0, 0, 97, 0, 0, 2, 56, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 178, 0, 0, 0, 100, 0, 179, 0, 0, 1, 236, 0, 0, 2, 42, 1, 0, 0, 1, 216, 0, 0, 1, 208, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 180, 0, 0, 0, 127, 0, 181, 0, 0, 2, 76, 0, 0, 1, 91, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 182, 0, 0, 0, 103, 0, 183, 0, 0, 4, 20, 0, 0, 1, 81, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 74, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 68, 0, 74, 0, 74, 9, 0, 184, 0, 0, 0, 105, 0, 185, 0, 0, 4, 178, 0, 0, 2, 20, 1, 0, 0, 2, 24, 0, 0, 1, 241, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 186, 0, 0, 0, 108, 0, 187, 0, 0, 0, 97, 0, 0, 3, 4, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 6, 193, 3, 0, 188, 0, 189, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 6, 166, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 6, 144, 0, 0, 6, 145, 0, 0, 6, 164, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 17, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 22, 0, 88, 0, 0, 0, 82, 0, 0, 2, 79, 1, 0, 0, 0, 168, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 190, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 90, 0, 124, 0, 0, 0, 9, 0, 0, 3, 93, 1, 0, 0, 0, 240, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 191, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 100, 0, 192, 0, 0, 1, 43, 0, 0, 3, 33, 1, 0, 0, 1, 85, 0, 0, 0, 198, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 28, 0, 193, 0, 0, 1, 44, 0, 0, 2, 35, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 194, 0, 128, 0, 0, 1, 40, 0, 0, 1, 242, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 195, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 196, 0, 197, 0, 0, 3, 139, 0, 0, 1, 55, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 198, 0, 199, 0, 0, 3, 135, 0, 0, 1, 6, 1, 0, 0, 0, 76, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 201, 0, 202, 0, 0, 5, 51, 0, 0, 2, 40, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 203, 0, 204, 0, 0, 5, 47, 0, 0, 1, 247, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 205, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 206, 0, 207, 0, 0, 6, 5, 0, 0, 2, 53, 1, 0, 0, 0, 209, 0, 0, 0, 60, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 208, 0, 209, 0, 0, 6, 1, 0, 0, 2, 4, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 210, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 211, 0, 212, 0, 0, 1, 252, 0, 0, 2, 25, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 213, 0, 109, 0, 0, 1, 248, 0, 0, 1, 232, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 214, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 215, 0, 216, 0, 0, 2, 208, 0, 0, 2, 25, 1, 0, 0, 0, 169, 0, 0, 0, 173, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 106, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 104, 6, 255, 254, 255, 254, 0, 217, 0, 116, 0, 0, 2, 204, 0, 0, 1, 232, 1, 0, 0, 0, 100, 0, 0, 0, 34, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 218, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 219, 0, 220, 0, 0, 3, 247, 0, 0, 3, 75, 1, 0, 0, 1, 18, 0, 0, 0, 146, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 0, 221, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 83, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 83, 4, 255, 254, 255, 254, 0, 222, 0, 223, 0, 0, 5, 70, 0, 0, 3, 70, 1, 0, 0, 1, 18, 0, 0, 0, 146, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 1, 67, 3, 0, 224, 0, 225, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 1, 40, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 135, 0, 0, 0, 136, 0, 0, 0, 155, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 234, 0, 0, 1, 214, 1, 0, 0, 1, 60, 0, 0, 1, 20, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 1, 0, 137, 0, 226, 0, 0, 0, 0, 1, 255, 255, 255, 255, 0, 0, 0, 0, 0, 2, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 64, 32, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 67, 106, 0, 0, 67, 235, 0, 0, 0, 1, 1, 68, 51, 64, 0, 67, 235, 0, 0, 0, 0, 0, 0, 0, 0, 58, 4, 1, 0, 10, 0, 20, 0, 32, 0, 43, 0, 64, 32, 0, 0, 0, 0, 255, 254, 1, 64, 144, 0, 0, 5, 0, 0, 0, 0, 0, 255, 254, 1, 1, 68, 51, 64, 0, 67, 235, 0, 0, 0, 1, 1, 68, 51, 64, 0, 67, 83, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 0, 0, 0, 2, 44, 3, 0, 144, 0, 227, 0, 6, 255, 254, 1, 0, 0, 0, 100, 0, 0, 0, 30, 13, 0, 0, 2, 17, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 83, 0, 0, 1, 249, 0, 0, 1, 250, 0, 0, 2, 13, 0, 0, 2, 15, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 1, 0, 32, 3, 1, 0, 8, 0, 11, 0, 30, 0, 7, 0, 0, 4, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 0, 0, 0, 4, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 99, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 99, 3, 255, 254, 255, 254, 0, 20, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 12, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 250, 250, 250, 255, 0, 0, 101, 7, 1, 0, 16, 0, 61, 0, 65, 0, 79, 0, 0, 0, 87, 0, 101, 3, 255, 254, 255, 254, 0, 28, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 10, 0, 0, 0, 0, 2, 0, 10, 0, 14, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 204, 204, 204, 255, 0, 0, 113, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 111, 6, 255, 254, 255, 254, 0, 22, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 80, 0, 0, 0, 30, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 24, 0, 0, 0, 255, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 228, 255, 254, 0, 0, 0, 0, 1, 57, 3, 0, 229, 0, 230, 0, 68, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 1, 30, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 8, 0, 0, 1, 9, 0, 0, 1, 28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 82, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 68, 0, 82, 3, 255, 254, 255, 254, 0, 231, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 153, 153, 153, 255, 0, 0, 127, 9, 1, 0, 20, 0, 65, 0, 69, 0, 71, 0, 79, 0, 85, 0, 106, 0, 108, 0, 123, 10, 255, 254, 255, 254, 0, 17, 0, 232, 0, 0, 0, 149, 0, 0, 0, 54, 1, 0, 0, 6, 85, 0, 0, 0, 88, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 3, 0, 7, 0, 255, 255, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 20, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 1, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 255, 254, 255, 254, 0, 69, 0, 0, 0, 255, 254, 0, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 1, 233, 3, 0, 233, 0, 234, 0, 6, 255, 254, 1, 0, 0, 0, 17, 0, 0, 0, 200, 16, 0, 0, 1, 206, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 183, 0, 0, 1, 184, 0, 0, 1, 203, 0, 0, 1, 205, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 17, 0, 0, 0, 200, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 86, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 73, 0, 86, 3, 255, 254, 255, 254, 0, 54, 0, 49, 0, 0, 0, 0, 0, 0, 0, 20, 1, 0, 0, 0, 17, 0, 0, 0, 160, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 15, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 51, 255, 254, 0, 55, 0, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 71, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 65, 0, 71, 0, 71, 9, 0, 56, 255, 254, 0, 236, 0, 237, 0, 0, 0, 0, 0, 0, 0, 180, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 13, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 58, 255, 254, 0, 238, 0, 50, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 0, 0, 0, 0, 1, 233, 3, 0, 239, 0, 240, 0, 6, 255, 254, 1, 0, 0, 0, 200, 0, 0, 0, 17, 16, 0, 0, 1, 206, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 1, 183, 0, 0, 1, 184, 0, 0, 1, 203, 0, 0, 1, 205, 0, 0, 0, 0, 0, 0, 0, 200, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 53, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 200, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 240, 240, 240, 255, 0, 0, 86, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 73, 0, 86, 3, 255, 254, 255, 254, 0, 54, 0, 49, 0, 0, 0, 20, 0, 0, 0, 0, 1, 0, 0, 0, 160, 0, 0, 0, 17, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 14, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 60, 255, 254, 0, 55, 0, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 71, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 65, 0, 71, 0, 71, 9, 0, 62, 255, 254, 0, 236, 0, 237, 0, 0, 0, 180, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 1, 6, 0, 255, 255, 0, 0, 0, 0, 0, 66, 7, 1, 0, 16, 0, 53, 0, 57, 0, 59, 0, 60, 0, 66, 0, 66, 9, 0, 64, 255, 254, 0, 238, 0, 50, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 0, 0, 0, 0, 0, 0, 0, 241, 0, 8, 52, 118, 48, 118, 108, 102, 113, 57, 0, 9, 100, 111, 116, 97, 112, 97, 110, 101, 108, 0, 8, 119, 100, 114, 99, 100, 56, 114, 112, 0, 8, 117, 105, 112, 117, 98, 108, 105, 99, 0, 5, 110, 104, 114, 101, 55, 0, 7, 66, 117, 116, 116, 111, 110, 49, 0, 12, 47, 99, 111, 109, 112, 111, 110, 101, 110, 116, 115, 47, 0, 6, 98, 117, 116, 116, 111, 110, 0, 1, 48, 0, 2, 117, 112, 0, 1, 49, 0, 4, 100, 111, 119, 110, 0, 1, 50, 0, 4, 111, 118, 101, 114, 0, 1, 51, 0, 12, 115, 101, 108, 101, 99, 116, 101, 100, 79, 118, 101, 114, 0, 6, 110, 104, 114, 101, 49, 108, 0, 7, 110, 48, 95, 110, 104, 114, 101, 0, 2, 110, 48, 0, 6, 110, 104, 114, 101, 49, 109, 0, 7, 110, 49, 95, 110, 104, 114, 101, 0, 2, 110, 49, 0, 7, 110, 51, 95, 110, 104, 114, 101, 0, 5, 116, 105, 116, 108, 101, 0, 5, 110, 104, 114, 101, 98, 0, 11, 66, 117, 116, 116, 111, 110, 67, 104, 101, 99, 107, 0, 6, 110, 104, 114, 101, 49, 110, 0, 6, 110, 104, 114, 101, 49, 111, 0, 7, 110, 50, 95, 110, 104, 114, 101, 0, 5, 110, 104, 114, 101, 104, 0, 12, 66, 117, 116, 116, 111, 110, 83, 105, 110, 103, 108, 101, 0, 5, 110, 104, 114, 101, 105, 0, 14, 83, 99, 114, 111, 108, 108, 67, 111, 109, 112, 70, 114, 101, 101, 0, 5, 106, 114, 108, 54, 57, 0, 5, 110, 104, 114, 101, 106, 0, 11, 83, 99, 114, 111, 108, 108, 67, 111, 109, 112, 86, 0, 5, 110, 104, 114, 101, 107, 0, 11, 83, 99, 114, 111, 108, 108, 67, 111, 109, 112, 72, 0, 5, 110, 104, 114, 101, 108, 0, 14, 67, 111, 109, 98, 111, 66, 111, 120, 49, 95, 105, 116, 101, 109, 0, 5, 110, 104, 114, 101, 109, 0, 15, 67, 111, 109, 98, 111, 66, 111, 120, 49, 95, 112, 111, 112, 117, 112, 0, 4, 108, 105, 115, 116, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 110, 104, 114, 101, 108, 0, 5, 110, 104, 114, 101, 111, 0, 12, 83, 108, 105, 100, 101, 114, 49, 95, 103, 114, 105, 112, 0, 2, 110, 50, 0, 5, 110, 104, 114, 101, 112, 0, 7, 83, 108, 105, 100, 101, 114, 49, 0, 3, 98, 97, 114, 0, 4, 103, 114, 105, 112, 0, 5, 113, 114, 116, 112, 114, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 95, 97, 114, 114, 111, 119, 49, 0, 7, 110, 48, 95, 113, 114, 116, 112, 0, 7, 110, 49, 95, 113, 114, 116, 112, 0, 7, 110, 50, 95, 113, 114, 116, 112, 0, 5, 113, 114, 116, 112, 115, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 95, 97, 114, 114, 111, 119, 50, 0, 5, 113, 114, 116, 112, 116, 0, 15, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 95, 103, 114, 105, 112, 0, 5, 113, 114, 116, 112, 118, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72, 95, 97, 114, 114, 111, 119, 49, 0, 5, 113, 114, 116, 112, 119, 0, 17, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72, 95, 97, 114, 114, 111, 119, 50, 0, 5, 113, 114, 116, 112, 120, 0, 15, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72, 95, 103, 114, 105, 112, 0, 5, 110, 104, 114, 101, 48, 0, 8, 84, 101, 115, 116, 76, 105, 115, 116, 0, 7, 47, 118, 105, 101, 119, 115, 47, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 110, 104, 114, 101, 104, 0, 1, 49, 0, 1, 50, 0, 1, 51, 0, 1, 52, 0, 1, 53, 0, 1, 54, 0, 1, 55, 0, 1, 56, 0, 12, 229, 141, 149, 233, 128, 137, 229, 136, 151, 232, 161, 168, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 113, 114, 116, 112, 117, 0, 1, 49, 0, 1, 50, 0, 1, 51, 0, 1, 52, 0, 1, 53, 0, 1, 54, 0, 1, 55, 0, 1, 56, 0, 2, 110, 51, 0, 12, 229, 164, 154, 233, 128, 137, 229, 136, 151, 232, 161, 168, 0, 7, 110, 52, 95, 110, 104, 114, 101, 0, 11, 118, 105, 114, 116, 117, 97, 108, 76, 105, 115, 116, 0, 1, 49, 0, 1, 50, 0, 1, 51, 0, 1, 52, 0, 1, 53, 0, 1, 54, 0, 1, 55, 0, 1, 56, 0, 7, 110, 53, 95, 110, 104, 114, 101, 0, 2, 110, 53, 0, 33, 232, 153, 154, 230, 139, 159, 229, 136, 151, 232, 161, 168, 239, 188, 140, 232, 138, 130, 231, 156, 129, 229, 164, 167, 233, 135, 143, 232, 181, 132, 230, 186, 144, 0, 7, 110, 55, 95, 110, 104, 114, 101, 0, 2, 110, 55, 0, 7, 110, 56, 95, 110, 104, 114, 101, 0, 2, 110, 56, 0, 12, 232, 135, 170, 231, 148, 177, 230, 187, 154, 229, 138, 168, 0, 7, 110, 57, 95, 110, 104, 114, 101, 0, 2, 110, 57, 0, 8, 110, 49, 48, 95, 110, 104, 114, 101, 0, 3, 110, 49, 48, 0, 8, 110, 49, 49, 95, 110, 104, 114, 101, 0, 3, 110, 49, 49, 0, 12, 230, 176, 180, 229, 185, 179, 230, 187, 154, 229, 138, 168, 0, 8, 110, 49, 50, 95, 110, 104, 114, 101, 0, 3, 110, 49, 50, 0, 12, 229, 158, 130, 231, 155, 180, 230, 187, 154, 229, 138, 168, 0, 5, 110, 104, 114, 101, 49, 0, 9, 84, 101, 115, 116, 76, 97, 98, 101, 108, 2, 52, 229, 155, 186, 229, 174, 154, 229, 174, 189, 233, 171, 152, 230, 150, 135, 230, 156, 172, 239, 188, 154, 232, 163, 129, 229, 137, 170, 229, 164, 154, 229, 135, 186, 229, 142, 187, 231, 154, 132, 233, 131, 168, 229, 136, 134, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 186, 232, 135, 170, 229, 138, 168, 229, 174, 189, 233, 171, 152, 230, 150, 135, 230, 156, 172, 239, 188, 154, 232, 135, 170, 229, 138, 168, 233, 128, 130, 229, 186, 148, 229, 174, 189, 229, 186, 166, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 201, 232, 135, 170, 229, 138, 168, 233, 171, 152, 229, 186, 166, 230, 150, 135, 230, 156, 172, 239, 188, 154, 229, 155, 186, 229, 174, 154, 229, 174, 189, 229, 186, 166, 239, 188, 140, 232, 135, 170, 229, 138, 168, 233, 128, 130, 229, 186, 148, 233, 171, 152, 229, 186, 166, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 195, 232, 135, 170, 229, 138, 168, 230, 148, 182, 231, 188, 169, 230, 150, 135, 230, 156, 172, 239, 188, 154, 229, 155, 186, 229, 174, 154, 229, 174, 189, 233, 171, 152, 239, 188, 140, 230, 150, 135, 229, 173, 151, 231, 188, 169, 230, 148, 190, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 2, 110, 52, 0, 198, 231, 156, 129, 231, 149, 165, 229, 143, 183, 230, 150, 135, 230, 156, 172, 239, 188, 154, 229, 155, 186, 229, 174, 154, 229, 174, 189, 233, 171, 152, 239, 188, 140, 232, 182, 133, 229, 135, 186, 233, 131, 168, 229, 136, 134, 231, 156, 129, 231, 149, 165, 227, 128, 130, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 229, 149, 138, 0, 15, 229, 183, 166, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 7, 110, 54, 95, 110, 104, 114, 101, 0, 2, 110, 54, 0, 18, 228, 184, 173, 233, 151, 180, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 15, 229, 143, 179, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 45, 233, 161, 182, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 233, 161, 182, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 233, 161, 182, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 60, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 228, 184, 173, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 0, 57, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 230, 156, 172, 229, 186, 149, 229, 175, 185, 233, 189, 144, 230, 150, 135, 1, 18, 229, 175, 140, 230, 150, 135, 230, 156, 172, 229, 175, 140, 91, 98, 93, 230, 150, 135, 230, 156, 172, 229, 175, 140, 91, 47, 98, 93, 230, 150, 135, 230, 156, 172, 91, 117, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 117, 93, 91, 105, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 105, 93, 91, 99, 111, 108, 111, 114, 61, 35, 48, 48, 102, 102, 54, 54, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 99, 111, 108, 111, 114, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 115, 105, 122, 101, 61, 53, 53, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 47, 115, 105, 122, 101, 93, 91, 105, 109, 103, 93, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 57, 91, 47, 105, 109, 103, 93, 229, 175, 140, 230, 150, 135, 230, 156, 172, 91, 105, 109, 103, 93, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 49, 103, 91, 47, 105, 109, 103, 93, 10, 91, 98, 93, 114, 105, 99, 104, 116, 101, 120, 116, 228, 184, 173, 230, 150, 135, 228, 184, 141, 230, 148, 175, 230, 140, 129, 229, 138, 160, 231, 178, 151, 10, 91, 47, 98, 93, 91, 105, 93, 114, 105, 99, 104, 116, 101, 120, 116, 228, 184, 173, 230, 150, 135, 228, 184, 141, 230, 148, 175, 230, 140, 129, 230, 150, 156, 228, 189, 147, 91, 47, 105, 93, 0, 5, 110, 104, 114, 101, 50, 0, 10, 84, 101, 115, 116, 66, 117, 116, 116, 111, 110, 0, 9, 114, 97, 100, 105, 111, 99, 116, 114, 108, 0, 12, 230, 153, 174, 233, 128, 154, 230, 140, 137, 233, 146, 174, 0, 12, 229, 164, 141, 233, 128, 137, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 12, 231, 187, 132, 229, 144, 136, 230, 140, 137, 233, 146, 174, 0, 5, 110, 104, 114, 101, 110, 0, 7, 100, 114, 111, 112, 66, 111, 120, 0, 3, 49, 49, 49, 0, 2, 50, 50, 0, 3, 51, 51, 51, 0, 4, 52, 52, 52, 52, 0, 9, 228, 184, 139, 230, 139, 137, 230, 161, 134, 0, 6, 115, 108, 105, 100, 101, 114, 0, 5, 99, 111, 108, 111, 114, 0, 5, 110, 104, 114, 101, 52, 0, 14, 84, 101, 115, 116, 84, 114, 97, 110, 115, 105, 116, 105, 111, 110, 0, 7, 110, 54, 95, 113, 114, 116, 112, 0, 7, 110, 57, 95, 103, 105, 111, 102, 0, 8, 110, 49, 48, 95, 103, 105, 111, 102, 0, 7, 116, 101, 115, 116, 66, 116, 110, 0, 27, 229, 138, 168, 230, 149, 136, 230, 146, 173, 229, 174, 140, 229, 144, 142, 232, 174, 190, 231, 189, 174, 228, 189, 141, 231, 189, 174, 0, 8, 110, 49, 49, 95, 103, 105, 111, 102, 0, 9, 114, 101, 112, 108, 97, 121, 66, 116, 110, 0, 12, 233, 135, 141, 230, 150, 176, 230, 146, 173, 230, 148, 190, 0, 8, 110, 49, 50, 95, 101, 103, 110, 49, 0, 6, 114, 111, 116, 97, 116, 101, 0, 4, 109, 111, 118, 101, 0, 5, 115, 99, 97, 108, 101, 0, 12, 115, 99, 97, 108, 101, 95, 99, 101, 110, 116, 101, 114, 0, 11, 115, 99, 97, 108, 101, 95, 114, 105, 103, 104, 116, 0, 6, 103, 114, 111, 117, 112, 49, 0, 5, 114, 111, 117, 110, 100, 0, 4, 115, 105, 122, 101, 0, 5, 110, 104, 114, 101, 54, 0, 10, 84, 101, 115, 116, 78, 97, 116, 105, 118, 101, 0, 5, 107, 52, 48, 118, 53, 0, 12, 97, 98, 105, 108, 105, 116, 121, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 51, 0, 11, 97, 118, 97, 116, 97, 114, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 49, 0, 6, 101, 102, 102, 101, 99, 116, 0, 5, 107, 52, 48, 118, 50, 0, 9, 104, 101, 114, 111, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 52, 0, 9, 105, 116, 101, 109, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 48, 0, 5, 109, 111, 100, 101, 108, 0, 5, 107, 52, 48, 118, 54, 0, 8, 117, 115, 101, 114, 78, 97, 109, 101, 0, 5, 110, 104, 114, 101, 101, 0, 10, 84, 101, 115, 116, 76, 111, 97, 100, 101, 114, 0, 19, 232, 175, 187, 229, 143, 150, 102, 103, 117, 105, 232, 181, 132, 230, 186, 144, 239, 188, 154, 0, 26, 232, 175, 187, 229, 143, 150, 100, 111, 116, 97, 50, 229, 134, 133, 233, 131, 168, 232, 181, 132, 230, 186, 144, 239, 188, 154, 0, 7, 100, 108, 111, 97, 100, 101, 114, 0, 8, 102, 108, 111, 97, 100, 101, 114, 49, 0, 7, 110, 54, 95, 120, 117, 51, 100, 0, 12, 232, 135, 170, 231, 148, 177, 231, 188, 169, 230, 148, 190, 0, 8, 110, 49, 52, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 52, 0, 8, 110, 49, 53, 95, 120, 117, 51, 100, 0, 3, 110, 49, 53, 0, 9, 230, 151, 160, 232, 190, 185, 230, 161, 134, 0, 8, 110, 49, 55, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 53, 0, 8, 110, 49, 56, 95, 120, 117, 51, 100, 0, 3, 110, 49, 56, 0, 12, 230, 152, 190, 231, 164, 186, 229, 133, 168, 233, 131, 168, 0, 8, 110, 50, 48, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 54, 0, 8, 110, 50, 49, 95, 120, 117, 51, 100, 0, 3, 110, 50, 49, 0, 12, 232, 135, 170, 229, 138, 168, 229, 164, 167, 229, 176, 143, 0, 7, 110, 56, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 50, 0, 7, 110, 57, 95, 120, 117, 51, 100, 0, 12, 233, 128, 130, 233, 133, 141, 229, 174, 189, 229, 186, 166, 0, 8, 110, 49, 49, 95, 120, 117, 51, 100, 0, 8, 102, 108, 111, 97, 100, 101, 114, 51, 0, 8, 110, 49, 50, 95, 120, 117, 51, 100, 0, 12, 233, 128, 130, 233, 133, 141, 233, 171, 152, 229, 186, 166, 0, 8, 110, 50, 51, 95, 120, 117, 51, 100, 0, 3, 110, 50, 51, 0, 18, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 57, 0, 8, 110, 50, 52, 95, 120, 117, 51, 100, 0, 16, 115, 99, 97, 108, 101, 57, 103, 105, 114, 100, 108, 111, 97, 100, 101, 114, 0, 5, 110, 104, 114, 101, 102, 0, 12, 84, 101, 115, 116, 82, 101, 108, 97, 116, 105, 111, 110, 0, 2, 116, 48, 0, 9, 67, 111, 109, 98, 111, 66, 111, 120, 49, 0, 18, 117, 105, 58, 47, 47, 107, 48, 98, 107, 122, 54, 103, 49, 110, 104, 114, 101, 109, 0, 5, 110, 104, 114, 101, 113, 0, 7, 84, 101, 115, 116, 72, 117, 100, 0, 7, 110, 49, 95, 120, 117, 51, 100, 0, 7, 116, 97, 98, 76, 105, 115, 116, 0, 5, 113, 114, 116, 112, 117, 0, 10, 83, 99, 114, 111, 108, 108, 66, 97, 114, 86, 0, 6, 97, 114, 114, 111, 119, 49, 0, 7, 110, 51, 95, 113, 114, 116, 112, 0, 6, 97, 114, 114, 111, 119, 50, 0, 7, 110, 52, 95, 113, 114, 116, 112, 0, 5, 113, 114, 116, 112, 121, 0, 10, 83, 99, 114, 111, 108, 108, 66, 97, 114, 72]).buffer);
           BinCache.PrecachePackageWithArrayBuffer("uipublic", new Uint8Array([70, 71, 85, 73, 0, 0, 0, 6, 0, 0, 8, 119, 100, 114, 99, 100, 56, 114, 112, 0, 8, 117, 105, 112, 117, 98, 108, 105, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 26, 0, 0, 0, 34, 0, 0, 3, 7, 0, 0, 0, 0, 0, 0, 3, 9, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 7, 0, 0, 2, 35, 3, 0, 2, 0, 3, 0, 4, 255, 254, 1, 0, 0, 0, 100, 0, 0, 0, 100, 12, 0, 0, 2, 8, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 101, 0, 0, 1, 230, 0, 0, 1, 231, 0, 0, 1, 250, 0, 0, 1, 252, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 2, 0, 24, 3, 1, 0, 8, 0, 11, 0, 22, 0, 5, 0, 0, 2, 0, 6, 0, 7, 0, 8, 0, 9, 0, 0, 0, 0, 24, 3, 1, 0, 8, 0, 11, 0, 22, 0, 10, 0, 0, 2, 0, 6, 255, 253, 0, 8, 255, 253, 0, 0, 0, 0, 4, 0, 104, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 89, 0, 104, 4, 255, 254, 255, 254, 0, 11, 0, 12, 255, 255, 255, 241, 255, 255, 255, 241, 1, 0, 0, 0, 132, 0, 0, 0, 132, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 0, 0, 1, 0, 8, 0, 1, 255, 255, 4, 14, 0, 15, 0, 3, 0, 10, 0, 0, 13, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 14, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 81, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 75, 0, 81, 0, 81, 9, 0, 16, 0, 0, 0, 17, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 255, 0, 0, 0, 0, 0, 100, 7, 1, 0, 16, 0, 61, 0, 65, 0, 77, 0, 0, 0, 85, 0, 100, 4, 255, 254, 255, 254, 0, 19, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 1, 0, 8, 0, 0, 1, 0, 1, 0, 8, 0, 1, 255, 255, 2, 14, 0, 15, 0, 0, 21, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 2, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 24, 0, 0, 22, 0, 23, 0, 24, 0, 25, 1, 0, 0, 0, 79, 0, 0, 0, 81, 0, 1, 255, 254, 0, 0, 0, 0, 0, 44, 0, 0, 26, 0, 27, 0, 24, 0, 28, 1, 0, 0, 0, 20, 0, 0, 0, 20, 1, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 8, 0, 0, 0, 7, 0, 0, 0, 0, 1, 255, 254, 0, 0, 0, 0, 0, 24, 0, 0, 29, 0, 30, 0, 24, 0, 31, 1, 0, 0, 0, 212, 0, 0, 0, 60, 0, 1, 255, 254, 0, 0, 0, 0, 0, 24, 0, 0, 32, 0, 33, 0, 24, 0, 34, 1, 0, 0, 0, 209, 0, 0, 0, 60, 0, 1, 255, 254, 0, 0, 0, 0, 0, 24, 0, 0, 35, 0, 36, 0, 24, 0, 37, 1, 0, 0, 0, 160, 0, 0, 0, 40, 0, 1, 255, 254, 0, 0, 0, 0, 0, 24, 0, 0, 38, 0, 39, 0, 24, 0, 40, 1, 0, 0, 0, 160, 0, 0, 0, 40, 0, 1, 255, 254, 0, 0, 0, 0, 0, 0, 0, 41, 0, 8, 52, 118, 48, 118, 108, 102, 113, 57, 0, 9, 100, 111, 116, 97, 112, 97, 110, 101, 108, 0, 5, 99, 50, 110, 55, 49, 0, 8, 105, 116, 101, 109, 99, 101, 108, 108, 0, 12, 47, 99, 111, 109, 112, 111, 110, 101, 110, 116, 115, 47, 0, 6, 98, 117, 116, 116, 111, 110, 0, 1, 48, 0, 2, 117, 112, 0, 1, 49, 0, 4, 100, 111, 119, 110, 0, 5, 101, 109, 112, 116, 121, 0, 7, 110, 53, 95, 99, 50, 110, 55, 0, 2, 110, 53, 0, 19, 117, 105, 58, 47, 47, 119, 100, 114, 99, 100, 56, 114, 112, 106, 114, 108, 54, 49, 103, 0, 7, 110, 51, 95, 99, 50, 110, 55, 0, 13, 113, 117, 97, 108, 105, 116, 121, 76, 111, 97, 100, 101, 114, 0, 5, 107, 52, 48, 118, 52, 0, 7, 110, 50, 95, 99, 50, 110, 55, 0, 4, 105, 116, 101, 109, 0, 7, 110, 54, 95, 103, 111, 97, 102, 0, 2, 110, 54, 0, 18, 117, 105, 58, 47, 47, 52, 118, 48, 118, 108, 102, 113, 57, 100, 110, 51, 118, 55, 0, 6, 106, 114, 108, 54, 49, 103, 0, 11, 103, 103, 95, 99, 104, 97, 116, 95, 115, 101, 108, 0, 10, 47, 116, 101, 120, 116, 117, 114, 101, 115, 47, 0, 10, 106, 114, 108, 54, 49, 103, 46, 112, 110, 103, 0, 5, 106, 114, 108, 54, 57, 0, 12, 103, 103, 95, 120, 105, 97, 111, 100, 105, 95, 48, 49, 0, 9, 106, 114, 108, 54, 57, 46, 112, 110, 103, 0, 6, 110, 104, 114, 101, 49, 108, 0, 14, 83, 75, 73, 76, 76, 95, 67, 65, 84, 69, 95, 79, 70, 70, 0, 10, 110, 104, 114, 101, 49, 108, 46, 112, 110, 103, 0, 6, 110, 104, 114, 101, 49, 109, 0, 13, 83, 75, 73, 76, 76, 95, 67, 65, 84, 69, 95, 79, 78, 0, 10, 110, 104, 114, 101, 49, 109, 46, 112, 110, 103, 0, 6, 110, 104, 114, 101, 49, 110, 0, 6, 89, 78, 95, 111, 102, 102, 0, 10, 110, 104, 114, 101, 49, 110, 46, 112, 110, 103, 0, 6, 110, 104, 114, 101, 49, 111, 0, 5, 89, 78, 95, 111, 110, 0, 10, 110, 104, 114, 101, 49, 111, 46, 112, 110, 103]).buffer);
           BinCache.PrecachePackageWithArrayBuffer("dotapanel", new Uint8Array([70, 71, 85, 73, 0, 0, 0, 6, 0, 0, 8, 52, 118, 48, 118, 108, 102, 113, 57, 0, 9, 100, 111, 116, 97, 112, 97, 110, 101, 108, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 26, 0, 0, 0, 30, 0, 0, 6, 103, 0, 0, 0, 0, 0, 0, 6, 105, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 203, 3, 0, 0, 0, 1, 0, 2, 255, 254, 1, 0, 0, 7, 128, 0, 0, 4, 56, 12, 0, 0, 0, 176, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 142, 0, 0, 0, 143, 0, 0, 0, 162, 0, 0, 0, 164, 0, 0, 0, 0, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 89, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 89, 3, 255, 254, 255, 254, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 7, 128, 0, 0, 4, 56, 0, 0, 0, 0, 63, 76, 204, 205, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 1, 0, 0, 0, 1, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 0, 255, 254, 63, 128, 0, 0, 0, 63, 76, 204, 205, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 5, 0, 6, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 8, 0, 9, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 10, 0, 11, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 12, 0, 13, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 14, 0, 15, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 16, 0, 17, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 192, 3, 0, 18, 0, 19, 0, 2, 255, 254, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 165, 8, 0, 0, 0, 0, 34, 0, 0, 0, 47, 0, 0, 0, 49, 0, 0, 0, 143, 0, 0, 0, 144, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 90, 7, 1, 0, 16, 0, 61, 0, 65, 0, 67, 0, 0, 0, 75, 0, 90, 4, 255, 254, 255, 254, 0, 7, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 0, 63, 128, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 255, 254, 255, 254, 255, 255, 0, 0, 1, 255, 255, 2, 14, 0, 15, 0, 255, 254, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 254, 1, 255, 255, 255, 254, 0, 0, 0, 0, 0, 0, 0, 0, 255, 254, 255, 254, 0, 0, 255, 254, 0, 0, 0, 0, 0, 24, 0, 0, 20, 0, 21, 0, 2, 0, 22, 1, 0, 0, 0, 128, 0, 0, 0, 128, 0, 1, 255, 254, 0, 0, 0, 0, 0, 0, 0, 23, 0, 5, 103, 111, 97, 102, 56, 0, 9, 66, 108, 97, 99, 107, 77, 97, 115, 107, 0, 1, 47, 0, 7, 110, 48, 95, 103, 111, 97, 102, 0, 2, 110, 48, 0, 5, 107, 52, 48, 118, 48, 0, 9, 68, 79, 84, 65, 77, 111, 100, 101, 108, 0, 7, 110, 48, 95, 100, 110, 51, 118, 0, 5, 107, 52, 48, 118, 49, 0, 10, 68, 79, 84, 65, 69, 102, 102, 101, 99, 116, 0, 5, 107, 52, 48, 118, 50, 0, 13, 68, 79, 84, 65, 72, 101, 114, 111, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 51, 0, 15, 68, 79, 84, 65, 65, 118, 97, 116, 97, 114, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 52, 0, 13, 68, 79, 84, 65, 73, 116, 101, 109, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 53, 0, 16, 68, 79, 84, 65, 65, 98, 105, 108, 105, 116, 121, 73, 109, 97, 103, 101, 0, 5, 107, 52, 48, 118, 54, 0, 12, 68, 79, 84, 65, 85, 115, 101, 114, 78, 97, 109, 101, 0, 5, 100, 110, 51, 118, 55, 0, 9, 101, 109, 112, 116, 121, 95, 112, 110, 103, 0, 9, 100, 110, 51, 118, 55, 46, 112, 110, 103]).buffer);
       }
@@ -20155,9 +20471,6 @@
       OnInit() {
           super.OnInit();
           this.n0_GGraph = (this.getChild("n0"));
-          this.n1_GTextField = (this.getChild("n1"));
-          this.n2_GGraph = (this.getChild("n2"));
-          this.n3_GTextField = (this.getChild("n3"));
           this.t0_t = this.getTransition("t0");
       }
   }
@@ -20319,14 +20632,15 @@
           super.OnInit();
       }
       OnShow() {
+          // UIConfig.useNativeTransition = false;
           this.testBtn_GButton.onEvent('onactivate', () => {
-              this.n9_GGraph.setPosition(900, 900);
+              GTween.to2(500, 500, 100, 100, 1, ActionType.XY).setTarget(this.testBtn_GButton).playNative();
+              GTween.to2(1, 1, 0.5, 0.5, 1, ActionType.Scale).setTarget(this.testBtn_GButton).playNative();
+              GTween.to(0, 180, 1, ActionType.Rotation).setTarget(this.testBtn_GButton).playNative();
+              GTween.to2(100, 100, 200, 200, 1, ActionType.XY).setDelay(1).setTarget(this.testBtn_GButton).playNative();
           });
           this.replayBtn_GButton.onEvent('onactivate', () => {
-              this.round_t.play(() => {
-                  //这个回调用在循环的动效是无效的  最好是只用在一次性的
-                  $.Msg("play finish");
-              });
+              this.round_t.play();
           });
       }
       OnClose() {

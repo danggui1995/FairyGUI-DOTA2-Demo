@@ -92,13 +92,6 @@ local function getTranslateStr(arr, lastx, lasty, oldx, oldy)
     return newx, newy
 end
 
-local sortWeight = {
-    rotateZ = 1,
-    rotate3d = 2,
-    scale3d = 3,
-    translate3d = 4,
-}
-
 local function genCss_One(handler, xmlPath, kfList, classList)
     local xmlfile = io.open(xmlPath, "r")
     local xmlstring = xmlfile:read("*a")
@@ -161,11 +154,11 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     frameMap[t_target][t_delay][t_type] = {"background-color", string.format("%s", t_startValue[1])}
                     frameMap[t_target][frame2Time][t_type] = {"background-color", string.format("%s", t_endValue[1])}
                 elseif t_type == ActionType.Rotation then
-                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_startValue[1])}
-                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_endValue[1])}
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_startValue[1]), 1}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("rotateZ(%sdeg)", t_endValue[1]), 1}
                 elseif t_type == ActionType.Scale then
-                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_startValue[1], t_startValue[2])}
-                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_endValue[1], t_endValue[2])}
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_startValue[1], t_startValue[2]), 3}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("scale3d(%s, %s, 1)", t_endValue[1], t_endValue[2]), 3}
                 elseif t_type == ActionType.Skew then
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_startValue[1], t_startValue[2]), 2}
                     frameMap[t_target][frame2Time][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_endValue[1], t_endValue[2]), 2}

@@ -9,6 +9,13 @@
   <Panel hittest="false" class="Root">
     <Panel id="HiddenRoot" />
     <Panel id="ViewRoot"/>
-  <Panel id="test" />
+    <Panel id="testtrans" />
+    <!-- <Button id="testMemory" onactivate="ProfileOn();" >
+      <Label text="profiler start" style="font-size:48px;"/>
+    </Button>
+
+    <Button id="testMemory2" onactivate="ProfileOff();" >
+      <Label text="profiler stop" style="font-size:48px;"/>
+    </Button> -->
   </Panel>
 </root>

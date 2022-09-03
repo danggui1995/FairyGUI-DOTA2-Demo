@@ -2,16 +2,9 @@
 <component size="1920,1080">
   <displayList>
     <graph id="n0_nhre" name="n0" xy="234,470" size="316,276" type="rect"/>
-    <text id="n1_nhre" name="n1" xy="594,455" size="30,310" fontSize="24" autoSize="none" text="我关联了左边的图形">
-      <relation target="n0_nhre" sidePair="middle-middle,left-right"/>
-    </text>
-    <graph id="n2_riop" name="n2" xy="347,881" size="100,100" type="rect"/>
-    <text id="n3_riop" name="n3" xy="381,914" size="32,34" fontSize="24" align="center" vAlign="middle" text="22">
-      <relation target="n2_riop" sidePair="center-center,middle-middle"/>
-    </text>
   </displayList>
   <transition name="t0" autoPlay="true" autoPlayRepeat="-1">
-    <item time="0" type="XY" target="n0_nhre" tween="true" startValue="234,470" endValue="717,470" duration="12"/>
-    <item time="12" type="XY" target="n0_nhre" tween="true" startValue="717,470" endValue="717,211" duration="12"/>
+    <item time="0" type="XY" target="n0_nhre" tween="true" startValue="234,470" endValue="717,470" duration="60"/>
+    <item time="60" type="XY" target="n0_nhre" tween="true" startValue="717,470" endValue="717,211" duration="108"/>
   </transition>
 </component>

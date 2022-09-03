@@ -1,3 +1,4 @@
+import { ActionType, GTween, UIConfig } from "panorama-fgui-types/fgui/FairyGUI";
 import { test_TestTransition_data } from "./test_data";
 
 export class test_TestTransition extends test_TestTransition_data{
@@ -16,15 +17,17 @@ export class test_TestTransition extends test_TestTransition_data{
 
     public OnShow():void
     {
+        // UIConfig.useNativeTransition = false;
         this.testBtn_GButton.onEvent('onactivate', ()=>{
-            this.n9_GGraph.setPosition(900, 900);
+            GTween.to2(500, 500, 100, 100, 1, ActionType.XY).setTarget(this.testBtn_GButton).playNative();
+            GTween.to2(1, 1, 0.5, 0.5, 1, ActionType.Scale).setTarget(this.testBtn_GButton).playNative();
+            GTween.to(0, 180, 1, ActionType.Rotation).setTarget(this.testBtn_GButton).playNative();
+
+            GTween.to2(100, 100, 200, 200, 1, ActionType.XY).setDelay(1).setTarget(this.testBtn_GButton).playNative();
         });
 
         this.replayBtn_GButton.onEvent('onactivate', ()=>{
-            this.round_t.play(()=>{
-                //这个回调用在循环的动效是无效的  最好是只用在一次性的
-                $.Msg("play finish");
-            });
+            this.round_t.play();
         });
     }
 

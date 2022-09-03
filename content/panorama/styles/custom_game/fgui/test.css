@@ -71,21 +71,21 @@
 
 @keyframes 'TestTransition_group1_n5_nhre_k' {
     0% {
-		transform: rotateZ(0deg) scale3d(1, 1, 1) translate3d(-41px, 11px, 0px);
-		opacity: 1;
 		background-color: #ffffff;
+		opacity: 1;
+		transform: rotateZ(0deg) scale3d(1, 1, 1) translate3d(-41px, 11px, 0px);
     }
 
     50% {
-		transform: rotateZ(90deg) scale3d(0.2, 1, 1) translate3d(542px, 11px, 0px);
-		opacity: 0;
 		background-color: #00ccff;
+		opacity: 0;
+		transform: rotateZ(90deg) scale3d(0.2, 1, 1) translate3d(542px, 11px, 0px);
     }
 
     100% {
-		transform: rotateZ(180deg) scale3d(1, 1, 1) translate3d(542px, 421px, 0px);
-		opacity: 1;
 		background-color: #000000;
+		opacity: 1;
+		transform: rotateZ(180deg) scale3d(1, 1, 1) translate3d(542px, 421px, 0px);
     }
 
 }
@@ -162,7 +162,7 @@
 		transform: translate3d(0px, 0px, 0px);
     }
 
-    50% {
+    35% {
 		transform: translate3d(483px, 0px, 0px);
     }
 
@@ -245,7 +245,7 @@
 
 .TestRelation_t0_n0_nhre {
     animation-name: TestRelation_t0_n0_nhre_k;
-    animation-duration: 1.00s;
+    animation-duration: 7.00s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
     animation-fill-mode: forwards;
