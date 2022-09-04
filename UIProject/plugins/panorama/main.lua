@@ -199,12 +199,18 @@ local function genCss_One(handler, xmlPath, kfList, classList)
             end
         end
 
+        local maxFrame = 0
+        for t_target, vv in pairs(frameMap) do
+            for frameTime, v in pairs(vv) do
+                if frameTime > maxFrame then
+                    maxFrame = frameTime
+                end
+            end
+        end
         --gen keyframe
         for t_target, vv in pairs(frameMap) do
             local frameList = {}
-            local maxFrame = 0
             for frameTime, v in pairs(vv) do
-               
                 local record = {}
                 for t_type, styleList in pairs(v) do
                     if not record[styleList[1]] then
@@ -213,7 +219,6 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     table.insert(record[styleList[1]], {styleList[2], styleList[3] or 0})
                 end
                 local typelist = {}
-                
                 for tp, sarr in pairs(record) do
                     if #sarr > 1 then
                         table.sort(sarr, function(a,b)
@@ -226,24 +231,32 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     end
                     table.insert(typelist, string.format("\t\t%s: %s;", tp, table.concat(sortedSArr, ' ')))
                 end
+                table.sort(typelist, function(a,b)
+                    return a < b
+                end)
                 table.insert(frameList, {frameTime, typelist})
-                if frameTime > maxFrame then
-                    maxFrame = frameTime
-                end
             end
 
             table.sort(frameList, function(a,b)
                 return a[1] < b[1]
             end)
             local sortedList = {}
-            for _, v in ipairs(frameList) do
+            for i, v in ipairs(frameList) do
                 local s = string.format(keyframePattern2, math.floor(v[1] / maxFrame * 100), table.concat(v[2], '\n'))
                 table.insert(sortedList, s)
+
+                if i == #frameList and v[1] < maxFrame then
+                    local s = string.format(keyframePattern2, 100, table.concat(v[2], '\n'))
+                    table.insert(sortedList, s)
+                elseif i == 1 and v[1] > 0 then
+                    local s = string.format(keyframePattern2, 0, table.concat(v[2], '\n'))
+                    table.insert(sortedList, s)
+                end
             end
+
             local transition_uniqueName = string.format("%s_%s_%s_k", fileName, name, t_target)
             local kf = string.format(keyframePattern, transition_uniqueName, table.concat(sortedList, '\n'))
             table.insert(kfList, kf)
-    
     
             --gen class
             local repeatCount
