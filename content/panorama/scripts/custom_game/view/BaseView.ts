@@ -7,6 +7,7 @@ export class BaseView{
     protected isFullScreen: boolean = false;
     protected maskComp : GComponent;
     protected static s_hiddenViews : BaseView[];
+    protected hasInitialized : boolean;
 
     public viewName : string;
     public root : GComponent;
@@ -55,19 +56,23 @@ export class BaseView{
 
     public __OnShow(args:string[]):void
     {
-        if (this.isFullScreen == true) {
-            this.root.setFullScreen();
-        }
-        else
+        if (!this.hasInitialized)
         {
-            this.root.center();
-            //加一层黑底
-            this.maskComp = UIPackage.createObject("dotapanel", "BlackMask") as GComponent;
-            this.maskComp.SetParent(this.root.parent);
-            this.root.SetParent(this.maskComp);
-            this.maskComp.onEvent('onactivate', this.onMaskClicked, this);
+            this.hasInitialized = true;
+            if (this.isFullScreen == true) {
+                this.root.setFullScreen();
+            }
+            else
+            {
+                this.root.center();
+                //加一层黑底
+                this.maskComp = UIPackage.createObject("dotapanel", "BlackMask") as GComponent;
+                this.maskComp.SetParent(this.root.parent);
+                this.root.SetParent(this.maskComp);
+                this.maskComp.onEvent('onactivate', this.onMaskClicked, this);
+            }
         }
-        this.root.emit("added_to_stage");
+
         this.OnShow(args);
     }
 

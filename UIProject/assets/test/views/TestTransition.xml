@@ -15,7 +15,7 @@
     <component id="n11_giof" name="replayBtn" src="nhre7" fileName="components/Button1.xml" xy="658,564">
       <Button title="重新播放"/>
     </component>
-    <graph id="n12_egn1" name="n12" xy="1408,614" size="100,100" type="rect"/>
+    <graph id="n12_egn1" name="n12" xy="1408,614" size="100,100" type="rect" lineSize="0"/>
   </displayList>
   <transition name="rotate" autoPlay="true" autoPlayRepeat="-1">
     <item time="0" type="Rotation" target="n0_nhre" tween="true" startValue="0" endValue="90" duration="6"/>

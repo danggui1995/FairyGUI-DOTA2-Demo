@@ -255,6 +255,7 @@ export class test_TestLoader_data extends BaseView{
 export class test_TestRelation_data extends BaseView{
 	public n0_GGraph : fgui.GGraph;
 	public t0_t : fgui.Transition;
+	public t1_t : fgui.Transition;
     constructor()
     {
         super();
@@ -269,6 +270,7 @@ export class test_TestRelation_data extends BaseView{
         super.OnInit();
 		this.n0_GGraph = <fgui.GGraph><unknown>(this.getChild("n0"));
 		this.t0_t = this.getTransition("t0");
+		this.t1_t = this.getTransition("t1");
     }
 }
 

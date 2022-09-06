@@ -19,11 +19,11 @@ export class test_TestTransition extends test_TestTransition_data{
     {
         // UIConfig.useNativeTransition = false;
         this.testBtn_GButton.onEvent('onactivate', ()=>{
-            GTween.to2(500, 500, 100, 100, 1, ActionType.XY).setTarget(this.testBtn_GButton).playNative();
-            GTween.to2(1, 1, 0.5, 0.5, 1, ActionType.Scale).setTarget(this.testBtn_GButton).playNative();
-            GTween.to(0, 180, 1, ActionType.Rotation).setTarget(this.testBtn_GButton).playNative();
+            GTween.to2(500, 500, 100, 100, 1, ActionType.XY).setTarget(this.testBtn_GButton);
+            GTween.to2(1, 1, 0.5, 0.5, 1, ActionType.Scale).setTarget(this.testBtn_GButton);
+            GTween.to(0, 180, 1, ActionType.Rotation).setTarget(this.testBtn_GButton);
 
-            GTween.to2(100, 100, 200, 200, 1, ActionType.XY).setDelay(1).setTarget(this.testBtn_GButton).playNative();
+            GTween.to2(100, 100, 200, 200, 1, ActionType.XY).setDelay(1).setTarget(this.testBtn_GButton);
         });
 
         this.replayBtn_GButton.onEvent('onactivate', ()=>{

@@ -10,11 +10,11 @@
     <Panel id="HiddenRoot" />
     <Panel id="ViewRoot"/>
     <Panel id="testtrans" />
-    <!-- <Button id="testMemory" onactivate="ProfileOn();" >
-      <Label text="profiler start" style="font-size:48px;"/>
-    </Button>
+    <!-- <Button id="testMemory"  >
+      <Label text="profiler start" style="font-size:48px;" onactivate="$('#testMemory').AddClass('test1');$('#testMemory').AddClass('test11'); $('#testMemory').AddClass('test2'); $('#testMemory').style.transitionDelay='0s';$('#testMemory').style.transitionDuration='3s';$('#testMemory').AddClass('test33'); $('#testMemory').AddClass('test4');"/>
+    </Button> -->
 
-    <Button id="testMemory2" onactivate="ProfileOff();" >
+    <!-- <Button id="testMemory2" onactivate="ProfileOff();" >
       <Label text="profiler stop" style="font-size:48px;"/>
     </Button> -->
   </Panel>

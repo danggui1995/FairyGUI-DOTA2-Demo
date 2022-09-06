@@ -77,6 +77,23 @@ local function findDisplayXY(xml, id)
     return 0, 0
 end
 
+local function findDisplaySize(xml, id)
+    local iter = xml:GetEnumerator("displayList")
+    while iter:MoveNext() do
+        local displayList = iter.Current
+        local itemIter = displayList:GetEnumerator()
+        while itemIter:MoveNext() do
+            local item = itemIter.Current
+            local xmlid = item:GetAttribute("id")
+            if xmlid == id then
+                local xy = item:GetAttributeArray("size")
+                return tonumber(xy[0]), tonumber(xy[1])
+            end
+        end
+    end
+    return 0, 0
+end
+
 local function getTranslateStr(arr, lastx, lasty, oldx, oldy)
     local newx, newy
     if arr[1] == '-' then
@@ -163,11 +180,9 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_startValue[1], t_startValue[2]), 2}
                     frameMap[t_target][frame2Time][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_endValue[1], t_endValue[2]), 2}
                 elseif t_type == ActionType.Size then
-                    frameMap[t_target][t_delay]["width"] = {"width", string.format("%dpx", t_startValue[1])}
-                    frameMap[t_target][t_delay]["height"] = {"height", string.format("%dpx", t_startValue[2])}
-
-                    frameMap[t_target][frame2Time]["width"] = {"width", string.format("%dpx", t_endValue[1])}
-                    frameMap[t_target][frame2Time]["height"] = {"height", string.format("%dpx", t_endValue[2])}
+                    local sx, sy = findDisplaySize(xml, t_target)
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%.2f, %.2f, 1)", t_startValue[1] / sx, t_startValue[2] / sy)}
+                    frameMap[t_target][frame2Time][t_type] = {"transform", string.format("scale3d(%.2f, %.2f, 1)", t_endValue[1] / sx, t_endValue[2] / sy)}
                 else
                     print("error: this type is not support : " .. t_type)
                 end
@@ -191,8 +206,8 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                 elseif t_type == ActionType.Skew then
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("skew(%sdeg, %sdeg)", t_startValue[1], t_startValue[2]), 2}
                 elseif t_type == ActionType.Size then
-                    frameMap[t_target][t_delay]["width"] = {"width", string.format("%dpx", t_startValue[1])}
-                    frameMap[t_target][t_delay]["height"] = {"height", string.format("%dpx", t_startValue[2])}
+                    local sx, sy = findDisplaySize(xml, t_target)
+                    frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%.2f, %.2f, 1)", t_startValue[1] / sx, t_startValue[2] / sy)}
                 else
                     print("error: this type is not support : " .. t_type)
                 end
