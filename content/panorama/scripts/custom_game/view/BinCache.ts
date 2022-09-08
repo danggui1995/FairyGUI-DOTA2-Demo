@@ -1,4 +1,4 @@
-import { AbUtil, UIPackage } from "panorama-fgui-types/fgui/FairyGUI";
+import { UIPackage } from "panorama-fgui-types/fgui/FairyGUI";
 
 
 //预载入UI界面和缓存
@@ -8,16 +8,6 @@ export class BinCache{
     constructor()
     {
 
-    }
-
-    /**
-     * PrecachePackage
-     */
-    public static PrecachePackage(pkgName : string, binData : string) {
-        if (!BinCache.cacheData.has(pkgName))
-        {
-            BinCache.cacheData.set(pkgName, AbUtil.decode(binData));
-        }
     }
 
     public static PrecachePackageWithArrayBuffer(pkgName : string, binData : ArrayBuffer)
