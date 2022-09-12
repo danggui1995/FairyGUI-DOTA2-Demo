@@ -13,5 +13,6 @@
     <text id="n9_nhre" name="n9" xy="830,646" size="300,147" fontSize="24" vAlign="middle" autoSize="none" text="中对齐文本中对齐文本中对齐文本中对齐文本"/>
     <text id="n10_nhre" name="n10" xy="1217,646" size="300,147" fontSize="24" vAlign="bottom" autoSize="none" text="底对齐文本底对齐文本底对齐文本底对齐文"/>
     <richtext id="n11_nhre" name="n11" xy="108,804" size="623,220" fontSize="24" ubb="true" autoSize="height" text="富文本富[b]文本富[/b]文本[u]富文本[/u][i]富文本[/i][color=#00ff66]富文本[/color]富文本[size=55]富文本[/size][img]ui://wdrcd8rpjrl69[/img]富文本[img]ui://wdrcd8rpjrl61g[/img]&#xA;[b]richtext中文不支持加粗&#xA;[/b][i]richtext中文不支持斜体[/i]"/>
+    <richtext id="n12_lqx4" name="n12" xy="1544,612" size="363,252" fontSize="24" ubb="true" autoSize="height" text="富文本富[b]文本富[/b]文本[u]富文本[/u][i]富文本[/i][color=#00ff66]富文本[/color]富文本[size=55]富文本[/size][img]ui://wdrcd8rpjrl69[/img]富文本[img]ui://wdrcd8rpjrl61g[/img]&#xA;[b]richtext中文不支持加粗&#xA;[/b][i]richtext中文不支持斜体[/i]"/>
   </displayList>
 </component>

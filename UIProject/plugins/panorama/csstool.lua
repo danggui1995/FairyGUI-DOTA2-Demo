@@ -1,33 +1,36 @@
 local function genCss()
     local transitionPropertys = {
-        "background-color", "transform", "pre-transform-scale2d", "pre-transform-rotate2d", "width", "height", "opacity"
+        "color",
+        "background-color",
+        "transform",
+        "pre-transform-scale2d",
+        "pre-transform-rotate2d",
+        "width",
+        "height",
+        "opacity",
     }
 
-    local transitionDurationMax = 10
-    local transitionDelayMax = 10
+    local transitionDurationMax = 5
     local easeType = {
-        "ease", "ease-in", "ease-out", "ease-in-out"
+        "ease", 
+        "ease-in", 
+        "ease-out", 
+        "ease-in-out",
     }
     local list = {}
-    for k, v in pairs(transitionPropertys) do
-        for kk, vv in pairs(easeType) do
-            local str = string.format("\ttransition-property: %s;\n\ttransition-timing-function: %s;", v, vv)
-            local name = string.format("FGUI_Transition_%s_%s", v, vv)
-            table.insert(list, string.format(".%s{\n%s\n}", name, str))
+    for propEnum, propStr in ipairs(transitionPropertys) do
+        local name1 = string.format("FGUI_T_%d", propEnum)
+        for easeEnum, easeStr in ipairs(easeType) do
+            local name2 = string.format("%s_FGUI_T_ease%d", name1, easeEnum)
+            for i = 0, transitionDurationMax, 0.1 do
+                local name3 = string.format("%s_FGUI_T_d%d", name2, math.floor(i * 10))
+                local str = string.format("transition: %s %.2fs %s 0s;", propStr, i, easeStr)
+                table.insert(list, string.format(".%s{%s}", name3, str))
+            end
         end
     end
-    for i = 0, transitionDurationMax, 0.01 do
-        local str = string.format("\ttransition-duration: %.2fs;", i)
-        local name = string.format("FGUI_Transition_Duration_%d", math.floor(i * 100))
-        table.insert(list, string.format(".%s{\n%s\n}", name, str))
-    end
-    for i = 0, transitionDelayMax, 0.01 do
-        local str = string.format("\ttransition-delay: %.2fs;", i)
-        local name = string.format("FGUI_Transition_Delay_%d", math.floor(i * 100))
-        table.insert(list, string.format(".%s{\n%s\n}", name, str))
-    end
-    print(#list)
-    local file = io.open("D:/gitfiles/fgui/new/FairyGUI-DOTA2-Demo/content/panorama/styles/custom_game/batch.css", "w")
+    
+    local file = io.open("E:/codeup/FairyGUI-DOTA2-Demo/content/panorama/styles/custom_game/batch.css", "w")
     file:write(table.concat(list, '\n'))
     file:close()
 end

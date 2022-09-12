@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component size="1920,1080">
-  <controller name="radioctrl" pages="0,,1,,2,,3," selected="0"/>
+  <controller name="radioctrl" pages="0,,1,,2,,3," selected="2"/>
   <displayList>
     <component id="n0_nhre" name="n0" src="nhre7" fileName="components/Button1.xml" xy="299,236">
       <Button title="普通按钮"/>
@@ -12,13 +12,13 @@
       <Button title="组合按钮" controller="radioctrl" page="1"/>
     </component>
     <component id="n3_nhre" name="n3" src="nhreb" fileName="components/ButtonCheck.xml" xy="640,464">
-      <Button title="组合按钮" controller="radioctrl" page="2"/>
+      <Button checked="true" title="组合按钮" controller="radioctrl" page="2"/>
     </component>
     <component id="n4_nhre" name="n4" src="nhreb" fileName="components/ButtonCheck.xml" xy="805,464">
       <Button title="组合按钮" controller="radioctrl" page="3"/>
     </component>
     <component id="n5_nhre" name="n5" src="nhreb" fileName="components/ButtonCheck.xml" xy="310,464">
-      <Button checked="true" title="组合按钮" controller="radioctrl" page="0"/>
+      <Button title="组合按钮" controller="radioctrl" page="0"/>
     </component>
     <component id="n6_nhre" name="dropBox" src="nhren" fileName="components/ComboBox1.xml" xy="302,682" size="488,44">
       <ComboBox title="下拉框" visibleItemCount="10">
@@ -31,6 +31,11 @@
     <component id="n7_nhre" name="slider" src="nhrep" fileName="components/Slider1.xml" xy="274,912" size="377,10">
       <Slider value="50" max="100"/>
     </component>
+    <graph id="n8_lqx4" name="n8" xy="1434,764" size="146,158" type="rect" fillColor="#ff00ff33">
+      <gearXY controller="radioctrl" pages="1,2,3" values="1434,335|1434,764|1038,764" default="1247,335" tween="true"/>
+      <gearSize controller="radioctrl" pages="2,3" values="146,158,1,1|77,72,1,1" default="100,100,1,1" tween="true"/>
+      <gearColor controller="radioctrl" pages="2" values="#00ff33" default="#ffffff" tween="true"/>
+    </graph>
   </displayList>
   <transition name="color"/>
 </component>

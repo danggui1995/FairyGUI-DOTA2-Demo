@@ -28,6 +28,7 @@ export class ViewManager
 
         PackageRegister.Init();
         UIConfig.buttonSound = "General.ButtonClick";
+        // UIConfig.useNativeTransition = true;
 
         //预载入 可提前到游戏载入阶段
         BinCache.PreloadPackage("dotapanel");

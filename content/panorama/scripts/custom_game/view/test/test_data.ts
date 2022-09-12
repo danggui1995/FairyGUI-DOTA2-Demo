@@ -53,6 +53,7 @@ export class test_TestLabel_data extends BaseView{
 	public n9_GTextField : fgui.GTextField;
 	public n10_GTextField : fgui.GTextField;
 	public n11_GRichTextField : fgui.GRichTextField;
+	public n12_GRichTextField : fgui.GRichTextField;
     constructor()
     {
         super();
@@ -77,6 +78,7 @@ export class test_TestLabel_data extends BaseView{
 		this.n9_GTextField = <fgui.GTextField><unknown>(this.getChild("n9"));
 		this.n10_GTextField = <fgui.GTextField><unknown>(this.getChild("n10"));
 		this.n11_GRichTextField = <fgui.GRichTextField><unknown>(this.getChild("n11"));
+		this.n12_GRichTextField = <fgui.GRichTextField><unknown>(this.getChild("n12"));
     }
 }
 
@@ -90,6 +92,7 @@ export class test_TestButton_data extends BaseView{
 	public n5_GButton : fgui.GButton;
 	public dropBox_GComboBox : fgui.GComboBox;
 	public slider_GSlider : fgui.GSlider;
+	public n8_GGraph : fgui.GGraph;
 	public color_t : fgui.Transition;
     constructor()
     {
@@ -112,6 +115,7 @@ export class test_TestButton_data extends BaseView{
 		this.n5_GButton = <fgui.GButton><unknown>(this.getChild("n5"));
 		this.dropBox_GComboBox = <fgui.GComboBox><unknown>(this.getChild("dropBox"));
 		this.slider_GSlider = <fgui.GSlider><unknown>(this.getChild("slider"));
+		this.n8_GGraph = <fgui.GGraph><unknown>(this.getChild("n8"));
 		this.color_t = this.getTransition("color");
     }
 }

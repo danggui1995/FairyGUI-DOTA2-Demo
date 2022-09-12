@@ -1,4 +1,5 @@
 @import url('file://{resources}/styles/custom_game/autogen.css');
+@import url('file://{resources}/styles/custom_game/batch.css');
 .Root {
     width: 100%;
     height: 100%;
@@ -390,3 +391,44 @@
     margin-top: -9999px;
     margin-left: -9999px;
 }
+
+.FGUI_Transition_XY
+{
+    transition-property: transform;
+}
+
+.FGUI_Transition_Width
+{
+    transition-property: width;
+}
+
+.FGUI_Transition_Height
+{
+    transition-property: height;
+}
+
+.FGUI_Transition_Scale
+{
+    transition-property: pre-transform-scale2d;
+}
+
+.FGUI_Transition_Rotate
+{
+    transition-property: pre-transform-rotate2d;
+}
+
+.FGUI_Transition_Color
+{
+    transition-property: color;
+}
+
+.FGUI_Transition_Color_BG
+{
+    transition-property: background-color;
+}
+
+.FGUI_Transition_Alpha
+{
+    transition-property: opacity;
+}
+
