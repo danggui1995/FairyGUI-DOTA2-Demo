@@ -6,7 +6,10 @@
       "strict": true,
       "strictNullChecks": false,
       "skipLibCheck" : true,
+      "preserveConstEnums" : true,
       "types": ["panorama-fgui-types"],
+      "allowJs": false,
+      "allowUmdGlobalAccess": true,
       "outDir": "dist"
     },
     "include": [

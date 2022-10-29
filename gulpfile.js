@@ -1,11 +1,10 @@
-const gulp = require('gulp')
-const rollup = require('rollup')
+const gulp = require('gulp');
+const rollup = require('rollup');
 const ts = require('gulp-typescript');
 const uglify = require('gulp-uglify-es').default;
 const tsProject = ts.createProject('tsconfig.json', { declaration: true });
-const resolve = require('rollup-plugin-node-resolve')
-const commonjs = require('rollup-plugin-commonjs')
-const clean = require('gulp-clean')
+const clean = require('gulp-clean');
+const rename = require("gulp-rename");
 
 const onwarn = warning => {
     // Silence circular dependency warning for moment package
@@ -32,18 +31,16 @@ gulp.task('cleanJs', () => {
 gulp.task("rollup", async function() {
     let config = {
         input: "build/main.js",
-        external: ['three'],
         onwarn: onwarn,
         output: {
             file: 'main.js',
             format: 'umd',
             extend: true,
-            name: 'fgui',
-            globals: { three: 'three' }
+            name: 'main'
         },
         plugins: [
-            resolve(),
-            commonjs()
+            //不用resolve 将fgui作为全局引入
+            // resolve(),
         ]
     };
     const subTask = await rollup.rollup(config);
@@ -52,11 +49,18 @@ gulp.task("rollup", async function() {
 
 gulp.task("uglify", function() {
     return gulp.src("main.js")
-        .pipe(uglify( /* options */ ));
+        .pipe(uglify( /* options */ ))
+        .pipe(gulp.dest("content/panorama/scripts/"));
 });
 
 gulp.task("move", function() {
     return gulp.src("main.js")
+        .pipe(gulp.dest("content/panorama/scripts/"));
+});
+
+gulp.task("movelib", function() {
+    return gulp.src("node_modules/panorama-fgui-types/fgui/FairyGUI.js")
+        .pipe(rename("fairygui.js"))
         .pipe(gulp.dest("content/panorama/scripts/"));
 });
 
@@ -66,6 +70,7 @@ gulp.task("finalclean", function() {
 });
 
 gulp.task('build', gulp.series(
+    gulp.parallel('movelib'),
     gulp.parallel('buildJs'),
     gulp.parallel('rollup'),
     gulp.parallel('cleanJs'),
