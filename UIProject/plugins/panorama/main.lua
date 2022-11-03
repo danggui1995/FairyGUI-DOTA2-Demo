@@ -109,6 +109,10 @@ local function getTranslateStr(arr, lastx, lasty, oldx, oldy)
     return newx, newy
 end
 
+local function errorExportCss(...)
+    print(string.format("Warning: this type is not support : %d and will use fgui's Tween system(maybe low framerate)", ...))
+end
+
 local function genCss_One(handler, xmlPath, kfList, classList)
     local xmlfile = io.open(xmlPath, "r")
     local xmlstring = xmlfile:read("*a")
@@ -130,6 +134,11 @@ local function genCss_One(handler, xmlPath, kfList, classList)
             local item = itemIter.Current
             local t_type = ActionType[item:GetAttribute("type")]
             local t_target = item:GetAttribute("target")
+            if not t_target then
+                --组件本身的动效没有target
+                t_target = "__root__"
+            end
+
             local t_tween = item:GetAttributeBool("tween")
             local t_startValue_s = item:GetAttribute("startValue")
             local t_delay = item:GetAttributeInt("time", 0)
@@ -184,7 +193,7 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%.2f, %.2f, 1)", t_startValue[1] / sx, t_startValue[2] / sy)}
                     frameMap[t_target][frame2Time][t_type] = {"transform", string.format("scale3d(%.2f, %.2f, 1)", t_endValue[1] / sx, t_endValue[2] / sy)}
                 else
-                    print("error: this type is not support : " .. t_type)
+                    errorExportCss(t_type)
                 end
             else
                 local t_startValue = split(item:GetAttribute("value"), ",")
@@ -209,7 +218,7 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     local sx, sy = findDisplaySize(xml, t_target)
                     frameMap[t_target][t_delay][t_type] = {"transform", string.format("scale3d(%.2f, %.2f, 1)", t_startValue[1] / sx, t_startValue[2] / sy)}
                 else
-                    print("error: this type is not support : " .. t_type)
+                    errorExportCss(t_type)
                 end
             end
         end

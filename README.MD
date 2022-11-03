@@ -1,6 +1,8 @@
 # Note
 1.UIProject中的plugins目录是必须的，他会决定导出的ts代码格式以及界面数据。<BR>
-2.支持的动效类型：由于接入了Panorama底层来提升帧率表现，目前支持的动效类型仅有：
+2.关于动效：目前支持高帧率和低帧率两种。
+当 `UIConfig.useNativeTransition = true` 并且使用的动效类型在下列类型中时，会使用高帧率动画。
+其他的情况下（包括Tween类方法的显式调用）都会使用低帧率（其实也可以在Lua端通过控制台提升UI渲染频率，这里不做推荐）。
 ```
 enum ActionType {
     XY = 0,

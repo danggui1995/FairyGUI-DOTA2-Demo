@@ -28,6 +28,7 @@
     <component id="qrtpw" name="ScrollBarH_arrow2.xml" path="/components/"/>
     <component id="qrtpx" name="ScrollBarH_grip.xml" path="/components/"/>
     <component id="qrtpy" name="ScrollBarH.xml" path="/components/" exported="true"/>
+    <component id="zchyz" name="TestTransition_Root.xml" path="/components/"/>
   </resources>
   <publish name=""/>
 </packageDescription>

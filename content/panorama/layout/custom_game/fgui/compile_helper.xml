@@ -4,24 +4,7 @@
     <scripts>
     </scripts>
   <Panel hittest="false" class="CompileRoot" style="width:100%;height:100%;">
-<Image src="file://{resources}/scripts/custom_game/fgui/dotapanel/dn3v7.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl61g.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_bc.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_bl.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_br.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_mc.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_ml.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_mr.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_tc.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_tl.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/jrl69_tr.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/nhre1l.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/nhre1m.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/nhre1n.png"/>
-<Image src="file://{resources}/scripts/custom_game/fgui/uipublic/nhre1o.png"/>
-<Label text='有图片在编译，3秒后FairyGUI将关闭此界面,
-也可以自己在compile_helper.xml中删除指定数据' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>
+
   </Panel>
 </root>
 

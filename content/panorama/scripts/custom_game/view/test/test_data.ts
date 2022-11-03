@@ -132,6 +132,7 @@ export class test_TestTransition_data extends BaseView{
 	public testBtn_GButton : fgui.GButton;
 	public replayBtn_GButton : fgui.GButton;
 	public n12_GGraph : fgui.GGraph;
+	public root_GComponent : fgui.GComponent;
 	public rotate_t : fgui.Transition;
 	public move_t : fgui.Transition;
 	public scale_t : fgui.Transition;
@@ -164,6 +165,7 @@ export class test_TestTransition_data extends BaseView{
 		this.testBtn_GButton = <fgui.GButton><unknown>(this.getChild("testBtn"));
 		this.replayBtn_GButton = <fgui.GButton><unknown>(this.getChild("replayBtn"));
 		this.n12_GGraph = <fgui.GGraph><unknown>(this.getChild("n12"));
+		this.root_GComponent = <fgui.GComponent><unknown>(this.getChild("root"));
 		this.rotate_t = this.getTransition("rotate");
 		this.move_t = this.getTransition("move");
 		this.scale_t = this.getTransition("scale");

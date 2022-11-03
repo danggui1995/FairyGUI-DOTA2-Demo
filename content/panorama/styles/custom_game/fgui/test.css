@@ -191,6 +191,21 @@
     }
 
 }
+
+@keyframes 'TestTransition_Root_t0___root___k' {
+    0% {
+		transform: translate3d(0px, 0px, 0px);
+    }
+
+    57% {
+		transform: translate3d(0px, 69px, 0px);
+    }
+
+    100% {
+		transform: translate3d(0px, 0px, 0px);
+    }
+
+}
 .TestTransition_rotate_n0_nhre {
     animation-name: TestTransition_rotate_n0_nhre_k;
     animation-duration: 0.50s;
@@ -274,6 +289,14 @@
 .TestRelation_t1_n0_nhre {
     animation-name: TestRelation_t1_n0_nhre_k;
     animation-duration: 2.00s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
+}
+
+.TestTransition_Root_t0___root__ {
+    animation-name: TestTransition_Root_t0___root___k;
+    animation-duration: 1.75s;
     animation-iteration-count: infinite;
     animation-timing-function: ease;
     animation-fill-mode: forwards;

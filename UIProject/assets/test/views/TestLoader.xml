@@ -3,23 +3,23 @@
   <displayList>
     <text id="n3_nhre" name="n3" xy="82,591" size="168,34" fontSize="24" text="读取fgui资源："/>
     <text id="n4_nhre" name="n4" xy="9,861" size="240,34" fontSize="24" text="读取dota2内部资源："/>
-    <loader id="n5_nhre" name="dloader" xy="299,801" size="341,198" url="ui://wdrcd8rpnhre1m" fill="scaleMatchWidth" clearOnPublish="true"/>
-    <loader id="n2_nhre" name="floader1" xy="300,547" size="169,173" group="n7_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleFree" clearOnPublish="true"/>
+    <loader id="n5_nhre" name="dloader" xy="299,801" size="341,198" url="ui://wdrcd8rpnhre1m" fill="scaleMatchWidth"/>
+    <loader id="n2_nhre" name="floader1" xy="300,547" size="169,173" group="n7_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleFree"/>
     <text id="n6_xu3d" name="n6" xy="296,498" size="100,34" group="n7_xu3d" fontSize="24" text="自由缩放"/>
-    <loader id="n14_xu3d" name="floader4" xy="907,311" size="169,173" group="n16_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleNoBorder" clearOnPublish="true"/>
+    <loader id="n14_xu3d" name="floader4" xy="907,311" size="169,173" group="n16_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleNoBorder"/>
     <text id="n15_xu3d" name="n15" xy="903,262" size="76,34" group="n16_xu3d" fontSize="24" text="无边框"/>
     <group id="n16_xu3d" name="n16" xy="903,262" size="173,222" group="n7_xu3d"/>
-    <loader id="n17_xu3d" name="floader5" xy="1331,552" size="169,173" group="n19_xu3d" url="ui://wdrcd8rpnhre1m" fill="scale" clearOnPublish="true"/>
+    <loader id="n17_xu3d" name="floader5" xy="1331,552" size="169,173" group="n19_xu3d" url="ui://wdrcd8rpnhre1m" fill="scale"/>
     <text id="n18_xu3d" name="n18" xy="1327,503" size="100,34" group="n19_xu3d" fontSize="24" text="显示全部"/>
     <group id="n19_xu3d" name="n19" xy="1327,503" size="173,222" group="n7_xu3d"/>
     <loader id="n20_xu3d" name="floader6" xy="1541,565" size="209,60" group="n22_xu3d" url="ui://wdrcd8rpnhre1m" autoSize="true" clearOnPublish="true"/>
     <text id="n21_xu3d" name="n21" xy="1537,516" size="100,34" group="n22_xu3d" fontSize="24" text="自动大小"/>
     <group id="n22_xu3d" name="n22" xy="1537,516" size="213,109" group="n7_xu3d"/>
     <group id="n7_xu3d" name="n7" xy="296,262" size="1454,463"/>
-    <loader id="n8_xu3d" name="floader2" xy="508,537" size="169,173" group="n10_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleMatchWidth" clearOnPublish="true"/>
+    <loader id="n8_xu3d" name="floader2" xy="508,537" size="169,173" group="n10_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleMatchWidth"/>
     <text id="n9_xu3d" name="n9" xy="504,488" size="100,34" group="n10_xu3d" fontSize="24" text="适配宽度"/>
     <group id="n10_xu3d" name="n10" xy="504,488" size="173,222"/>
-    <loader id="n11_xu3d" name="floader3" xy="720,537" size="169,173" group="n13_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleMatchHeight" clearOnPublish="true"/>
+    <loader id="n11_xu3d" name="floader3" xy="720,537" size="169,173" group="n13_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleMatchHeight"/>
     <text id="n12_xu3d" name="n12" xy="716,488" size="100,34" group="n13_xu3d" fontSize="24" text="适配高度"/>
     <group id="n13_xu3d" name="n13" xy="716,488" size="173,222"/>
     <loader id="n23_xu3d" name="n23" xy="1015,843" size="274,146" url="ui://wdrcd8rpjrl69" fill="scaleFree"/>
