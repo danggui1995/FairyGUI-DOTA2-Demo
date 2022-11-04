@@ -126,7 +126,7 @@ local function genCode(handler)
         local classInfo = classes[i]
         local lowerPath = classInfo.res.path:lower()
         if (lowerPath:find("/view") or lowerPath:find("/component")) and classInfo.res.exported then
-            local targetDir = string.format("%s/../view/%s", handler.exportCodePath, pkgName)
+            local targetDir = string.format("%s/../view/%s", handler.exportCodePath, pkgName):gsub("/images/", "/scripts/")
             local targetPath = string.format("%s/%s_%s.ts", targetDir, pkgName, classInfo.resName)
             targetPath = targetPath:gsub("\\", "/")
 

@@ -336,7 +336,7 @@ local function genCss(handler)
 
     --gen pkg css
     do
-        local cssDir = handler.exportPath:gsub("\\", "/"):gsub("/scripts/", "/styles/")
+        local cssDir = handler.exportPath:gsub("\\", "/"):gsub("/images/", "/styles/")
         local cssPath = cssDir .. "/" .. handler.pkg.name .. ".css"
         if (not IO.Directory.Exists(cssDir)) then
             IO.Directory.CreateDirectory(cssDir)
@@ -348,10 +348,17 @@ local function genCss(handler)
 
     --check autogen
     do
-        local cssDir = handler.exportPath:gsub("\\", "/"):gsub("/scripts/", "/styles/")
+        local cssDir = handler.exportPath:gsub("\\", "/"):gsub("/images/", "/styles/")
         local autogenPath = cssDir .. "/../autogen.css"
         local file = io.open(autogenPath, "r")
-        local data = file:read("*a")
+        local data
+        if not file then
+            file = io.open(autogenPath, "w")
+            file:write("")
+            data = ""
+        else
+            data = file:read("*a")
+        end
         file:close()
 
         local pkgCss = string.format("@import url(\"file://{resources}/styles/custom_game/fgui/%s.css\");", handler.pkg.name)
@@ -490,15 +497,50 @@ local function genScale9Grid(handler)
     end
 end
 
-local function genPackageRegister(exportPath, pkgName, str)
+local pkgRegisterPattern = [[
+import { BinCache } from "./view/BinCache";
+
+export class PackageRegister
+{
+    constructor()
+    {
+    }
+
+    public static Init()
+    {
+    }
+}
+]]
+local function genPackageRegister(exportPath, pkgName, str, handler)
     local path = string.format("%s/../PackageRegister.ts", exportPath)
     local file = io.open(path, "r")
-    local data = file:read("*a")
+    local data
+    if not file then
+        file = io.open(path, "w")
+        file:write(pkgRegisterPattern)
+        data = pkgRegisterPattern
+    else
+        data = file:read("*a")
+    end
+    file:close()
+
     local findpattern = "BinCache%.PrecachePackageWithArrayBuffer%(\"" .. pkgName .. "\","
     local output = string.format("\tBinCache.PrecachePackageWithArrayBuffer(\"%s\", %s);\n", pkgName, str)
     local pattern = "\tBinCache%.PrecachePackageWithArrayBuffer%(\"" .. pkgName .. "\", (.-)%);\n"
 
-    --TODO 当包被删除时这里也要删除
+    --删除已经没用的包
+    local deletePattern = "BinCache.PrecachePackageWithArrayBuffer%(\"([^\"]+)\"[%s]*,[%s]*new[%s]+Uint8Array%(%[([%d,]*)%]%).buffer%);"
+    local projectPath = handler.project.basePath:gsub("\\", "/")
+    data = data:gsub(deletePattern, function(pkgName, arraybuffer)
+        local pkgPath = string.format("%s/assets/%s", projectPath, pkgName)
+        if (not IO.Directory.Exists(pkgPath)) then
+            --不存在这个包了 删掉
+            return ""
+        else
+            return string.format("BinCache.PrecachePackageWithArrayBuffer(\"%s\", new Uint8Array([%s]).buffer);", pkgName, arraybuffer)
+        end
+    end)
+
     data = data:gsub("Init%(%)%s*{(.-)\t}", function (scope)
         if not scope:find(findpattern) then
             scope = scope .. "\t" .. output
@@ -529,16 +571,17 @@ local function genBinaryStr(pkgName, path)
     return arrayStr
 end
 
-local function genBase64(handler, allClsData)
+local function genLayoutFile(handler, allClsData)
     local pkgName = handler.pkg.name
-    local exportPath = handler.exportPath
+    local exportPath = handler.exportPath:gsub("\\", "/")
+    local scriptPath = exportPath:gsub("/images/", "/scripts/")
     local path = string.format("%s/%s/package.xml", exportPath, pkgName)
 
     local timer = CS.FairyGUI.Timers()
     timer:Add(0.5, 1, function()
         
         if IO.File.Exists(path) then
-            local targetDir = string.format("%s/../view/%s", exportPath, pkgName)
+            local targetDir = string.format("%s/../view/%s", scriptPath, pkgName)
             if (not IO.Directory.Exists(targetDir)) then
                 IO.Directory.CreateDirectory(targetDir)
             end
@@ -548,11 +591,7 @@ local function genBase64(handler, allClsData)
             IO.File.WriteAllText(targetPath, string.format(template_data, allClsStr))
 
             local str = genBinaryStr(pkgName, path)
-
-            -- local bytes = IO.File.ReadAllBytes(path)
-            -- local str = CS.System.Convert.ToBase64String(bytes)
-
-            genPackageRegister(exportPath, pkgName, str)
+            genPackageRegister(scriptPath, pkgName, str, handler)
         else
             fprint("File Not Found : " .. path)
         end
@@ -565,7 +604,6 @@ end
 
 local function TraverseFolder(dir, callBack)
     local folder = IO.DirectoryInfo(dir);
-
     local allFiles = IO.Directory.GetFiles(dir)
     for i = 0, allFiles.Length - 1 do
         local file = allFiles[i];
@@ -604,30 +642,19 @@ function compileTextures(exportPath)
         end)
     end)
 
-    table.insert(arr, string.format("<Label text='有图片在编译，3秒后FairyGUI将关闭此界面,\n也可以自己在compile_helper.xml中删除指定数据' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>"))
+    table.insert(arr, string.format("<Label text='有图片在编译\n请在compile_helper.xml中删除编译好的图片' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>"))
 
     local str = string.format(xmlTemplate, table.concat(arr, '\n'))
-    local layoutPath = exportPath:gsub("\\", "/"):gsub("/scripts/", "/layout/")
+    local layoutPath = exportPath:gsub("/images/", "/layout/")
     if (not IO.Directory.Exists(layoutPath)) then
         IO.Directory.CreateDirectory(layoutPath)
     end
     IO.File.WriteAllText(layoutPath .. "/compile_helper.xml", str)
-
-    local timer = CS.FairyGUI.Timers()
-    --wtf 这个参数真的迷
-    timer:Add(10, 1, function()
-        local str = string.format(xmlTemplate, "")
-        local layoutPath = exportPath:gsub("\\", "/"):gsub("/scripts/", "/layout/")
-        if (not IO.Directory.Exists(layoutPath)) then
-            IO.Directory.CreateDirectory(layoutPath)
-        end
-        IO.File.WriteAllText(layoutPath .. "/compile_helper.xml", str)
-    end)
 end
 
 function onPublish(handler)
     local allClsData = genCode(handler)
-    genBase64(handler, allClsData)
+    genLayoutFile(handler, allClsData)
     --os.execute被阉割了
     --触发gulp编译
     -- local ret = os.execute("cd panorama & gulp build")

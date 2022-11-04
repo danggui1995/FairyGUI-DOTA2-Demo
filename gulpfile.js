@@ -73,8 +73,8 @@ gulp.task('build', gulp.series(
     gulp.parallel('movelib'),
     gulp.parallel('buildJs'),
     gulp.parallel('rollup'),
-    gulp.parallel('cleanJs'),
-    gulp.parallel('uglify'),
+    // gulp.parallel('cleanJs'),
+    // gulp.parallel('uglify'),
     gulp.parallel('move'),
     gulp.parallel('finalclean'),
 ))
