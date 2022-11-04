@@ -14,13 +14,8 @@ enum ActionType {
     Skew = 13,
 }
 ```
-3.九宫格：与Unity平台的有差异，插件会将图切成9份来还原九宫图的效果（无力吐槽这翻九倍的消耗）。
-
-
-# 建议
-
-1.由于Dota2阉割了Web的不少特性，你可能会遇到编辑器生效，游戏内不生效的问题。<BR>
-2.项目结构为
+3.九宫格：与Unity平台的有差异，插件会将图切成9份来还原九宫图的效果（无力吐槽这翻九倍的消耗）。<Br>
+4.项目结构推荐为
 ```
 |-- UIProject
 |-- content
@@ -33,6 +28,7 @@ enum ActionType {
 mklink /J game "C:\Games\steamapps\common\dota 2 beta\game\dota_addons\testlink" 
 mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\testlink"
 ```
+5.禁止使用FairyGUI的批量导出，因为这样会使插件的编译图片功能失效。
 
 # Q & A
 Q:如何编译导出的图片到vtex_c?<BR>
