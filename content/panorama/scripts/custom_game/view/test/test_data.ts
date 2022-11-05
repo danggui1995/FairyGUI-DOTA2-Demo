@@ -93,7 +93,11 @@ export class test_TestButton_data extends BaseView{
 	public dropBox_GComboBox : fgui.GComboBox;
 	public slider_GSlider : fgui.GSlider;
 	public n8_GGraph : fgui.GGraph;
+	public n9_GButton : fgui.GButton;
 	public color_t : fgui.Transition;
+	public btnMove_t : fgui.Transition;
+	public btnMove2_t : fgui.Transition;
+	public btnSingle_t : fgui.Transition;
     constructor()
     {
         super();
@@ -116,7 +120,11 @@ export class test_TestButton_data extends BaseView{
 		this.dropBox_GComboBox = <fgui.GComboBox><unknown>(this.getChild("dropBox"));
 		this.slider_GSlider = <fgui.GSlider><unknown>(this.getChild("slider"));
 		this.n8_GGraph = <fgui.GGraph><unknown>(this.getChild("n8"));
+		this.n9_GButton = <fgui.GButton><unknown>(this.getChild("n9"));
 		this.color_t = this.getTransition("color");
+		this.btnMove_t = this.getTransition("btnMove");
+		this.btnMove2_t = this.getTransition("btnMove2");
+		this.btnSingle_t = this.getTransition("btnSingle");
     }
 }
 

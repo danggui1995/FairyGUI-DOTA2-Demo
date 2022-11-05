@@ -1,17 +1,18 @@
-(function (global, factory) {
+(function(global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.fgui = global.fgui || {}));
-})(this, (function (exports) { 'use strict';
+        typeof define === 'function' && define.amd ? define(['exports'], factory) :
+        (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.fgui = global.fgui || {}));
+})(this, (function(exports) {
+    'use strict';
 
     exports.ButtonMode = void 0;
-    (function (ButtonMode) {
+    (function(ButtonMode) {
         ButtonMode[ButtonMode["Common"] = 0] = "Common";
         ButtonMode[ButtonMode["Check"] = 1] = "Check";
         ButtonMode[ButtonMode["Radio"] = 2] = "Radio";
     })(exports.ButtonMode || (exports.ButtonMode = {}));
     exports.AutoSizeType = void 0;
-    (function (AutoSizeType) {
+    (function(AutoSizeType) {
         AutoSizeType[AutoSizeType["None"] = 0] = "None";
         AutoSizeType[AutoSizeType["Both"] = 1] = "Both";
         AutoSizeType[AutoSizeType["Height"] = 2] = "Height";
@@ -19,7 +20,7 @@
         AutoSizeType[AutoSizeType["Ellipsis"] = 4] = "Ellipsis";
     })(exports.AutoSizeType || (exports.AutoSizeType = {}));
     exports.LoaderFillType = void 0;
-    (function (LoaderFillType) {
+    (function(LoaderFillType) {
         LoaderFillType[LoaderFillType["None"] = 0] = "None";
         LoaderFillType[LoaderFillType["Scale"] = 1] = "Scale";
         LoaderFillType[LoaderFillType["ScaleMatchHeight"] = 2] = "ScaleMatchHeight";
@@ -28,7 +29,7 @@
         LoaderFillType[LoaderFillType["ScaleNoBorder"] = 5] = "ScaleNoBorder";
     })(exports.LoaderFillType || (exports.LoaderFillType = {}));
     exports.ListLayoutType = void 0;
-    (function (ListLayoutType) {
+    (function(ListLayoutType) {
         ListLayoutType[ListLayoutType["SingleColumn"] = 0] = "SingleColumn";
         ListLayoutType[ListLayoutType["SingleRow"] = 1] = "SingleRow";
         ListLayoutType[ListLayoutType["FlowHorizontal"] = 2] = "FlowHorizontal";
@@ -36,20 +37,20 @@
         ListLayoutType[ListLayoutType["Pagination"] = 4] = "Pagination";
     })(exports.ListLayoutType || (exports.ListLayoutType = {}));
     exports.ListSelectionMode = void 0;
-    (function (ListSelectionMode) {
+    (function(ListSelectionMode) {
         ListSelectionMode[ListSelectionMode["Single"] = 0] = "Single";
         ListSelectionMode[ListSelectionMode["Multiple"] = 1] = "Multiple";
         ListSelectionMode[ListSelectionMode["Multiple_SingleClick"] = 2] = "Multiple_SingleClick";
         ListSelectionMode[ListSelectionMode["None"] = 3] = "None";
     })(exports.ListSelectionMode || (exports.ListSelectionMode = {}));
     exports.OverflowType = void 0;
-    (function (OverflowType) {
+    (function(OverflowType) {
         OverflowType[OverflowType["Visible"] = 0] = "Visible";
         OverflowType[OverflowType["Hidden"] = 1] = "Hidden";
         OverflowType[OverflowType["Scroll"] = 2] = "Scroll";
     })(exports.OverflowType || (exports.OverflowType = {}));
     exports.PackageItemType = void 0;
-    (function (PackageItemType) {
+    (function(PackageItemType) {
         PackageItemType[PackageItemType["Image"] = 0] = "Image";
         PackageItemType[PackageItemType["MovieClip"] = 1] = "MovieClip";
         PackageItemType[PackageItemType["Sound"] = 2] = "Sound";
@@ -63,7 +64,7 @@
         PackageItemType[PackageItemType["DragonBones"] = 10] = "DragonBones";
     })(exports.PackageItemType || (exports.PackageItemType = {}));
     exports.ObjectType = void 0;
-    (function (ObjectType) {
+    (function(ObjectType) {
         ObjectType[ObjectType["Image"] = 0] = "Image";
         ObjectType[ObjectType["MovieClip"] = 1] = "MovieClip";
         ObjectType[ObjectType["Swf"] = 2] = "Swf";
@@ -91,52 +92,52 @@
         ObjectType[ObjectType["GDOTAUserName"] = 24] = "GDOTAUserName";
     })(exports.ObjectType || (exports.ObjectType = {}));
     exports.ProgressTitleType = void 0;
-    (function (ProgressTitleType) {
+    (function(ProgressTitleType) {
         ProgressTitleType[ProgressTitleType["Percent"] = 0] = "Percent";
         ProgressTitleType[ProgressTitleType["ValueAndMax"] = 1] = "ValueAndMax";
         ProgressTitleType[ProgressTitleType["Value"] = 2] = "Value";
         ProgressTitleType[ProgressTitleType["Max"] = 3] = "Max";
     })(exports.ProgressTitleType || (exports.ProgressTitleType = {}));
     exports.ScrollBarDisplayType = void 0;
-    (function (ScrollBarDisplayType) {
+    (function(ScrollBarDisplayType) {
         ScrollBarDisplayType[ScrollBarDisplayType["Default"] = 0] = "Default";
         ScrollBarDisplayType[ScrollBarDisplayType["Visible"] = 1] = "Visible";
         ScrollBarDisplayType[ScrollBarDisplayType["Auto"] = 2] = "Auto";
         ScrollBarDisplayType[ScrollBarDisplayType["Hidden"] = 3] = "Hidden";
     })(exports.ScrollBarDisplayType || (exports.ScrollBarDisplayType = {}));
     exports.ScrollType = void 0;
-    (function (ScrollType) {
+    (function(ScrollType) {
         ScrollType[ScrollType["Horizontal"] = 0] = "Horizontal";
         ScrollType[ScrollType["Vertical"] = 1] = "Vertical";
         ScrollType[ScrollType["Both"] = 2] = "Both";
     })(exports.ScrollType || (exports.ScrollType = {}));
     exports.FlipType = void 0;
-    (function (FlipType) {
+    (function(FlipType) {
         FlipType[FlipType["None"] = 0] = "None";
         FlipType[FlipType["Horizontal"] = 1] = "Horizontal";
         FlipType[FlipType["Vertical"] = 2] = "Vertical";
         FlipType[FlipType["Both"] = 3] = "Both";
     })(exports.FlipType || (exports.FlipType = {}));
     exports.ChildrenRenderOrder = void 0;
-    (function (ChildrenRenderOrder) {
+    (function(ChildrenRenderOrder) {
         ChildrenRenderOrder[ChildrenRenderOrder["Ascent"] = 0] = "Ascent";
         ChildrenRenderOrder[ChildrenRenderOrder["Descent"] = 1] = "Descent";
         ChildrenRenderOrder[ChildrenRenderOrder["Arch"] = 2] = "Arch";
     })(exports.ChildrenRenderOrder || (exports.ChildrenRenderOrder = {}));
     exports.GroupLayoutType = void 0;
-    (function (GroupLayoutType) {
+    (function(GroupLayoutType) {
         GroupLayoutType[GroupLayoutType["None"] = 0] = "None";
         GroupLayoutType[GroupLayoutType["Horizontal"] = 1] = "Horizontal";
         GroupLayoutType[GroupLayoutType["Vertical"] = 2] = "Vertical";
     })(exports.GroupLayoutType || (exports.GroupLayoutType = {}));
     exports.PopupDirection = void 0;
-    (function (PopupDirection) {
+    (function(PopupDirection) {
         PopupDirection[PopupDirection["Auto"] = 0] = "Auto";
         PopupDirection[PopupDirection["Up"] = 1] = "Up";
         PopupDirection[PopupDirection["Down"] = 2] = "Down";
     })(exports.PopupDirection || (exports.PopupDirection = {}));
     exports.RelationType = void 0;
-    (function (RelationType) {
+    (function(RelationType) {
         RelationType[RelationType["Left_Left"] = 0] = "Left_Left";
         RelationType[RelationType["Left_Center"] = 1] = "Left_Center";
         RelationType[RelationType["Left_Right"] = 2] = "Left_Right";
@@ -164,7 +165,7 @@
         RelationType[RelationType["Size"] = 24] = "Size";
     })(exports.RelationType || (exports.RelationType = {}));
     exports.FillMethod = void 0;
-    (function (FillMethod) {
+    (function(FillMethod) {
         FillMethod[FillMethod["None"] = 0] = "None";
         FillMethod[FillMethod["Horizontal"] = 1] = "Horizontal";
         FillMethod[FillMethod["Vertical"] = 2] = "Vertical";
@@ -173,7 +174,7 @@
         FillMethod[FillMethod["Radial360"] = 5] = "Radial360";
     })(exports.FillMethod || (exports.FillMethod = {}));
     exports.FillOrigin = void 0;
-    (function (FillOrigin) {
+    (function(FillOrigin) {
         FillOrigin[FillOrigin["Top"] = 0] = "Top";
         FillOrigin[FillOrigin["Bottom"] = 1] = "Bottom";
         FillOrigin[FillOrigin["Left"] = 2] = "Left";
@@ -184,14 +185,14 @@
         FillOrigin[FillOrigin["BottomRight"] = 3] = "BottomRight";
     })(exports.FillOrigin || (exports.FillOrigin = {}));
     exports.FillOrigin90 = void 0;
-    (function (FillOrigin90) {
+    (function(FillOrigin90) {
         FillOrigin90[FillOrigin90["TopLeft"] = 0] = "TopLeft";
         FillOrigin90[FillOrigin90["TopRight"] = 1] = "TopRight";
         FillOrigin90[FillOrigin90["BottomLeft"] = 2] = "BottomLeft";
         FillOrigin90[FillOrigin90["BottomRight"] = 3] = "BottomRight";
     })(exports.FillOrigin90 || (exports.FillOrigin90 = {}));
     exports.ObjectPropID = void 0;
-    (function (ObjectPropID) {
+    (function(ObjectPropID) {
         ObjectPropID[ObjectPropID["Text"] = 0] = "Text";
         ObjectPropID[ObjectPropID["Icon"] = 1] = "Icon";
         ObjectPropID[ObjectPropID["Color"] = 2] = "Color";
@@ -231,8 +232,7 @@
                     this.pool.push(element2);
                 }
                 element.length = 0;
-            }
-            else {
+            } else {
                 if (this._reset)
                     this._reset(element);
                 this.pool.push(element);
@@ -337,8 +337,7 @@
                 if (col.dispatching != 0) {
                     arr[index + 2] = true;
                     col.dispatching = 2;
-                }
-                else
+                } else
                     arr.splice(index, 3);
             }
         }
@@ -347,19 +346,21 @@
                 let col = this._listeners[type];
                 if (col) {
                     if (col.dispatching != 0) {
-                        col.callbacks.forEach((value, index, arr) => { if (index % 3 == 2)
-                            arr[index] = true; });
-                        col.captures.forEach((value, index, arr) => { if (index % 3 == 2)
-                            arr[index] = true; });
+                        col.callbacks.forEach((value, index, arr) => {
+                            if (index % 3 == 2)
+                                arr[index] = true;
+                        });
+                        col.captures.forEach((value, index, arr) => {
+                            if (index % 3 == 2)
+                                arr[index] = true;
+                        });
                         col.dispatching = 2;
-                    }
-                    else {
+                    } else {
                         col.callbacks.length = 0;
                         col.captures.length = 0;
                     }
                 }
-            }
-            else {
+            } else {
                 for (var key in this._listeners) {
                     delete this._listeners[key];
                 }
@@ -376,44 +377,43 @@
                 arr.findIndex((value, index, arr) => value == callback && arr[index + 1] == target) != -1;
         }
         emit(type, data) {
-            let col = this._listeners[type];
-            if (!col || col.callbacks.length == 0 && col.captures.length == 0)
-                return;
-            let ev = EventPool.borrow(type);
-            ev._type = type;
-            ev.data = data;
-            this._dispatch(col, ev, true);
-            this._dispatch(col, ev, false);
-            EventPool.returns(ev);
-            return ev._defaultPrevented;
-        }
-        /** @internal */
+                let col = this._listeners[type];
+                if (!col || col.callbacks.length == 0 && col.captures.length == 0)
+                    return;
+                let ev = EventPool.borrow(type);
+                ev._type = type;
+                ev.data = data;
+                this._dispatch(col, ev, true);
+                this._dispatch(col, ev, false);
+                EventPool.returns(ev);
+                return ev._defaultPrevented;
+            }
+            /** @internal */
         _dispatch(col, ev, capture) {
-            if (col.dispatching != 0)
-                return;
-            col.dispatching = 1;
-            ev._target = this;
-            let arr = capture ? col.captures : col.callbacks;
-            let cnt = arr.length;
-            for (let i = 0; i < cnt; i += 3) {
-                arr[i].call(arr[i + 1], ev);
-            }
-            if (col.dispatching == 2) {
+                if (col.dispatching != 0)
+                    return;
+                col.dispatching = 1;
+                ev._target = this;
+                let arr = capture ? col.captures : col.callbacks;
                 let cnt = arr.length;
-                let i = 0;
-                while (i < cnt) {
-                    if (arr[i + 2]) {
-                        arr.splice(i, 3);
-                        cnt -= 3;
-                        continue;
-                    }
-                    else
-                        i += 3;
+                for (let i = 0; i < cnt; i += 3) {
+                    arr[i].call(arr[i + 1], ev);
                 }
+                if (col.dispatching == 2) {
+                    let cnt = arr.length;
+                    let i = 0;
+                    while (i < cnt) {
+                        if (arr[i + 2]) {
+                            arr.splice(i, 3);
+                            cnt -= 3;
+                            continue;
+                        } else
+                            i += 3;
+                    }
+                }
+                col.dispatching = 0;
             }
-            col.dispatching = 0;
-        }
-        /** @internal */
+            /** @internal */
         _dispatchDirect(type, ev) {
             let col = this._listeners[type];
             if (col) {
@@ -426,7 +426,7 @@
     }
 
     exports.EaseType = void 0;
-    (function (EaseType) {
+    (function(EaseType) {
         EaseType[EaseType["Linear"] = 0] = "Linear";
         EaseType[EaseType["SineIn"] = 1] = "SineIn";
         EaseType[EaseType["SineOut"] = 2] = "SineOut";
@@ -494,8 +494,7 @@
             var cnt = buffer.readShort();
             if ("pages" in this) {
                 this.pages = buffer.readSArray(cnt);
-            }
-            else {
+            } else {
                 for (i = 0; i < cnt; i++) {
                     page = buffer.readS();
                     if (page == null)
@@ -524,21 +523,15 @@
                         if (buffer.readBool())
                             this.addExtStatus(null, buffer);
                     }
-                }
-                else if ("condition" in this)
+                } else if ("condition" in this)
                     this.condition = buffer.readByte();
             }
         }
-        updateFromRelations(dx, dy) {
-        }
-        addStatus(pageId, buffer) {
-        }
-        init() {
-        }
-        apply() {
-        }
-        updateState() {
-        }
+        updateFromRelations(dx, dy) {}
+        addStatus(pageId, buffer) {}
+        init() {}
+        apply() {}
+        updateState() {}
     }
     class GearTweenConfig {
         constructor() {
@@ -646,8 +639,8 @@
             this._displayLockToken++;
             if (this._displayLockToken <= 0)
                 this._displayLockToken = 1;
-            if (this.pages == null || this.pages.length == 0
-                || this.pages.indexOf(this._controller.selectedPageId) != -1)
+            if (this.pages == null || this.pages.length == 0 ||
+                this.pages.indexOf(this._controller.selectedPageId) != -1)
                 this._visible = 1;
             else
                 this._visible = 0;
@@ -665,8 +658,8 @@
             this.pages = null;
         }
         apply() {
-            if (this.pages == null || this.pages.length == 0
-                || this.pages.indexOf(this._controller.selectedPageId) != -1)
+            if (this.pages == null || this.pages.length == 0 ||
+                this.pages.indexOf(this._controller.selectedPageId) != -1)
                 this._visible = 1;
             else
                 this._visible = 0;
@@ -799,8 +792,7 @@
                         this.end = true;
                 }
                 return true;
-            }
-            else
+            } else
                 return false;
         }
         reset() {
@@ -814,6 +806,7 @@
     var _enumI = 0;
     var _enumCount = 0;
     var _lastTime = 0;
+
     function __timer(timeStamp) {
         Timers.frameCount++;
         Timers.time = timeStamp;
@@ -840,7 +833,7 @@
     }
     let tickFunc;
     let tickInterval = 1 / 60;
-    tickFunc = function () {
+    tickFunc = function() {
         __timer(Game.Time());
         $.Schedule(tickInterval, tickFunc);
     };
@@ -896,7 +889,7 @@
         }
     }
     exports.ActionType = void 0;
-    (function (ActionType) {
+    (function(ActionType) {
         ActionType[ActionType["XY"] = 0] = "XY";
         ActionType[ActionType["Size"] = 1] = "Size";
         ActionType[ActionType["Scale"] = 2] = "Scale";
@@ -919,6 +912,7 @@
     // Author: Daniele Giardini - http://www.demigiant.com
     const _PiOver2 = Math.PI * 0.5;
     const _TwoPi = Math.PI * 2;
+
     function evaluateEase(easeType, time, duration, overshootOrAmplitude, period) {
         switch (easeType) {
             case exports.EaseType.Linear:
@@ -994,8 +988,7 @@
                 if (overshootOrAmplitude < 1) {
                     overshootOrAmplitude = 1;
                     s0 = period / 4;
-                }
-                else
+                } else
                     s0 = period / _TwoPi * Math.asin(1 / overshootOrAmplitude);
                 return -(overshootOrAmplitude * Math.pow(2, 10 * (time -= 1)) * Math.sin((time * duration - s0) * _TwoPi / period));
             case exports.EaseType.ElasticOut:
@@ -1009,8 +1002,7 @@
                 if (overshootOrAmplitude < 1) {
                     overshootOrAmplitude = 1;
                     s1 = period / 4;
-                }
-                else
+                } else
                     s1 = period / _TwoPi * Math.asin(1 / overshootOrAmplitude);
                 return (overshootOrAmplitude * Math.pow(2, -10 * time) * Math.sin((time * duration - s1) * _TwoPi / period) + 1);
             case exports.EaseType.ElasticInOut:
@@ -1024,8 +1016,7 @@
                 if (overshootOrAmplitude < 1) {
                     overshootOrAmplitude = 1;
                     s = period / 4;
-                }
-                else
+                } else
                     s = period / _TwoPi * Math.asin(1 / overshootOrAmplitude);
                 if (time < 1)
                     return -0.5 * (overshootOrAmplitude * Math.pow(2, 10 * (time -= 1)) * Math.sin((time * duration - s) * _TwoPi / period));
@@ -1048,9 +1039,11 @@
                 return -(time /= duration) * (time - 2);
         }
     }
+
     function bounce_easeIn(time, duration) {
         return 1 - bounce_easeOut(duration - time, duration);
     }
+
     function bounce_easeOut(time, duration) {
         if ((time /= duration) < (1 / 2.75)) {
             return (7.5625 * time * time);
@@ -1063,6 +1056,7 @@
         }
         return (7.5625 * (time -= (2.625 / 2.75)) * time + 0.984375);
     }
+
     function bounce_easeInOut(time, duration) {
         if (time < duration * 0.5) {
             return bounce_easeIn(time * 2, duration) * 0.5;
@@ -1223,12 +1217,12 @@
             return this._ended == 1;
         }
         setPaused(paused) {
-            this._paused = paused;
-            return this;
-        }
-        /**
-         * seek position of the tween, in seconds.
-         */
+                this._paused = paused;
+                return this;
+            }
+            /**
+             * seek position of the tween, in seconds.
+             */
         seek(time) {
             if (this._killed)
                 return;
@@ -1357,7 +1351,7 @@
             if (dt == 0)
                 return;
             if (this._ended != 0) //Maybe completed by seek
-             {
+            {
                 this.callCompleteCallback();
                 this._killed = true;
                 return;
@@ -1374,7 +1368,7 @@
         update() {
             this._ended = 0;
             if (this._valueSize == 0) //DelayedCall
-             {
+            {
                 if (this._elapsedTime >= this._delay + this._duration)
                     this._ended = 1;
                 return;
@@ -1404,8 +1398,7 @@
                     tt = this._duration;
                     this._ended = 1;
                 }
-            }
-            else if (tt >= this._duration) {
+            } else if (tt >= this._duration) {
                 tt = this._duration;
                 this._ended = 1;
             }
@@ -1421,13 +1414,11 @@
                     this._deltaValue.y = ry;
                     this._value.x = this._startValue.x + rx;
                     this._value.y = this._startValue.y + ry;
-                }
-                else {
+                } else {
                     this._value.x = this._startValue.x;
                     this._value.y = this._startValue.y;
                 }
-            }
-            else if (this._path) {
+            } else if (this._path) {
                 let pt = this._path.getPointAt(this._normalizedTime, s_vec2$4);
                 if (this._snapping) {
                     pt.x = Math.round(pt.x);
@@ -1437,8 +1428,7 @@
                 this._deltaValue.y = pt.y - this._value.y;
                 this._value.x = pt.x;
                 this._value.y = pt.y;
-            }
-            else {
+            } else {
                 for (var i = 0; i < this._valueSize; i++) {
                     var n1 = this._startValue.getField(i);
                     var n2 = this._endValue.getField(i);
@@ -1471,8 +1461,7 @@
                             this._propType.call(this._target, this._value.x, this._value.y);
                             break;
                     }
-                }
-                else {
+                } else {
                     if (this._valueSize == 5)
                         this._target[this._propType] = this._value.color;
                     else
@@ -1485,8 +1474,7 @@
             if (this._onStart) {
                 try {
                     this._onStart.call(this._onStartCaller, this);
-                }
-                catch (err) {
+                } catch (err) {
                     $.Msg("error in start callback > " + err);
                 }
             }
@@ -1495,8 +1483,7 @@
             if (this._onUpdate) {
                 try {
                     this._onUpdate.call(this._onUpdateCaller, this);
-                }
-                catch (err) {
+                } catch (err) {
                     $.Msg("error in update callback > " + err);
                 }
             }
@@ -1505,8 +1492,7 @@
             if (this._onComplete) {
                 try {
                     this._onComplete.call(this._onCompleteCaller, this);
-                }
-                catch (err) {
+                } catch (err) {
                     $.Msg("error in complete callback > " + err);
                 }
             }
@@ -1529,8 +1515,8 @@
             var anyType = !propType;
             for (var i = 0; i < _totalActiveTweens; i++) {
                 var tweener = _activeTweens[i];
-                if (tweener && tweener.target == target && !tweener._killed
-                    && (anyType || tweener._propType == propType))
+                if (tweener && tweener.target == target && !tweener._killed &&
+                    (anyType || tweener._propType == propType))
                     return true;
             }
             return false;
@@ -1543,8 +1529,8 @@
             var anyType = !propType;
             for (var i = 0; i < cnt; i++) {
                 var tweener = _activeTweens[i];
-                if (tweener && tweener.target == target && !tweener._killed
-                    && (anyType || tweener._propType == propType)) {
+                if (tweener && tweener.target == target && !tweener._killed &&
+                    (anyType || tweener._propType == propType)) {
                     tweener.kill(completed);
                     flag = true;
                 }
@@ -1558,8 +1544,8 @@
             var anyType = !propType;
             for (var i = 0; i < cnt; i++) {
                 var tweener = _activeTweens[i];
-                if (tweener && tweener.target == target && !tweener._killed
-                    && (anyType || tweener._propType == propType)) {
+                if (tweener && tweener.target == target && !tweener._killed &&
+                    (anyType || tweener._propType == propType)) {
                     return tweener;
                 }
             }
@@ -1574,14 +1560,12 @@
                 if (tweener == null) {
                     if (freePosStart == -1)
                         freePosStart = i;
-                }
-                else if (tweener._killed) {
+                } else if (tweener._killed) {
                     _tweenerPool.returns(tweener);
                     _activeTweens[i] = null;
                     if (freePosStart == -1)
                         freePosStart = i;
-                }
-                else {
+                } else {
                     if (tweener._target && ('isDisposed' in tweener._target) && tweener._target.isDisposed)
                         tweener._killed = true;
                     else if (!tweener._paused)
@@ -1595,7 +1579,7 @@
             }
             if (freePosStart >= 0) {
                 if (_totalActiveTweens != cnt) //new tweens added
-                 {
+                {
                     var j = cnt;
                     cnt = _totalActiveTweens - cnt;
                     for (i = 0; i < cnt; i++)
@@ -1678,8 +1662,7 @@
                     if (this._tweenConfig._tweener.endValue.x != gv.alpha || this._tweenConfig._tweener.endValue.y != gv.rotation) {
                         this._tweenConfig._tweener.kill(true);
                         this._tweenConfig._tweener = null;
-                    }
-                    else
+                    } else
                         return;
                 }
                 var a = gv.alpha != this._owner.alpha;
@@ -1695,8 +1678,7 @@
                         .onUpdate(this.__tweenUpdate, this)
                         .onComplete(this.__tweenComplete, this);
                 }
-            }
-            else {
+            } else {
                 this._owner._gearLocked = true;
                 this._owner.grayed = gv.grayed;
                 this._owner.alpha = gv.alpha;
@@ -1761,12 +1743,11 @@
             var gv = this._storage[this._controller.selectedPageId] || this._default;
             if (this.allowTween) {
                 if (this._tweenConfig._tweener) {
-                    if (this._tweenConfig._tweener.endValue.x != gv.width || this._tweenConfig._tweener.endValue.y != gv.height
-                        || this._tweenConfig._tweener.endValue.z != gv.scaleX || this._tweenConfig._tweener.endValue.w != gv.scaleY) {
+                    if (this._tweenConfig._tweener.endValue.x != gv.width || this._tweenConfig._tweener.endValue.y != gv.height ||
+                        this._tweenConfig._tweener.endValue.z != gv.scaleX || this._tweenConfig._tweener.endValue.w != gv.scaleY) {
                         this._tweenConfig._tweener.kill(true);
                         this._tweenConfig._tweener = null;
-                    }
-                    else
+                    } else
                         return;
                 }
                 var a = gv.width != this._owner.width || gv.height != this._owner.height;
@@ -1782,8 +1763,7 @@
                         .onUpdate(this.__tweenUpdate, this)
                         .onComplete(this.__tweenComplete, this);
                 }
-            }
-            else {
+            } else {
                 this._owner._gearLocked = true;
                 this._owner.setSize(gv.width, gv.height, this._owner.checkGearController(1, this._controller));
                 this._owner.setScale(gv.scaleX, gv.scaleY);
@@ -1889,8 +1869,7 @@
             if (this.positionsInPercent && this._owner.parent) {
                 ex = pt.px * this._owner.parent.width;
                 ey = pt.py * this._owner.parent.height;
-            }
-            else {
+            } else {
                 ex = pt.x;
                 ey = pt.y;
             }
@@ -1899,8 +1878,7 @@
                     if (this._tweenConfig._tweener.endValue.x != ex || this._tweenConfig._tweener.endValue.y != ey) {
                         this._tweenConfig._tweener.kill(true);
                         this._tweenConfig._tweener = null;
-                    }
-                    else
+                    } else
                         return;
                 }
                 var ox = this._owner.x;
@@ -1915,8 +1893,7 @@
                         .onUpdate(this.__tweenUpdate, this)
                         .onComplete(this.__tweenComplete, this);
                 }
-            }
-            else {
+            } else {
                 this._owner._gearLocked = true;
                 this._owner.setPosition(ex, ey);
                 this._owner._gearLocked = false;
@@ -2206,8 +2183,7 @@
                         tmp = this._owner.xMin;
                         this._owner.width = this._owner._rawWidth - dx;
                         this._owner.xMin = tmp + dx;
-                    }
-                    else
+                    } else
                         this._owner.width = this._owner._rawWidth - dx;
                     break;
                 case exports.RelationType.RightExt_Left:
@@ -2216,8 +2192,7 @@
                         tmp = this._owner.xMin;
                         this._owner.width = this._owner._rawWidth + dx;
                         this._owner.xMin = tmp;
-                    }
-                    else
+                    } else
                         this._owner.width = this._owner._rawWidth + dx;
                     break;
                 case exports.RelationType.TopExt_Top:
@@ -2226,8 +2201,7 @@
                         tmp = this._owner.yMin;
                         this._owner.height = this._owner._rawHeight - dy;
                         this._owner.yMin = tmp + dy;
-                    }
-                    else
+                    } else
                         this._owner.height = this._owner._rawHeight - dy;
                     break;
                 case exports.RelationType.BottomExt_Top:
@@ -2236,14 +2210,15 @@
                         tmp = this._owner.yMin;
                         this._owner.height = this._owner._rawHeight + dy;
                         this._owner.yMin = tmp;
-                    }
-                    else
+                    } else
                         this._owner.height = this._owner._rawHeight + dy;
                     break;
             }
         }
         applyOnSizeChanged(info) {
-            var pos = 0, pivot = 0, delta = 0;
+            var pos = 0,
+                pivot = 0,
+                delta = 0;
             var v, tmp;
             if (info.axis == 0) {
                 if (this._target != this._owner.parent) {
@@ -2254,11 +2229,9 @@
                 if (info.percent) {
                     if (this._targetWidth != 0)
                         delta = this._target._width / this._targetWidth;
-                }
-                else
+                } else
                     delta = this._target._width - this._targetWidth;
-            }
-            else {
+            } else {
                 if (this._target != this._owner.parent) {
                     pos = this._target.y;
                     if (this._target.pivotAsAnchor)
@@ -2267,8 +2240,7 @@
                 if (info.percent) {
                     if (this._targetHeight != 0)
                         delta = this._target._height / this._targetHeight;
-                }
-                else
+                } else
                     delta = this._target._height - this._targetHeight;
             }
             switch (info.type) {
@@ -2368,11 +2340,9 @@
                             tmp = this._owner.xMin;
                             this._owner.setSize(this._target._width + v, this._owner._rawHeight, true);
                             this._owner.xMin = tmp;
-                        }
-                        else
+                        } else
                             this._owner.setSize(this._target._width + v, this._owner._rawHeight, true);
-                    }
-                    else
+                    } else
                         this._owner.width = this._target._width + v;
                     break;
                 case exports.RelationType.Height:
@@ -2387,11 +2357,9 @@
                             tmp = this._owner.yMin;
                             this._owner.setSize(this._owner._rawWidth, this._target._height + v, true);
                             this._owner.yMin = tmp;
-                        }
-                        else
+                        } else
                             this._owner.setSize(this._owner._rawWidth, this._target._height + v, true);
-                    }
-                    else
+                    } else
                         this._owner.height = this._target._height + v;
                     break;
                 case exports.RelationType.LeftExt_Left:
@@ -2427,24 +2395,21 @@
                         if (this._owner == this._target.parent) {
                             if (this._owner._underConstruct)
                                 this._owner.width = pos + this._target._width - this._target._width * pivot +
-                                    (this._owner.sourceWidth - pos - this._target.initWidth + this._target.initWidth * pivot) * delta;
+                                (this._owner.sourceWidth - pos - this._target.initWidth + this._target.initWidth * pivot) * delta;
                             else
                                 this._owner.width = pos + (this._owner._rawWidth - pos) * delta;
-                        }
-                        else {
+                        } else {
                             v = pos + (tmp + this._owner._rawWidth - pos) * delta - (tmp + this._owner._rawWidth);
                             this._owner.width = this._owner._rawWidth + v;
                             this._owner.xMin = tmp;
                         }
-                    }
-                    else {
+                    } else {
                         if (this._owner == this._target.parent) {
                             if (this._owner._underConstruct)
                                 this._owner.width = this._owner.sourceWidth + (this._target._width - this._target.initWidth) * (1 - pivot);
                             else
                                 this._owner.width = this._owner._rawWidth + delta * (1 - pivot);
-                        }
-                        else {
+                        } else {
                             v = delta * (1 - pivot);
                             this._owner.width = this._owner._rawWidth + v;
                             this._owner.xMin = tmp;
@@ -2484,24 +2449,21 @@
                         if (this._owner == this._target.parent) {
                             if (this._owner._underConstruct)
                                 this._owner.height = pos + this._target._height - this._target._height * pivot +
-                                    (this._owner.sourceHeight - pos - this._target.initHeight + this._target.initHeight * pivot) * delta;
+                                (this._owner.sourceHeight - pos - this._target.initHeight + this._target.initHeight * pivot) * delta;
                             else
                                 this._owner.height = pos + (this._owner._rawHeight - pos) * delta;
-                        }
-                        else {
+                        } else {
                             v = pos + (tmp + this._owner._rawHeight - pos) * delta - (tmp + this._owner._rawHeight);
                             this._owner.height = this._owner._rawHeight + v;
                             this._owner.yMin = tmp;
                         }
-                    }
-                    else {
+                    } else {
                         if (this._owner == this._target.parent) {
                             if (this._owner._underConstruct)
                                 this._owner.height = this._owner.sourceHeight + (this._target._height - this._target.initHeight) * (1 - pivot);
                             else
                                 this._owner.height = this._owner._rawHeight + delta * (1 - pivot);
-                        }
-                        else {
+                        } else {
                             v = delta * (1 - pivot);
                             this._owner.height = this._owner._rawHeight + v;
                             this._owner.yMin = tmp;
@@ -2594,8 +2556,7 @@
         }
     }
     class RelationDef {
-        constructor() {
-        }
+        constructor() {}
         copy(source) {
             this.percent = source.percent;
             this.type = source.type;
@@ -2634,11 +2595,9 @@
                         item.dispose();
                         this._items.splice(i, 1);
                         cnt--;
-                    }
-                    else
+                    } else
                         i++;
-                }
-                else
+                } else
                     i++;
             }
         }
@@ -2660,8 +2619,7 @@
                     item.dispose();
                     this._items.splice(i, 1);
                     cnt--;
-                }
-                else
+                } else
                     i++;
             }
         }
@@ -2769,8 +2727,7 @@
             if (str.length == 8) {
                 a = parseInt(str.substr(0, 2), 16);
                 rgb = parseInt(str.substr(2), 16);
-            }
-            else
+            } else
                 rgb = parseInt(str, 16);
             this.r = ((rgb >> 16) & 0xFF) / 255;
             this.g = ((rgb >> 8) & 0xFF) / 255;
@@ -2818,12 +2775,12 @@
     //The "rebound" effect in the scolling container. Recommeded true for mobile.
     UIConfig.defaultScrollBounceEffect = true;
     /**
-    * 当滚动容器设置为“贴近ITEM”时，判定贴近到哪一个ITEM的滚动距离阀值。
-    */
+     * 当滚动容器设置为“贴近ITEM”时，判定贴近到哪一个ITEM的滚动距离阀值。
+     */
     UIConfig.defaultScrollSnappingThreshold = 0.1;
     /**
-    * 当滚动容器设置为“页面模式”时，判定翻到哪一页的滚动距离阀值。
-    */
+     * 当滚动容器设置为“页面模式”时，判定翻到哪一页的滚动距离阀值。
+     */
     UIConfig.defaultScrollPagingThreshold = 0.3;
     //Resources for PopupMenu.
     UIConfig.popupMenu = null;
@@ -2846,7 +2803,8 @@
     UIConfig.frameTimeForAsyncUIConstruction = 2;
     UIConfig.defaultLinkClass = "fgui-link";
     UIConfig.scaleLevel = 0;
-    UIConfig.ouputDir = "file://{resources}/scripts/custom_game/fgui/";
+    //resource path
+    UIConfig.ouputDir = "file://{resources}/images/custom_game/fgui/";
     UIConfig.useNativeTransition = true;
     // let dpr = window.devicePixelRatio;
     // if (dpr > 3)
@@ -2941,7 +2899,8 @@
             this.touchAction = 0;
             this._updateRegisted = false;
             this._pivotStr = "0% 0%";
-            this._registedEvents = new Map();
+            this._registedEvents = new Map;
+            this._registedHandlers = new Map;
         }
         get id() {
             return this._id;
@@ -2982,7 +2941,7 @@
                 if (this instanceof GGroup)
                     this.moveChildren(dx, dy);
                 this.updateGear(1);
-                if (this._parent && !("setVirtual" in this._parent) /*not list*/) {
+                if (this._parent && !("setVirtual" in this._parent) /*not list*/ ) {
                     this._parent.setBoundsChangedFlag();
                     if (this._group)
                         this._group.setBoundsChangedFlag(true);
@@ -3056,8 +3015,7 @@
                             this.setPosition(this.x - this._pivotX * dWidth, this.y - this._pivotY * dHeight);
                         else
                             this.handlePositionChanged();
-                    }
-                    else
+                    } else
                         this.handlePositionChanged();
                 }
                 if (this instanceof GGroup)
@@ -3315,8 +3273,7 @@
                 var ret = gearDisplay.addLock();
                 this.checkGearDisplay();
                 return ret;
-            }
-            else
+            } else
                 return 0;
         }
         releaseDisplayLock(token) {
@@ -3362,8 +3319,7 @@
         removeFromParent(dispose) {
             if (this._parent) {
                 this._parent.removeChild(this, dispose);
-            }
-            else {
+            } else {
                 //已经被移除过了 直接native delete
                 if (dispose) {
                     this.dispose();
@@ -3376,13 +3332,11 @@
         get text() {
             return null;
         }
-        set text(value) {
-        }
+        set text(value) {}
         get icon() {
             return null;
         }
-        set icon(value) {
-        }
+        set icon(value) {}
         get treeNode() {
             return this._treeNode;
         }
@@ -3555,8 +3509,7 @@
                     break;
             }
         }
-        constructFromResource() {
-        }
+        constructFromResource() {}
         setup_beforeAdd(buffer, beginPos) {
             buffer.seek(beginPos, 0);
             buffer.skip(5);
@@ -3635,19 +3588,31 @@
         }
         RegisterEventHandler(evt, func) {
             if (!this._registedEvents.has(evt)) {
-                var handler = $.RegisterEventHandler(evt, this.GetNativePanel(), func);
-                this._registedEvents.set(evt, handler);
+                this._registedEvents.set(evt, [func]);
+                var handler = $.RegisterEventHandler(evt, this.GetNativePanel(), (arg1, arg2, arg3) => {
+                    var funcArray = this._registedEvents.get(evt);
+                    funcArray.forEach(callback => {
+                        callback(arg1, arg2, arg3);
+                    });
+                });
+                this._registedHandlers.set(evt, handler);
+            } else {
+                var array = this._registedEvents.get(evt);
+                if (array.indexOf(func) == -1) {
+                    array.push(func);
+                }
             }
         }
         UnregisterEventHandler(evt, panel) {
-            let handler = this._registedEvents.get(evt);
-            if (handler) {
-                $.UnregisterEventHandler(evt, panel, handler);
-                this._registedEvents.delete(evt);
+                let handler = this._registedHandlers.get(evt);
+                if (handler) {
+                    $.UnregisterEventHandler(evt, panel, handler);
+                    this._registedEvents.delete(evt);
+                    this._registedHandlers.delete(evt);
+                }
             }
-        }
-        //drag support
-        //-------------------------------------------------------------------
+            //drag support
+            //-------------------------------------------------------------------
         initDrag() {
             var nativePanel = this.GetNativePanel();
             if (this._draggable) {
@@ -3677,8 +3642,7 @@
                     GObject.draggingObject = null;
                     return true;
                 });
-            }
-            else {
+            } else {
                 nativePanel.SetDraggable(false);
                 this.UnregisterEventHandler('DragEnter', nativePanel);
                 this.UnregisterEventHandler('DragDrop', nativePanel);
@@ -3702,16 +3666,15 @@
                     GObject.RegisterUpdate(this);
                     this.AddClass(MouseOverStyle);
                 }
-            }
-            else if (PanelEventSet.has(evt)) {
+            } else if (PanelEventSet.has(evt)) {
                 //直接this.emit分发
                 this.element.nativePanel.SetPanelEvent(evt, this.emit.bind(caller, evt));
             }
         }
         removeEvent(evt, callback, caller) {
-            this.off(evt, callback, caller);
-        }
-        //同一对象 同一事件最多绑定一个函数
+                this.off(evt, callback, caller);
+            }
+            //同一对象 同一事件最多绑定一个函数
         onEvent(evt, callback, caller) {
             this.addEvent(evt, callback.bind(caller, this), this);
         }
@@ -3750,8 +3713,7 @@
                         this.callEvent('onTouchBegin');
                     }
                 }
-            }
-            else {
+            } else {
                 if (this.touchAction == 1) {
                     this.callEvent('onTouchEnd');
                     this.touchAction = 0;
@@ -3762,6 +3724,7 @@
             if (this._element && this._element.nativePanel) {
                 // this._element.nativePanel.RemoveClass(clsName);
                 // this._element.nativePanel.AddClass(clsName);
+                // this._element.nativePanel.SetHasClass(clsName, false);
                 this._element.nativePanel.SetHasClass(clsName, true);
             }
         }
@@ -3825,8 +3788,9 @@
         GearDisplay, GearXY, GearSize, GearLook, GearColor,
         GearAnimation, GearText, GearIcon, GearDisplay2, GearFontSize
     ];
+
     function createGear(owner, index) {
-        let ret = new (GearClasses[index])();
+        let ret = new(GearClasses[index])();
         ret._owner = owner;
         return ret;
     }
@@ -3948,8 +3912,10 @@
             var cnt = this._parent.numChildren;
             var i;
             var child;
-            var ax = Number.POSITIVE_INFINITY, ay = Number.POSITIVE_INFINITY;
-            var ar = Number.NEGATIVE_INFINITY, ab = Number.NEGATIVE_INFINITY;
+            var ax = Number.POSITIVE_INFINITY,
+                ay = Number.POSITIVE_INFINITY;
+            var ar = Number.NEGATIVE_INFINITY,
+                ab = Number.NEGATIVE_INFINITY;
             var tmp;
             var empty = true;
             for (i = 0; i < cnt; i++) {
@@ -3970,7 +3936,8 @@
                     ab = tmp;
                 empty = false;
             }
-            var w = 0, h = 0;
+            var w = 0,
+                h = 0;
             if (!empty) {
                 this._updating |= 1;
                 this.setPosition(ax, ay);
@@ -3982,8 +3949,7 @@
                 this._updating |= 2;
                 this.setSize(w, h);
                 this._updating &= 1;
-            }
-            else {
+            } else {
                 this._updating &= 1;
                 this.resizeChildren(this._width - w, this._height - h);
             }
@@ -4006,8 +3972,7 @@
                     if (child.width != 0)
                         curX += child.width + this._columnGap;
                 }
-            }
-            else if (this._layout == exports.GroupLayoutType.Vertical) {
+            } else if (this._layout == exports.GroupLayoutType.Vertical) {
                 var curY = this.y;
                 cnt = this._parent.numChildren;
                 for (i = 0; i < cnt; i++) {
@@ -4078,8 +4043,7 @@
                         child = this._parent.getChildAt(this._mainChildIndex);
                         this._totalSize += this._mainGridMinSize - child.width;
                         child._sizePercentInGroup = this._mainGridMinSize / this._totalSize;
-                    }
-                    else {
+                    } else {
                         child = this._parent.getChildAt(this._mainChildIndex);
                         this._totalSize += this._mainGridMinSize - child.height;
                         child._sizePercentInGroup = this._mainGridMinSize / this._totalSize;
@@ -4127,8 +4091,7 @@
                     if (child.width != 0)
                         curX += child.width + this._columnGap;
                 }
-            }
-            else {
+            } else {
                 remainSize = this.height - (this._numChildren - 1) * this._lineGap;
                 if (this._mainChildIndex != -1 && remainSize >= this._totalSize) {
                     child = this._parent.getChildAt(this._mainChildIndex);
@@ -4198,10 +4161,12 @@
     }
 
     const s_color$1 = new Color();
+
     function convertToHtmlColor(rgb) {
         s_color$1.setRGB(rgb);
         return s_color$1.toStyleString();
     }
+
     function clamp(value, min, max) {
         if (value < min)
             value = min;
@@ -4209,6 +4174,7 @@
             value = max;
         return value;
     }
+
     function clamp01(value) {
         if (isNaN(value))
             value = 0;
@@ -4218,19 +4184,21 @@
             value = 0;
         return value;
     }
+
     function lerp(start, end, percent) {
         return (start + percent * (end - start));
     }
+
     function repeat(t, length) {
         return t - Math.floor(t / length) * length;
     }
+
     function distance(x1, y1, x2, y2) {
         return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 
     class DotaPanel {
-        constructor() {
-        }
+        constructor() {}
         set visible(bool) {
             this.nativePanel.visible = bool;
         }
@@ -4391,7 +4359,7 @@
         }
         updateFilters() {
             if (this._grayed)
-                ;
+            ;
             // this.nativePanel.style.filter = filter;
             //TODO 置灰
         }
@@ -4410,7 +4378,7 @@
         setScale(xv, yv) {
             if (this._scale.x != xv || this._scale.y != yv) {
                 this._scale.set(xv, yv);
-                this.nativePanel.style.preTransformScale2d = `${xv}, ${yv}`;
+                this.nativePanel.style.transform = `scale3d(${xv}, ${yv}, 1)`;
             }
         }
         get rotation() {
@@ -4475,23 +4443,22 @@
             return this._grayed;
         }
         set grayed(value) {
-            if (this._grayed != value) {
-                this._grayed = value;
-                if (value) {
-                    this.nativePanel.AddClass("FGUI_Gray");
-                }
-                else {
-                    this.nativePanel.RemoveClass("FGUI_Gray");
+                if (this._grayed != value) {
+                    this._grayed = value;
+                    if (value) {
+                        this.nativePanel.AddClass("FGUI_Gray");
+                    } else {
+                        this.nativePanel.RemoveClass("FGUI_Gray");
+                    }
                 }
             }
-        }
-        // public get blendMode(): Blending {
-        //     return this._graphics ? this._graphics.material.blending : NormalBlending;
-        // }
-        // public set blendMode(value: Blending) {
-        //     if (this._graphics)
-        //         this._graphics.material.blending = value;
-        // }
+            // public get blendMode(): Blending {
+            //     return this._graphics ? this._graphics.material.blending : NormalBlending;
+            // }
+            // public set blendMode(value: Blending) {
+            //     if (this._graphics)
+            //         this._graphics.material.blending = value;
+            // }
         get focusable() {
             return !this._notFocusable;
         }
@@ -4512,8 +4479,7 @@
                 if (value) {
                     this.nativePanel.tabindex = 0;
                     // this.addEventListener("focus", () => { if (this._tabStop) this.stage.setFocus(this, true); });
-                }
-                else
+                } else
                     this.nativePanel.tabindex = null;
             }
         }
@@ -4550,8 +4516,7 @@
         localToGlobal(x, y, result) {
             if (!result) {
                 result = new Vec2(x, y);
-            }
-            else {
+            } else {
                 result.set(x, y);
             }
             var p = this.parent;
@@ -4571,8 +4536,7 @@
             else {
                 if (index > this._children.length - 1) {
                     this.appendChild(child);
-                }
-                else {
+                } else {
                     let refNode = this._children[index];
                     this.insertBefore(child, refNode);
                 }
@@ -4590,8 +4554,7 @@
                     throw 'not a child';
                 }
                 this.removeChildAt(index);
-            }
-            else
+            } else
                 super.removeChild(child);
             return child;
         }
@@ -4612,8 +4575,7 @@
             if (index >= this._children.length - 1) {
                 this._children.push(child);
                 this.appendChild(child);
-            }
-            else {
+            } else {
                 this._children.splice(index, 0, child);
                 let refNode = this._children[index + 1];
                 this.insertBefore(child, refNode);
@@ -4623,19 +4585,19 @@
             return this._children.indexOf(child);
         }
         get numChildren() {
-            return this._children.length;
-        }
-        // public isAncestorOf(child: UIElement): boolean {
-        //     if (child == null)
-        //         return false;
-        //     var p: UIElement = child.parent;
-        //     while (p) {
-        //         if (p == this)
-        //             return true;
-        //         p = p.parent;
-        //     }
-        //     return false;
-        // }
+                return this._children.length;
+            }
+            // public isAncestorOf(child: UIElement): boolean {
+            //     if (child == null)
+            //         return false;
+            //     var p: UIElement = child.parent;
+            //     while (p) {
+            //         if (p == this)
+            //             return true;
+            //         p = p.parent;
+            //     }
+            //     return false;
+            // }
         get clipping() {
             return this._clipping;
         }
@@ -4648,8 +4610,7 @@
                     this.nativePanel.style.overflow = "noclip";
             }
         }
-        init() {
-        }
+        init() {}
         dispose() {
             this.nativePanel.RemoveAndDeleteChildren();
             for (const evt of PanelEventSet) {
@@ -4706,8 +4667,7 @@
                     this._touchDisabled = false;
                     this.updateTouchableFlag();
                 }
-            }
-            else {
+            } else {
                 if (type == 0) {
                     this.nativePanel.style.backgroundColor = "transparent";
                     this.nativePanel.style.border = "0px solid";
@@ -4852,19 +4812,16 @@
                         this._element.drawRoundRect(lineSize, lineColor, fillColor, cornerRadius[0], cornerRadius[1], cornerRadius[2], cornerRadius[3]);
                     else
                         this._element.drawRect(lineSize, lineColor, fillColor);
-                }
-                else if (type == 2) {
+                } else if (type == 2) {
                     this._element.drawEllipse(lineSize, lineColor, fillColor, 0, 360);
-                }
-                else if (type == 3) {
+                } else if (type == 3) {
                     cnt = buffer.readShort();
                     let points = [];
                     points.length = cnt;
                     for (i = 0; i < cnt; i++)
                         points[i] = buffer.readFloat();
                     this._element.drawPolygon(points, fillColor, lineSize, lineColor);
-                }
-                else if (type == 4) {
+                } else if (type == 4) {
                     let sides = buffer.readShort();
                     let startAngle = buffer.readFloat();
                     cnt = buffer.readShort();
@@ -4881,7 +4838,7 @@
     }
 
     var MarginType;
-    (function (MarginType) {
+    (function(MarginType) {
         MarginType[MarginType["W11"] = 0] = "W11";
         MarginType[MarginType["H11"] = 1] = "H11";
         MarginType[MarginType["W12"] = 2] = "W12";
@@ -4943,7 +4900,7 @@
                     {
                         return `${this.right}px`;
                     }
-                //vertival
+                    //vertival
                 case MarginType.H11:
                 case MarginType.H12:
                 case MarginType.H13:
@@ -4979,33 +4936,45 @@
 
     const GridStyleTemplate = new Map([
         ["cornerStyle", {
-                "background-size": `100%`,
-                "background-repeat": `no-repeat`,
-            }],
+            "background-size": `100%`,
+            "background-repeat": `no-repeat`,
+        }],
         ["horizontalBorderStyle", {
-                "width": `100%`,
-                "background-repeat": `repeat-x`,
-            }],
+            "width": `100%`,
+            "background-repeat": `repeat-x`,
+        }],
         ["verticalBorderStyle", {
-                "height": `100%`,
-                "background-repeat": `repeat-y`,
-            }],
+            "height": `100%`,
+            "background-repeat": `repeat-y`,
+        }],
         ["centerStyle", {
-                "width": `100%`,
-                "height": `100%`,
-                "background-size": `100%`,
-                "background-repeat": `repeat`,
-            }]
+            "width": `100%`,
+            "height": `100%`,
+            "background-size": `100%`,
+            "background-repeat": `repeat`,
+        }]
     ]);
     const GridStyleParams = [
-        ["width", MarginType.W11, "height", MarginType.H11], ["margin-left", MarginType.W11, "margin-right", MarginType.W13, "height", MarginType.H12], ["width", MarginType.W13, "height", MarginType.H13],
-        ["margin-top", MarginType.H11, "margin-bottom", MarginType.H31, "width", MarginType.W21], ["margin-left", MarginType.W12, "margin-right", MarginType.W32, "margin-top", MarginType.H12, "margin-bottom", MarginType.H32], ["margin-top", MarginType.H13, "margin-bottom", MarginType.H33, "width", MarginType.W23],
-        ["width", MarginType.W31, "height", MarginType.H31], ["margin-left", MarginType.W11, "margin-right", MarginType.W33, "height", MarginType.H32], ["width", MarginType.W33, "height", MarginType.H33],
+        ["width", MarginType.W11, "height", MarginType.H11],
+        ["margin-left", MarginType.W11, "margin-right", MarginType.W13, "height", MarginType.H12],
+        ["width", MarginType.W13, "height", MarginType.H13],
+        ["margin-top", MarginType.H11, "margin-bottom", MarginType.H31, "width", MarginType.W21],
+        ["margin-left", MarginType.W12, "margin-right", MarginType.W32, "margin-top", MarginType.H12, "margin-bottom", MarginType.H32],
+        ["margin-top", MarginType.H13, "margin-bottom", MarginType.H33, "width", MarginType.W23],
+        ["width", MarginType.W31, "height", MarginType.H31],
+        ["margin-left", MarginType.W11, "margin-right", MarginType.W33, "height", MarginType.H32],
+        ["width", MarginType.W33, "height", MarginType.H33],
     ];
     const GridStyleMap = [
-        ["tl", "left top", "cornerStyle"], ["tc", "center top", "horizontalBorderStyle"], ["tr", "right top", "cornerStyle"],
-        ["ml", "left center", "verticalBorderStyle"], ["mc", "center center", "centerStyle"], ["mr", "right center", "verticalBorderStyle"],
-        ["bl", "left bottom", "cornerStyle"], ["bc", "center bottom", "horizontalBorderStyle"], ["br", "right bottom", "cornerStyle"],
+        ["tl", "left top", "cornerStyle"],
+        ["tc", "center top", "horizontalBorderStyle"],
+        ["tr", "right top", "cornerStyle"],
+        ["ml", "left center", "verticalBorderStyle"],
+        ["mc", "center center", "centerStyle"],
+        ["mr", "right center", "verticalBorderStyle"],
+        ["bl", "left bottom", "cornerStyle"],
+        ["bc", "center bottom", "horizontalBorderStyle"],
+        ["br", "right bottom", "cornerStyle"],
     ];
     class Image extends UIElement {
         constructor() {
@@ -5067,23 +5036,19 @@
         get fillMethod() {
             return exports.FillMethod.None;
         }
-        set fillMethod(value) {
-        }
+        set fillMethod(value) {}
         get fillOrigin() {
             return 0;
         }
-        set fillOrigin(value) {
-        }
+        set fillOrigin(value) {}
         get fillClockwise() {
             return true;
         }
-        set fillClockwise(value) {
-        }
+        set fillClockwise(value) {}
         get fillAmount() {
             return 0;
         }
-        set fillAmount(value) {
-        }
+        set fillAmount(value) {}
         updateFilters() {
             // this.nativePanel.style.filter = filter;
         }
@@ -5099,13 +5064,11 @@
                     this.nativePanel.style.backgroundSize = "auto";
                 this.nativePanel.style.backgroundRepeat = "repeat";
                 this.nativePanel.SetImage(this._src);
-            }
-            else if (this._scale9Grid) {
+            } else if (this._scale9Grid) {
                 this.nativePanel.style.backgroundRepeat = "no-repeat";
                 if (this._textureScale.x != 1 || this._textureScale.y != 1) {
                     this.nativePanel.style.backgroundSize = (this._textureScale.x * 100) + "% " + (this._textureScale.y * 100) + "%";
-                }
-                else {
+                } else {
                     this.nativePanel.style.backgroundSize = "auto";
                 }
                 if (this._scale9Panels.length == 0) {
@@ -5143,8 +5106,7 @@
                         this._scale9Panels.push(gridpanel);
                     }
                 }
-            }
-            else {
+            } else {
                 this.nativePanel.style.backgroundSize = "100% 100%";
                 this.nativePanel.style.backgroundRepeat = "no-repeat";
                 this.nativePanel.SetImage(this._src);
@@ -5292,8 +5254,7 @@
                 this._frameElapsed = 0;
                 this._repeatedCount = 0;
                 this._reversed = false;
-            }
-            else
+            } else
                 this._frameCount = 0;
             this.drawFrame();
             this.checkTimer();
@@ -5317,12 +5278,12 @@
             return this._playing;
         }
         set playing(value) {
-            if (this._playing != value) {
-                this._playing = value;
-                this.checkTimer();
+                if (this._playing != value) {
+                    this._playing = value;
+                    this.checkTimer();
+                }
             }
-        }
-        //从start帧开始，播放到end帧（-1表示结尾），重复times次（0表示无限循环），循环结束后，停止在endAt帧（-1表示参数end）
+            //从start帧开始，播放到end帧（-1表示结尾），重复times次（0表示无限循环），循环结束后，停止在endAt帧（-1表示参数end）
         rewind() {
             this._frame = 0;
             this._frameElapsed = 0;
@@ -5338,52 +5299,50 @@
             this.drawFrame();
         }
         advance(timeInMiniseconds) {
-            var beginFrame = this._frame;
-            var beginReversed = this._reversed;
-            var backupTime = timeInMiniseconds;
-            while (true) {
-                var tt = this.interval + (this._frames[this._frame].addDelay || 0);
-                if (this._frame == 0 && this._repeatedCount > 0)
-                    tt += this.repeatDelay;
-                if (timeInMiniseconds < tt) {
-                    this._frameElapsed = 0;
-                    break;
-                }
-                timeInMiniseconds -= tt;
-                if (this.swing) {
-                    if (this._reversed) {
-                        this._frame--;
-                        if (this._frame <= 0) {
-                            this._frame = 0;
-                            this._repeatedCount++;
-                            this._reversed = !this._reversed;
-                        }
+                var beginFrame = this._frame;
+                var beginReversed = this._reversed;
+                var backupTime = timeInMiniseconds;
+                while (true) {
+                    var tt = this.interval + (this._frames[this._frame].addDelay || 0);
+                    if (this._frame == 0 && this._repeatedCount > 0)
+                        tt += this.repeatDelay;
+                    if (timeInMiniseconds < tt) {
+                        this._frameElapsed = 0;
+                        break;
                     }
-                    else {
+                    timeInMiniseconds -= tt;
+                    if (this.swing) {
+                        if (this._reversed) {
+                            this._frame--;
+                            if (this._frame <= 0) {
+                                this._frame = 0;
+                                this._repeatedCount++;
+                                this._reversed = !this._reversed;
+                            }
+                        } else {
+                            this._frame++;
+                            if (this._frame > this._frameCount - 1) {
+                                this._frame = Math.max(0, this._frameCount - 2);
+                                this._repeatedCount++;
+                                this._reversed = !this._reversed;
+                            }
+                        }
+                    } else {
                         this._frame++;
                         if (this._frame > this._frameCount - 1) {
-                            this._frame = Math.max(0, this._frameCount - 2);
+                            this._frame = 0;
                             this._repeatedCount++;
-                            this._reversed = !this._reversed;
                         }
                     }
-                }
-                else {
-                    this._frame++;
-                    if (this._frame > this._frameCount - 1) {
-                        this._frame = 0;
-                        this._repeatedCount++;
+                    if (this._frame == beginFrame && this._reversed == beginReversed) //走了一轮了
+                    {
+                        var roundTime = backupTime - timeInMiniseconds; //这就是一轮需要的时间
+                        timeInMiniseconds -= Math.floor(timeInMiniseconds / roundTime) * roundTime; //跳过
                     }
                 }
-                if (this._frame == beginFrame && this._reversed == beginReversed) //走了一轮了
-                 {
-                    var roundTime = backupTime - timeInMiniseconds; //这就是一轮需要的时间
-                    timeInMiniseconds -= Math.floor(timeInMiniseconds / roundTime) * roundTime; //跳过
-                }
+                this.drawFrame();
             }
-            this.drawFrame();
-        }
-        //从start帧开始，播放到end帧（-1表示结尾），重复times次（0表示无限循环），循环结束后，停止在endAt帧（-1表示参数end）
+            //从start帧开始，播放到end帧（-1表示结尾），重复times次（0表示无限循环），循环结束后，停止在endAt帧（-1表示参数end）
         setPlaySettings(start, end, times, endAt) {
             this._start = start || 0;
             this._end = end || -1;
@@ -5421,8 +5380,7 @@
                         this._repeatedCount++;
                         this._reversed = !this._reversed;
                     }
-                }
-                else {
+                } else {
                     this._frame++;
                     if (this._frame > this._frameCount - 1) {
                         this._frame = Math.max(0, this._frameCount - 2);
@@ -5430,8 +5388,7 @@
                         this._reversed = !this._reversed;
                     }
                 }
-            }
-            else {
+            } else {
                 this._frame++;
                 if (this._frame > this._frameCount - 1) {
                     this._frame = 0;
@@ -5439,20 +5396,18 @@
                 }
             }
             if (this._status == 1) //new loop
-             {
+            {
                 this._frame = this._start;
                 this._frameElapsed = 0;
                 this._status = 0;
-            }
-            else if (this._status == 2) //ending
-             {
+            } else if (this._status == 2) //ending
+            {
                 this._frame = this._endAt;
                 this._frameElapsed = 0;
                 this._status = 3; //ended
                 if (this.$owner)
                     this.$owner.emit("play_end");
-            }
-            else {
+            } else {
                 if (this._frame == this._end) {
                     if (this._times > 0) {
                         this._times--;
@@ -5460,8 +5415,7 @@
                             this._status = 2; //ending
                         else
                             this._status = 1; //new loop
-                    }
-                    else {
+                    } else {
                         this._status = 1; //new loop
                     }
                 }
@@ -5538,9 +5492,9 @@
             this._element.syncStatus(anotherMc._element);
         }
         advance(timeInMiniseconds) {
-            this._element.advance(timeInMiniseconds);
-        }
-        //从start帧开始，播放到end帧（-1表示结尾），重复times次（0表示无限循环），循环结束后，停止在endAt帧（-1表示参数end）
+                this._element.advance(timeInMiniseconds);
+            }
+            //从start帧开始，播放到end帧（-1表示结尾），重复times次（0表示无限循环），循环结束后，停止在endAt帧（-1表示参数end）
         setPlaySettings(start, end, times, endAt) {
             this._element.setPlaySettings(start, end, times, endAt);
         }
@@ -5685,8 +5639,7 @@
                 arr.push(this._textFormat.outline);
                 arr.push(convertToHtmlColor(this._textFormat.outlineColor));
                 this._label.style.textShadow = arr.join(' ');
-            }
-            else
+            } else
                 this._label.style.boxShadow = null;
         }
         get text() {
@@ -5740,8 +5693,7 @@
                 if (this.$owner) {
                     this.$owner.setSize(this._textSize.x, this._textSize.y);
                 }
-            }
-            else if (this._autoSize == exports.AutoSizeType.Height) {
+            } else if (this._autoSize == exports.AutoSizeType.Height) {
                 if (this.$owner) {
                     this.$owner.height = this._textSize.y;
                 }
@@ -5763,11 +5715,9 @@
                 if (this._autoSize == exports.AutoSizeType.Both) {
                     this._label.style.width = null;
                     this._label.style.textOverflow = "noclip";
-                }
-                else if (this._autoSize == exports.AutoSizeType.Height) {
+                } else if (this._autoSize == exports.AutoSizeType.Height) {
                     this._label.style.textOverflow = "noclip";
-                }
-                else if (this._autoSize == exports.AutoSizeType.Ellipsis)
+                } else if (this._autoSize == exports.AutoSizeType.Ellipsis)
                     this._label.style.textOverflow = "ellipsis";
                 else if (this._autoSize == exports.AutoSizeType.Shrink)
                     this._label.style.textOverflow = "shrink";
@@ -5798,8 +5748,7 @@
         updateWrapping(forceWrap) {
             if ((this._autoSize == exports.AutoSizeType.Both || this._singleLine) && !forceWrap) {
                 this._label.style.whiteSpace = "nowrap";
-            }
-            else {
+            } else {
                 this._label.style.whiteSpace = "normal";
             }
         }
@@ -6014,21 +5963,18 @@
                 if (useShort) {
                     this._pos += 2 * blockIndex;
                     newPos = this.readUshort();
-                }
-                else {
+                } else {
                     this._pos += 4 * blockIndex;
                     newPos = this.readUint();
                 }
                 if (newPos > 0) {
                     this._pos = indexTablePos + newPos;
                     return true;
-                }
-                else {
+                } else {
                     this._pos = tmp;
                     return false;
                 }
-            }
-            else {
+            } else {
                 this._pos = tmp;
                 return false;
             }
@@ -6146,8 +6092,7 @@
                         return pkg.getItemById(srcId);
                     }
                 }
-            }
-            else {
+            } else {
                 var pkgName = url.substr(pos1 + 2, pos2 - pos1 - 2);
                 pkg = UIPackage.getByName(pkgName);
                 if (pkg != null) {
@@ -6228,8 +6173,7 @@
                 var fileName = buffer.readS();
                 if (fileName != null) {
                     fileName = UIConfig.ouputDir + path + "/" + fileName;
-                }
-                else {
+                } else {
                     fileName = path;
                 }
                 pi.file = fileName;
@@ -6254,8 +6198,7 @@
                                 pi.scale9Grid.width = sw;
                                 pi.scale9Grid.height = sh;
                                 pi.tileGridIndice = buffer.readInt();
-                            }
-                            else if (scaleOption == 2)
+                            } else if (scaleOption == 2)
                                 pi.scaleByTile = true;
                             pi.smoothing = buffer.readBool();
                             break;
@@ -6313,8 +6256,7 @@
                 buffer.pos = nextPos;
             }
         }
-        dispose() {
-        }
+        dispose() {}
         get id() {
             return this._id;
         }
@@ -6380,8 +6322,7 @@
                 if (attr == null)
                     attr = this.getTagText();
                 return "<a class='" + this.linkClass + "' href=\"#\" onclick=\"$.UIObjectFactory.openURL('" + attr + "');\">";
-            }
-            else
+            } else
                 return "</a>";
         }
         onTag_IMG(tagName, end, attr) {
@@ -6398,8 +6339,7 @@
                     return "<img src=\"" + src + "\" width=\"" + this.defaultImgWidth + "\" height=\"" + this.defaultImgHeight + "\"/>";
                 else
                     return "<img src=\"" + src + "\"/>";
-            }
-            else
+            } else
                 return null;
         }
         onTag_B(tagName, end, attr) {
@@ -6418,16 +6358,14 @@
             if (!end) {
                 this.lastColor = attr;
                 return "<font color='" + attr + "'>";
-            }
-            else
+            } else
                 return "</font>";
         }
         onTag_SIZE(tagName, end, attr) {
             if (!end) {
                 this.lastSize = attr;
                 return "<span class='FGUI_FontSize" + attr + "'>";
-            }
-            else
+            } else
                 return "</span>";
         }
         getTagText(remove) {
@@ -6436,12 +6374,11 @@
             var result = "";
             while ((pos2 = this._text.indexOf("[", pos1)) != -1) {
                 if (this._text.charCodeAt(pos2 - 1) == 92) //\
-                 {
+                {
                     result += this._text.substring(pos1, pos2 - 1);
                     result += "[";
                     pos1 = pos2 + 1;
-                }
-                else {
+                } else {
                     result += this._text.substring(pos1, pos2);
                     break;
                 }
@@ -6456,7 +6393,8 @@
             this._text = text;
             this.lastColor = null;
             this.lastSize = null;
-            var pos1 = 0, pos2, pos3;
+            var pos1 = 0,
+                pos2, pos3;
             var end;
             var tag, attr;
             var repl;
@@ -6464,7 +6402,7 @@
             var result = "";
             while ((pos2 = this._text.indexOf("[", pos1)) != -1) {
                 if (pos2 > 0 && this._text.charCodeAt(pos2 - 1) == 92) //\
-                 {
+                {
                     result += this._text.substring(pos1, pos2 - 1);
                     result += "[";
                     pos1 = pos2 + 1;
@@ -6493,8 +6431,7 @@
                         if (repl != null)
                             result += repl;
                     }
-                }
-                else
+                } else
                     result += this._text.substring(pos1, this._readPos);
                 pos1 = this._readPos;
             }
@@ -6510,7 +6447,8 @@
         static decodeString(aSource) {
             let len = aSource.length;
             let sb = "";
-            let pos1 = 0, pos2 = 0;
+            let pos1 = 0,
+                pos2 = 0;
             while (true) {
                 pos2 = aSource.indexOf('&', pos1);
                 if (pos2 == -1) {
@@ -6536,11 +6474,9 @@
                                 u = parseInt(entity.substr(1));
                             sb += String.fromCharCode(u);
                             pos1 = pos2 + 1;
-                        }
-                        else
+                        } else
                             sb += '&';
-                    }
-                    else {
+                    } else {
                         switch (entity) {
                             case "amp":
                                 u = 38;
@@ -6564,12 +6500,10 @@
                         if (u > 0) {
                             sb += String.fromCharCode(u);
                             pos1 = pos2 + 1;
-                        }
-                        else
+                        } else
                             sb += '&';
                     }
-                }
-                else {
+                } else {
                     sb += '&';
                 }
             }
@@ -6595,8 +6529,7 @@
             if (value[value.length - 1] == '%') {
                 let ret = parseInt(value.substring(0, value.length - 1));
                 return Math.ceil(ret / 100.0 * defValue);
-            }
-            else
+            } else
                 return parseInt(value);
         }
         static getFloat(attrs, attrName, defValue) {
@@ -6769,35 +6702,33 @@
             this._updatingSize = true;
             if (this._element.autoSize == exports.AutoSizeType.Both) {
                 this.setSize(this._element.width, this._element.height);
-            }
-            else if (this._element.autoSize == exports.AutoSizeType.Height) {
+            } else if (this._element.autoSize == exports.AutoSizeType.Height) {
                 this.height = this._element.height;
             }
             this._updatingSize = false;
         }
         handleSizeChanged() {
-            if (this._updatingSize)
-                return;
-            if (this._underConstruct)
-                this._element.setSize(this.width, this.height);
-            else {
-                if (this._element.autoSize == exports.AutoSizeType.Height) {
-                    this._element.width = this.width; //先调整宽度，让文本重排
-                    if (this._text != "") //文本为空时，1是本来就不需要调整， 2是为了防止改掉文本为空时的默认高度，造成关联错误
-                        this._element.height = this.height;
-                }
-                else {
+                if (this._updatingSize)
+                    return;
+                if (this._underConstruct)
                     this._element.setSize(this.width, this.height);
+                else {
+                    if (this._element.autoSize == exports.AutoSizeType.Height) {
+                        this._element.width = this.width; //先调整宽度，让文本重排
+                        if (this._text != "") //文本为空时，1是本来就不需要调整， 2是为了防止改掉文本为空时的默认高度，造成关联错误
+                            this._element.height = this.height;
+                    } else {
+                        this._element.setSize(this.width, this.height);
+                    }
                 }
             }
-        }
-        // protected handleGrayedChanged(): void {
-        //     super.handleGrayedChanged();
-        //     if (this.grayed)
-        //         this._element.color = "#AAAAAA";
-        //     else
-        //         this._element.color = this._color;
-        // }
+            // protected handleGrayedChanged(): void {
+            //     super.handleGrayedChanged();
+            //     if (this.grayed)
+            //         this._element.color = "#AAAAAA";
+            //     else
+            //         this._element.color = this._color;
+            // }
         setup_beforeAdd(buffer, beginPos) {
             super.setup_beforeAdd(buffer, beginPos);
             buffer.seek(beginPos, 5);
@@ -6822,7 +6753,7 @@
                 tf.outline = buffer.readFloat();
             }
             if (buffer.readBool()) //shadow
-             {
+            {
                 tf.shadowColor = buffer.readColor();
                 let f1 = buffer.readFloat();
                 let f2 = buffer.readFloat();
@@ -6842,13 +6773,14 @@
                 this.text = str;
         }
         parseTemplate(template) {
-            var pos1 = 0, pos2, pos3;
+            var pos1 = 0,
+                pos2, pos3;
             var tag;
             var value;
             var result = "";
             while ((pos2 = template.indexOf("{", pos1)) != -1) {
                 if (pos2 > 0 && template.charCodeAt(pos2 - 1) == 92) //\
-                 {
+                {
                     result += template.substring(pos1, pos2 - 1);
                     result += "{";
                     pos1 = pos2 + 1;
@@ -6872,8 +6804,7 @@
                         result += tag.substring(pos3 + 1);
                     else
                         result += value;
-                }
-                else {
+                } else {
                     value = this._template[tag];
                     if (value != null)
                         result += value;
@@ -6917,34 +6848,33 @@
             this._singleLine = true;
         }
         init() {
-            super.init();
-            this._input = $.CreatePanel("TextEntry", $('#HiddenRoot'), this.$owner.name);
-            if (this._singleLine) {
-                this._input.style.whiteSpace = "nowrap";
-            }
-            else {
-                this._input.style.whiteSpace = "normal";
-            }
-            this.nativePanel = this._input;
-            this._input.SetPanelEvent('onfocus', function () {
-                isAnyEditing = true;
-                // this.stage.setFocus(this, true);
-            });
-            this._input.SetPanelEvent('oncancel', function () {
-                isAnyEditing = false;
-            });
-            this._input.SetPanelEvent('ontextentrychange', () => {
-                if (this._skipEvent == true) {
-                    this._skipEvent = false;
-                    return;
+                super.init();
+                this._input = $.CreatePanel("TextEntry", $('#HiddenRoot'), this.$owner.name);
+                if (this._singleLine) {
+                    this._input.style.whiteSpace = "nowrap";
+                } else {
+                    this._input.style.whiteSpace = "normal";
                 }
-                this._text = this._input.text;
-                this.$owner.emit("changed");
-                // this.onTextUpdate();
-            });
-            this.onTextUpdate();
-        }
-        //处理密码类型的
+                this.nativePanel = this._input;
+                this._input.SetPanelEvent('onfocus', function() {
+                    isAnyEditing = true;
+                    // this.stage.setFocus(this, true);
+                });
+                this._input.SetPanelEvent('oncancel', function() {
+                    isAnyEditing = false;
+                });
+                this._input.SetPanelEvent('ontextentrychange', () => {
+                    if (this._skipEvent == true) {
+                        this._skipEvent = false;
+                        return;
+                    }
+                    this._text = this._input.text;
+                    this.$owner.emit("changed");
+                    // this.onTextUpdate();
+                });
+                this.onTextUpdate();
+            }
+            //处理密码类型的
         onTextUpdate() {
             this._skipEvent = true;
             this._oldText = this._input.text;
@@ -7008,10 +6938,8 @@
             if (value > 0)
                 this._input.SetMaxChars(value);
         }
-        setKeyboardType(keyboardType) {
-        }
-        setRestrict(value) {
-        }
+        setKeyboardType(keyboardType) {}
+        setRestrict(value) {}
         get editable() {
             // return !this._input.readOnly;
             return true;
@@ -7157,7 +7085,7 @@
                 tf.outline = buffer.readFloat() + 1;
             }
             if (buffer.readBool()) //shadow
-             {
+            {
                 tf.shadowColor = buffer.readColor();
                 let f1 = buffer.readFloat();
                 let f2 = buffer.readFloat();
@@ -7197,19 +7125,16 @@
     }
 
     class ControllerAction {
-        constructor() {
-        }
+        constructor() {}
         run(controller, prevPage, curPage) {
-            if ((!this.fromPage || this.fromPage.length == 0 || this.fromPage.indexOf(prevPage) != -1)
-                && (!this.toPage || this.toPage.length == 0 || this.toPage.indexOf(curPage) != -1))
+            if ((!this.fromPage || this.fromPage.length == 0 || this.fromPage.indexOf(prevPage) != -1) &&
+                (!this.toPage || this.toPage.length == 0 || this.toPage.indexOf(curPage) != -1))
                 this.enter(controller);
             else
                 this.leave(controller);
         }
-        enter(controller) {
-        }
-        leave(controller) {
-        }
+        enter(controller) {}
+        leave(controller) {}
         setup(buffer) {
             var cnt;
             var i;
@@ -7273,8 +7198,7 @@
                     if (this.targetPage == "~1") {
                         if (controller.selectedIndex < cc.pageCount)
                             cc.selectedIndex = controller.selectedIndex;
-                    }
-                    else if (this.targetPage == "~2")
+                    } else if (this.targetPage == "~2")
                         cc.selectedPage = controller.selectedPage;
                     else
                         cc.selectedPageId = this.targetPage;
@@ -7306,18 +7230,18 @@
             return this._selectedIndex;
         }
         set selectedIndex(value) {
-            if (this._selectedIndex != value) {
-                if (value > this._pageIds.length - 1)
-                    throw "index out of bounds: " + value;
-                this.changing = true;
-                this._previousIndex = this._selectedIndex;
-                this._selectedIndex = value;
-                this.parent.applyController(this);
-                this.emit.call(this, "status_changed");
-                this.changing = false;
+                if (this._selectedIndex != value) {
+                    if (value > this._pageIds.length - 1)
+                        throw "index out of bounds: " + value;
+                    this.changing = true;
+                    this._previousIndex = this._selectedIndex;
+                    this._selectedIndex = value;
+                    this.parent.applyController(this);
+                    this.emit.call(this, "status_changed");
+                    this.changing = false;
+                }
             }
-        }
-        //功能和设置selectedIndex一样，但不会触发事件
+            //功能和设置selectedIndex一样，但不会触发事件
         setSelectedIndex(value) {
             if (this._selectedIndex != value) {
                 if (value > this._pageIds.length - 1)
@@ -7339,12 +7263,12 @@
                 return this._pageNames[this._selectedIndex];
         }
         set selectedPage(val) {
-            var i = this._pageNames.indexOf(val);
-            if (i == -1)
-                i = 0;
-            this.selectedIndex = i;
-        }
-        //功能和设置selectedPage一样，但不会触发事件
+                var i = this._pageNames.indexOf(val);
+                if (i == -1)
+                    i = 0;
+                this.selectedIndex = i;
+            }
+            //功能和设置selectedPage一样，但不会触发事件
         setSelectedPage(value) {
             var i = this._pageNames.indexOf(value);
             if (i == -1)
@@ -7373,8 +7297,7 @@
             if (index == null || index == this._pageIds.length) {
                 this._pageIds.push(nid);
                 this._pageNames.push(name);
-            }
-            else {
+            } else {
                 this._pageIds.splice(index, 0, nid);
                 this._pageNames.splice(index, 0, name);
             }
@@ -7513,6 +7436,7 @@
                 this._selectedIndex = -1;
         }
     }
+
     function createAction(type) {
         switch (type) {
             case 0:
@@ -7646,8 +7570,7 @@
                     this._owner.onEvent("onmouseover", this.__rollOver, this);
                     this._owner.onEvent("onmouseout", this.__rollOut, this);
                 }
-            }
-            else
+            } else
                 this._mouseWheelEnabled = false;
             if (headerRes) {
                 this._header = UIPackage.createObjectFromURL(headerRes);
@@ -7905,13 +7828,11 @@
                 if (target.parent != this._owner) {
                     target.parent.localToGlobalRect(target.x, target.y, target.width, target.height, s_rect);
                     rect = this._owner.globalToLocalRect(s_rect.x, s_rect.y, s_rect.width, s_rect.height, s_rect);
-                }
-                else {
+                } else {
                     rect = s_rect;
                     rect.set(target.x, target.y, target.width, target.height);
                 }
-            }
-            else
+            } else
                 rect = target;
             if (this._overlapSize.y > 0) {
                 var bottom = this._yPos + this._viewSize.y;
@@ -7922,8 +7843,7 @@
                         this.setPosY(Math.floor(rect.y / this._pageSize.y) * this._pageSize.y, ani);
                     else
                         this.setPosY(rect.y, ani);
-                }
-                else if (rect.y + rect.height > bottom) {
+                } else if (rect.y + rect.height > bottom) {
                     if (this._pageMode)
                         this.setPosY(Math.floor(rect.y / this._pageSize.y) * this._pageSize.y, ani);
                     else if (rect.height <= this._viewSize.y / 2)
@@ -7941,8 +7861,7 @@
                         this.setPosX(Math.floor(rect.x / this._pageSize.x) * this._pageSize.x, ani);
                     else
                         this.setPosX(rect.x, ani);
-                }
-                else if (rect.x + rect.width > right) {
+                } else if (rect.x + rect.width > right) {
                     if (this._pageMode)
                         this.setPosX(Math.floor(rect.x / this._pageSize.x) * this._pageSize.x, ani);
                     else if (rect.width <= this._viewSize.x / 2)
@@ -8051,8 +7970,7 @@
                         this._hzScrollBar.x = this._scrollBarMargin.left + this._vtScrollBar.width;
                     else
                         this._hzScrollBar.x = this._scrollBarMargin.left;
-                }
-                else {
+                } else {
                     this._hzScrollBar.width = aWidth - this._scrollBarMargin.left - this._scrollBarMargin.right;
                     this._hzScrollBar.x = this._scrollBarMargin.left;
                 }
@@ -8103,8 +8021,7 @@
                     this._yPos = this._overlapSize.y;
                     this._tweenChange.y = -this._yPos - this._tweenStart.y;
                 }
-            }
-            else if (this._tweening == 2) {
+            } else if (this._tweening == 2) {
                 //重新调整起始位置，确保能够顺滑滚下去
                 if (deltaPosX != 0) {
                     this._container.x -= deltaPosX;
@@ -8116,8 +8033,7 @@
                     this._tweenStart.y -= deltaPosY;
                     this._yPos = -this._container.y;
                 }
-            }
-            else if (this._dragged) {
+            } else if (this._dragged) {
                 if (deltaPosX != 0) {
                     this._container.x -= deltaPosX;
                     this._containerPos.x -= deltaPosX;
@@ -8128,8 +8044,7 @@
                     this._containerPos.y -= deltaPosY;
                     this._yPos = -this._container.y;
                 }
-            }
-            else {
+            } else {
                 //如果原来滚动位置是贴边，加入处理继续贴边。
                 if (deltaWidth != 0 && isRightmost) {
                     this._xPos = this._overlapSize.x;
@@ -8197,8 +8112,7 @@
                     max += this._footerLockedSize;
                 if (this._refreshBarAxis == "x") {
                     this._container.setPosition(clamp(this._container.x, -max, this._headerLockedSize), clamp(this._container.y, -this._overlapSize.y, 0));
-                }
-                else {
+                } else {
                     this._container.setPosition(clamp(this._container.x, -this._overlapSize.x, 0), clamp(this._container.y, -max, this._headerLockedSize));
                 }
                 if (this._header) {
@@ -8213,8 +8127,7 @@
                     else
                         this._footer.width = this._viewSize.x;
                 }
-            }
-            else {
+            } else {
                 this._container.setPosition(clamp(this._container.x, -this._overlapSize.x, 0), clamp(this._container.y, -this._overlapSize.y, 0));
             }
             this.updateScrollBarPos();
@@ -8244,7 +8157,7 @@
             this.refresh2();
             this._owner.emit.call(this._owner, "scroll");
             if (this._needRefresh) //在onScroll事件里开发者可能修改位置，这里再刷新一次，避免闪烁
-             {
+            {
                 this._needRefresh = false;
                 Timers.remove(this.refresh, this);
                 this.refresh2();
@@ -8275,11 +8188,9 @@
                     this._tweenStart.set(this._container.x, this._container.y);
                     this._tweenChange.set(posX - this._tweenStart.x, posY - this._tweenStart.y);
                     this.startTween(1);
-                }
-                else if (this._tweening != 0)
+                } else if (this._tweening != 0)
                     this.killTween();
-            }
-            else {
+            } else {
                 if (this._tweening != 0)
                     this.killTween();
                 this._container.setPosition(Math.floor(-this._xPos), Math.floor(-this._yPos));
@@ -8295,8 +8206,7 @@
                 this.killTween();
                 // this._owner.element.stage.cancelClick(evt.input.pointerId);
                 this._dragged = true;
-            }
-            else
+            } else
                 this._dragged = false;
             var cpos = GameUI.GetCursorPosition();
             var pt = owner.globalToLocal(cpos[0], cpos[1], s_vec2$2);
@@ -8327,15 +8237,14 @@
                     if (diff < sensitivity)
                         return;
                     if ((s_gestureFlag & 2) != 0) //已经有水平方向的手势在监测，那么我们用严格的方式检查是不是按垂直方向移动，避免冲突
-                     {
+                    {
                         let diff2 = Math.abs(this._beginTouchPos.x - pt.x);
                         if (diff < diff2) //不通过则不允许滚动了
                             return;
                     }
                 }
                 sv = true;
-            }
-            else if (this._scrollType == exports.ScrollType.Horizontal) {
+            } else if (this._scrollType == exports.ScrollType.Horizontal) {
                 if (!this._isHoldAreaDone) {
                     s_gestureFlag |= 2;
                     diff = Math.abs(this._beginTouchPos.x - pt.x);
@@ -8348,8 +8257,7 @@
                     }
                 }
                 sh = true;
-            }
-            else {
+            } else {
                 s_gestureFlag = 3;
                 if (!this._isHoldAreaDone) {
                     diff = Math.abs(this._beginTouchPos.y - pt.y);
@@ -8371,16 +8279,14 @@
                         this._container.y = Math.floor(Math.min(newPosY * 0.5, this._header.maxHeight));
                     else
                         this._container.y = Math.floor(Math.min(newPosY * 0.5, this._viewSize.y * PULL_RATIO));
-                }
-                else if (newPosY < -this._overlapSize.y) {
+                } else if (newPosY < -this._overlapSize.y) {
                     if (!this._bouncebackEffect)
                         this._container.y = -this._overlapSize.y;
                     else if (this._footer && this._footer.maxHeight > 0)
                         this._container.y = Math.floor(Math.max((newPosY + this._overlapSize.y) * 0.5, -this._footer.maxHeight) - this._overlapSize.y);
                     else
                         this._container.y = Math.floor(Math.max((newPosY + this._overlapSize.y) * 0.5, -this._viewSize.y * PULL_RATIO) - this._overlapSize.y);
-                }
-                else
+                } else
                     this._container.y = newPosY;
             }
             if (sh) {
@@ -8391,16 +8297,14 @@
                         this._container.x = Math.floor(Math.min(newPosX * 0.5, this._header.maxWidth));
                     else
                         this._container.x = Math.floor(Math.min(newPosX * 0.5, this._viewSize.x * PULL_RATIO));
-                }
-                else if (newPosX < 0 - this._overlapSize.x) {
+                } else if (newPosX < 0 - this._overlapSize.x) {
                     if (!this._bouncebackEffect)
                         this._container.x = -this._overlapSize.x;
                     else if (this._footer && this._footer.maxWidth > 0)
                         this._container.x = Math.floor(Math.max((newPosX + this._overlapSize.x) * 0.5, -this._footer.maxWidth) - this._overlapSize.x);
                     else
                         this._container.x = Math.floor(Math.max((newPosX + this._overlapSize.x) * 0.5, -this._viewSize.x * PULL_RATIO) - this._overlapSize.x);
-                }
-                else
+                } else
                     this._container.x = newPosX;
             }
             //更新速度
@@ -8416,7 +8320,7 @@
             if (deltaTime != 0) {
                 var elapsed = deltaTime * frameRate - 1;
                 if (elapsed > 1) //速度衰减
-                 {
+                {
                     var factor = Math.pow(0.833, elapsed);
                     this._velocity.x = this._velocity.x * factor;
                     this._velocity.y = this._velocity.y * factor;
@@ -8425,7 +8329,7 @@
                 this._velocity.y = lerp(this._velocity.y, deltaPositionY * 60 / frameRate / deltaTime, deltaTime * 10);
             }
             /*速度计算使用的是本地位移，但在后续的惯性滚动判断中需要用到屏幕位移，所以这里要记录一个位移的比例。
-            */
+             */
             var deltaGlobalPositionX = this._lastTouchGlobalPos.x - cpos[0];
             var deltaGlobalPositionY = this._lastTouchGlobalPos.y - cpos[1];
             if (deltaPositionX != 0)
@@ -8473,16 +8377,14 @@
             if (this._container.x > 0) {
                 s_endPos.x = 0;
                 flag = true;
-            }
-            else if (this._container.x < -this._overlapSize.x) {
+            } else if (this._container.x < -this._overlapSize.x) {
                 s_endPos.x = -this._overlapSize.x;
                 flag = true;
             }
             if (this._container.y > 0) {
                 s_endPos.y = 0;
                 flag = true;
-            }
-            else if (this._container.y < -this._overlapSize.y) {
+            } else if (this._container.y < -this._overlapSize.y) {
                 s_endPos.y = -this._overlapSize.y;
                 flag = true;
             }
@@ -8492,8 +8394,7 @@
                     this._refreshEventDispatching = true;
                     this._owner.emit.call(this._owner, "pull_down_release");
                     this._refreshEventDispatching = false;
-                }
-                else if (this._tweenChange.x > UIConfig.touchDragSensitivity || this._tweenChange.y > UIConfig.touchDragSensitivity) {
+                } else if (this._tweenChange.x > UIConfig.touchDragSensitivity || this._tweenChange.y > UIConfig.touchDragSensitivity) {
                     this._refreshEventDispatching = true;
                     this._owner.emit.call(this._owner, "pull_up_release");
                     this._refreshEventDispatching = false;
@@ -8502,8 +8403,7 @@
                     s_endPos[this._refreshBarAxis] = this._headerLockedSize;
                     this._tweenChange.x = s_endPos.x - this._tweenStart.x;
                     this._tweenChange.y = s_endPos.y - this._tweenStart.y;
-                }
-                else if (this._footerLockedSize > 0 && s_endPos[this._refreshBarAxis] == -this._overlapSize[this._refreshBarAxis]) {
+                } else if (this._footerLockedSize > 0 && s_endPos[this._refreshBarAxis] == -this._overlapSize[this._refreshBarAxis]) {
                     var max = this._overlapSize[this._refreshBarAxis];
                     if (max == 0)
                         max = Math.max(this._contentSize[this._refreshBarAxis] + this._footerLockedSize - this._viewSize[this._refreshBarAxis], 0);
@@ -8514,8 +8414,7 @@
                     this._tweenChange.y = s_endPos.y - this._tweenStart.y;
                 }
                 this._tweenDuration.set(TWEEN_TIME_DEFAULT, TWEEN_TIME_DEFAULT);
-            }
-            else {
+            } else {
                 //更新速度
                 if (!this._inertiaDisabled) {
                     var frameRate = 60;
@@ -8527,8 +8426,7 @@
                     }
                     //根据速度计算目标位置和需要时间
                     this.updateTargetAndDuration(this._tweenStart, s_endPos);
-                }
-                else
+                } else
                     this._tweenDuration.set(TWEEN_TIME_DEFAULT, TWEEN_TIME_DEFAULT);
                 s_oldChange.set(s_endPos.x - this._tweenStart.x, s_endPos.y - this._tweenStart.y);
                 //调整目标位置
@@ -8556,8 +8454,7 @@
             if (this._overlapSize.x > 0 && this._overlapSize.y == 0) {
                 let step = this._pageMode ? this._pageSize.x : this._scrollStep;
                 this.setPosX(this._xPos + step * delta, false);
-            }
-            else {
+            } else {
                 let step = this._pageMode ? this._pageSize.y : this._scrollStep;
                 this.setPosY(this._yPos + step * delta, false);
             }
@@ -8597,8 +8494,7 @@
             if (this._scrollBarDisplayAuto && !this._hover && this._tweening == 0 && !this._dragged && !bar.gripDragging) {
                 if (bar.element.visible)
                     GTween.to(1, 0, 0.5).setDelay(0.5).onComplete(this.__barTweenComplete, this).setTarget(bar, "alpha");
-            }
-            else {
+            } else {
                 bar.alpha = 1;
                 bar.element.visible = true;
             }
@@ -8618,18 +8514,15 @@
                 if (this._xPos < 0.001) {
                     this._xPos += this.getLoopPartSize(2, "x");
                     changed = true;
-                }
-                else if (this._xPos >= this._overlapSize.x) {
+                } else if (this._xPos >= this._overlapSize.x) {
                     this._xPos -= this.getLoopPartSize(2, "x");
                     changed = true;
                 }
-            }
-            else if (this._loop == 2 && this._overlapSize.y > 0) {
+            } else if (this._loop == 2 && this._overlapSize.y > 0) {
                 if (this._yPos < 0.001) {
                     this._yPos += this.getLoopPartSize(2, "y");
                     changed = true;
-                }
-                else if (this._yPos >= this._overlapSize.y) {
+                } else if (this._yPos >= this._overlapSize.y) {
                     this._yPos -= this.getLoopPartSize(2, "y");
                     changed = true;
                 }
@@ -8654,8 +8547,7 @@
                     endPos[axis] -= halfSize;
                     this._tweenStart[axis] = tmp;
                 }
-            }
-            else if (endPos[axis] < -this._overlapSize[axis]) {
+            } else if (endPos[axis] < -this._overlapSize[axis]) {
                 halfSize = this.getLoopPartSize(2, axis);
                 tmp = this._tweenStart[axis] + halfSize;
                 if (tmp <= 0 && tmp >= -this._overlapSize[axis]) {
@@ -8678,8 +8570,7 @@
                     pos = clamp(pos + v, 0, this._overlapSize[axis]);
                     changed = true;
                 }
-            }
-            else if (value >= this._overlapSize[axis]) {
+            } else if (value >= this._overlapSize[axis]) {
                 value -= this.getLoopPartSize(2, axis);
                 if (value < pos) {
                     v = this.getLoopPartSize(6, axis);
@@ -8700,8 +8591,7 @@
             if (this._pageMode) {
                 pos.x = this.alignByPage(pos.x, "x", inertialScrolling);
                 pos.y = this.alignByPage(pos.y, "y", inertialScrolling);
-            }
-            else if (this._snapToItem) {
+            } else if (this._snapToItem) {
                 var xDir = 0;
                 var yDir = 0;
                 if (inertialScrolling) {
@@ -8728,12 +8618,11 @@
                 var delta = -pos - page * this._pageSize[axis];
                 //页面吸附策略
                 if (Math.abs(change) > this._pageSize[axis]) //如果滚动距离超过1页,则需要超过页面的一半，才能到更下一页
-                 {
+                {
                     if (delta > testPageSize * 0.5)
                         page++;
-                }
-                else //否则只需要页面的1/3，当然，需要考虑到左移和右移的情况
-                 {
+                } else //否则只需要页面的1/3，当然，需要考虑到左移和右移的情况
+                {
                     if (delta > testPageSize * (change < 0 ? UIConfig.defaultScrollPagingThreshold : (1 - UIConfig.defaultScrollPagingThreshold)))
                         page++;
                 }
@@ -8784,8 +8673,7 @@
                 if (this._pageMode || !touchScreen) {
                     if (v2 > 500)
                         ratio = Math.pow((v2 - 500) / 500, 2);
-                }
-                else {
+                } else {
                     if (v2 > 1000)
                         ratio = Math.pow((v2 - 1000) / 1000, 2);
                 }
@@ -8825,7 +8713,7 @@
         }
         killTween() {
             if (this._tweening == 1) //取消类型为1的tween需立刻设置到终点
-             {
+            {
                 this._container.setPosition(this._tweenStart.x + this._tweenChange.x, this._tweenStart.y + this._tweenChange.y);
                 this._owner.emit.call(this._owner, "scroll");
             }
@@ -8846,8 +8734,7 @@
                     pt.set(this._header.width, this._header.height);
                     pt[this._refreshBarAxis] = pos;
                     this._header.setSize(pt.x, pt.y);
-                }
-                else {
+                } else {
                     if (this._header.element.parent)
                         this._maskContainer.removeChild(this._header.element);
                 }
@@ -8870,8 +8757,7 @@
                     else
                         pt[this._refreshBarAxis] = this._viewSize[this._refreshBarAxis] - this._footer[this._refreshBarAxis];
                     this._footer.setSize(pt.x, pt.y);
-                }
-                else {
+                } else {
                     if (this._footer.element.parent)
                         this._maskContainer.removeChild(this._footer.element);
                 }
@@ -8897,8 +8783,7 @@
                 this.updateScrollBarVisible();
                 this._owner.emit.call(this._owner, "scroll");
                 this._owner.emit.call(this._owner, "scroll_end");
-            }
-            else {
+            } else {
                 this.updateScrollBarPos();
                 this._owner.emit.call(this._owner, "scroll");
             }
@@ -8910,8 +8795,7 @@
                 if (this._tweenTime[axis] >= this._tweenDuration[axis]) {
                     newValue = this._tweenStart[axis] + this._tweenChange[axis];
                     this._tweenChange[axis] = 0;
-                }
-                else {
+                } else {
                     var ratio = easeFunc(this._tweenTime[axis], this._tweenDuration[axis]);
                     newValue = this._tweenStart[axis] + Math.floor(this._tweenChange[axis] * ratio);
                 }
@@ -8928,45 +8812,42 @@
                     threshold2 = -max;
                 }
                 if (this._tweening == 2 && this._bouncebackEffect) {
-                    if (newValue > 20 + threshold1 && this._tweenChange[axis] > 0
-                        || newValue > threshold1 && this._tweenChange[axis] == 0) //开始回弹
-                     {
+                    if (newValue > 20 + threshold1 && this._tweenChange[axis] > 0 ||
+                        newValue > threshold1 && this._tweenChange[axis] == 0) //开始回弹
+                    {
                         this._tweenTime[axis] = 0;
                         this._tweenDuration[axis] = TWEEN_TIME_DEFAULT;
                         this._tweenChange[axis] = -newValue + threshold1;
                         this._tweenStart[axis] = newValue;
-                    }
-                    else if (newValue < threshold2 - 20 && this._tweenChange[axis] < 0
-                        || newValue < threshold2 && this._tweenChange[axis] == 0) //开始回弹
-                     {
+                    } else if (newValue < threshold2 - 20 && this._tweenChange[axis] < 0 ||
+                        newValue < threshold2 && this._tweenChange[axis] == 0) //开始回弹
+                    {
                         this._tweenTime[axis] = 0;
                         this._tweenDuration[axis] = TWEEN_TIME_DEFAULT;
                         this._tweenChange[axis] = threshold2 - newValue;
                         this._tweenStart[axis] = newValue;
                     }
-                }
-                else {
+                } else {
                     if (newValue > threshold1) {
                         newValue = threshold1;
                         this._tweenChange[axis] = 0;
-                    }
-                    else if (newValue < threshold2) {
+                    } else if (newValue < threshold2) {
                         newValue = threshold2;
                         this._tweenChange[axis] = 0;
                     }
                 }
-            }
-            else
+            } else
                 newValue = this._container[axis];
             return newValue;
         }
     }
+
     function easeFunc(t, d) {
         return (t = t / d - 1) * t * t + 1; //cubicOut
     }
 
     var CurveType;
-    (function (CurveType) {
+    (function(CurveType) {
         CurveType[CurveType["CRSpline"] = 0] = "CRSpline";
         CurveType[CurveType["Bezier"] = 1] = "Bezier";
         CurveType[CurveType["CubicBezier"] = 2] = "CubicBezier";
@@ -9067,14 +8948,12 @@
                         seg.ptCount = 2;
                         this._points.push(new Vec2(prev.x, prev.y));
                         this._points.push(new Vec2(current.x, current.y));
-                    }
-                    else if (prev.curveType == CurveType.Bezier) {
+                    } else if (prev.curveType == CurveType.Bezier) {
                         seg.ptCount = 3;
                         this._points.push(new Vec2(prev.x, prev.y));
                         this._points.push(new Vec2(current.x, current.y));
                         this._points.push(new Vec2(prev.control1_x, prev.control1_y));
-                    }
-                    else if (prev.curveType == CurveType.CubicBezier) {
+                    } else if (prev.curveType == CurveType.CubicBezier) {
                         seg.ptCount = 4;
                         this._points.push(new Vec2(prev.x, prev.y));
                         this._points.push(new Vec2(current.x, current.y));
@@ -9090,8 +8969,7 @@
                         splinePoints.push(new Vec2(current.x, current.y));
                         this.createSplineSegment(splinePoints);
                     }
-                }
-                else
+                } else
                     splinePoints.push(new Vec2(current.x, current.y));
                 prev = current;
             }
@@ -9138,8 +9016,7 @@
                     result.x = lerp(this._points[seg.ptStart].x, this._points[seg.ptStart + 1].x, t);
                     result.y = lerp(this._points[seg.ptStart].y, this._points[seg.ptStart + 1].y, t);
                     return result;
-                }
-                else if (seg.type == CurveType.Bezier || seg.type == CurveType.CubicBezier)
+                } else if (seg.type == CurveType.Bezier || seg.type == CurveType.CubicBezier)
                     return this.onBezierCurve(seg.ptStart, seg.ptCount, t, result);
                 else
                     return this.onCRSplineCurve(seg.ptStart, seg.ptCount, t, result);
@@ -9153,8 +9030,7 @@
                     if (seg.type == CurveType.Straight) {
                         result.x = lerp(this._points[seg.ptStart].x, this._points[seg.ptStart + 1].x, t);
                         result.y = lerp(this._points[seg.ptStart].y, this._points[seg.ptStart + 1].y, t);
-                    }
-                    else if (seg.type == CurveType.Bezier || seg.type == CurveType.CubicBezier)
+                    } else if (seg.type == CurveType.Bezier || seg.type == CurveType.CubicBezier)
                         result = this.onBezierCurve(seg.ptStart, seg.ptCount, t, result);
                     else
                         result = this.onCRSplineCurve(seg.ptStart, seg.ptCount, t, result);
@@ -9185,8 +9061,7 @@
             if (seg.type == CurveType.Straight) {
                 points.push(new Vec2(lerp(this._points[seg.ptStart].x, this._points[seg.ptStart + 1].x, t0), lerp(this._points[seg.ptStart].y, this._points[seg.ptStart + 1].y, t0)));
                 points.push(new Vec2(lerp(this._points[seg.ptStart].x, this._points[seg.ptStart + 1].x, t1), lerp(this._points[seg.ptStart].y, this._points[seg.ptStart + 1].y, t1)));
-            }
-            else {
+            } else {
                 var func;
                 if (seg.type == CurveType.Bezier || seg.type == CurveType.CubicBezier)
                     func = this.onBezierCurve;
@@ -9250,8 +9125,7 @@
                 var cp1y = this._points[ptStart + 3].y;
                 result.x = t2 * t2 * t2 * p0x + 3 * t2 * t2 * t * cp0x + 3 * t2 * t * t * cp1x + t * t * t * p1x;
                 result.y = t2 * t2 * t2 * p0y + 3 * t2 * t2 * t * cp0y + 3 * t2 * t * t * cp1y + t * t * t * p1y;
-            }
-            else {
+            } else {
                 result.x = t2 * t2 * p0x + 2 * t2 * t * cp0x + t * t * p1x;
                 result.y = t2 * t2 * p0y + 2 * t2 * t * cp0y + t * t * p1y;
             }
@@ -9281,12 +9155,13 @@
             this._timeScale = 1;
             this._startTime = 0;
             this._endTime = 0;
+            this.autoReset = true;
             this._runningAnimation = new Set;
-            this._onAnimationEndCallback = (_, className) => {
-                this.onAnimationEnd(className);
+            this._onAnimationEndCallback = (p, kName) => {
+                this.onAnimationEnd(p, kName);
             };
-            this._onAnimationStartCallback = (_, className) => {
-                this.onAnimationStart(className);
+            this._onAnimationStartCallback = (p, kName) => {
+                this.onAnimationStart(p, kName);
             };
         }
         play(onComplete, times, delay, startTime, endTime) {
@@ -9306,8 +9181,7 @@
                 if (this._autoPlay) {
                     if (this._owner.onStage)
                         this.play(null, null, this._autoPlayTimes, this._autoPlayDelay);
-                }
-                else {
+                } else {
                     if (!this._owner.onStage)
                         this.stop(false, true);
                 }
@@ -9331,8 +9205,7 @@
                         item.target = this._owner.getChildById(item.targetId);
                     else
                         item.target = this._owner;
-                }
-                else if (item.target != this._owner && item.target.parent != this._owner)
+                } else if (item.target != this._owner && item.target.parent != this._owner)
                     item.target = null;
                 if (item.target && item.type == exports.ActionType.Transition) {
                     var trans = item.target.getTransition(item.value.transName);
@@ -9340,7 +9213,7 @@
                         trans = null;
                     if (trans) {
                         if (item.value.playTimes == 0) //this.stop
-                         {
+                        {
                             var j;
                             for (j = i - 1; j >= 0; j--) {
                                 var item2 = this._items[j];
@@ -9355,8 +9228,7 @@
                                 item.value.stopTime = 0;
                             else
                                 trans = null; //no need to handle this.stop anymore
-                        }
-                        else
+                        } else
                             item.value.stopTime = -1;
                     }
                     item.value.trans = trans;
@@ -9364,34 +9236,38 @@
             }
             if (cnt > 0) {
                 if (UIConfig.useNativeTransition && this.checkCanUseNative()) {
-                    this._playing = false;
+                    this._playing = true;
                     this.stopAnimation();
-                    let runningSet = new Set;
+                    if (this.autoReset == true) {
+                        this.applyAnimationProperties(true);
+                    }
                     for (var i = 0; i < cnt; i++) {
                         var item = this._items[i];
-                        let transitionClassName = "";
-                        if (item.targetId == "") {
-                            //是组件本身
-                            transitionClassName = `${item.fileName}_${item.name}___root__`;
-                        }
-                        else {
-                            transitionClassName = `${item.fileName}_${item.name}_${item.targetId}`;
-                        }
-                        if (!runningSet.has(transitionClassName)) {
-                            runningSet.add(transitionClassName);
+                        var transitionClassName = this.getTransitionClassName(item);
+                        if (!this._runningAnimation.has(transitionClassName)) {
+                            this._runningAnimation.add(transitionClassName);
                             item.target.AddClass(transitionClassName);
-                            item.target.RegisterEventHandler('AnimationStart', this._onAnimationStartCallback);
+                            // item.target.RegisterEventHandler('AnimationStart', this._onAnimationStartCallback);
                             item.target.RegisterEventHandler('AnimationEnd', this._onAnimationEndCallback);
                         }
                     }
-                }
-                else {
+                } else {
                     if (delay == 0)
                         this.onDelayedPlay();
                     else
                         GTween.delayedCall(delay).setTarget(this).onComplete(this.onDelayedPlay, this);
                 }
             }
+        }
+        getTransitionClassName(item) {
+            let transitionClassName = "";
+            if (item.targetId == "") {
+                //是组件本身
+                transitionClassName = `${item.fileName}_${item.name}___root__`;
+            } else {
+                transitionClassName = `${item.fileName}_${item.name}_${item.targetId}`;
+            }
+            return transitionClassName;
         }
         checkCanUseNative() {
             var cnt = this._items.length;
@@ -9407,21 +9283,29 @@
             let cnt = this._items.length;
             for (var i = 0; i < cnt; i++) {
                 var item = this._items[i];
-                let transitionClassName = `${item.fileName}_${item.name}_${item.targetId}`;
+                let transitionClassName = this.getTransitionClassName(item);
                 if (!className || className == transitionClassName) {
+                    item.target.RemoveClass(transitionClassName);
                     if (this._runningAnimation.has(transitionClassName)) {
-                        item.target.RemoveClass(transitionClassName);
                         this._runningAnimation.delete(transitionClassName);
                     }
                 }
             }
+            if (this.autoReset == true) {
+                this.applyAnimationProperties(false);
+            }
         }
-        onAnimationEnd(className) {
+        onAnimationEnd(p, kName) {
+            var className = kName.substring(0, kName.length - 2);
             if (this._runningAnimation.has(className)) {
                 this._runningAnimation.delete(className);
-                this._playing = true;
             }
+            p.SetHasClass(className, false);
+            $.Msg(new Error().stack);
             if (this._runningAnimation.size == 0 && this._playing == true) {
+                if (this.autoReset == true) {
+                    this.applyAnimationProperties(false);
+                }
                 this._playing = false;
                 if (this._onComplete) {
                     let handler = this._onComplete;
@@ -9430,9 +9314,42 @@
                 this._onComplete = null;
             }
         }
-        onAnimationStart(className) {
-            this._runningAnimation.add(className);
-            this._playing = true;
+        doApplyTweenValues(i, runTypeMap, isFirst) {
+            var item = this._items[i];
+            if (runTypeMap.has(item.type)) {
+                return;
+            }
+            runTypeMap.add(item.type);
+            if (item.tweenConfig) {
+                var endValue = (isFirst == this._reversed) ? item.tweenConfig.endValue : item.tweenConfig.startValue;
+                item.value.f1 = endValue.f1;
+                item.value.f2 = endValue.f2;
+            }
+            item.value.b1 = true;
+            item.value.b2 = true;
+            this.applyValue(item);
+        }
+        applyAnimationProperties(isFirst) {
+            let cnt = this._items.length;
+            var runTypeMap = new Set;
+            if (!isFirst) {
+                for (var i = cnt - 1; i >= 0; i--) {
+                    this.doApplyTweenValues(i, runTypeMap, isFirst);
+                }
+            } else {
+                for (var i = 0; i < cnt; i++) {
+                    this.doApplyTweenValues(i, runTypeMap, isFirst);
+                }
+            }
+        }
+        stayLastFrame() {
+            this.applyAnimationProperties(false);
+        }
+        backToFirstFrame() {
+            this.applyAnimationProperties(true);
+        }
+        onAnimationStart(p, kName) {
+            //这里会监听到其他的事件，尽量不用
         }
         stop(setToComplete, processCallback) {
             if (!this._playing)
@@ -9453,8 +9370,7 @@
                         continue;
                     this.stopItem(item, setToComplete);
                 }
-            }
-            else {
+            } else {
                 for (i = 0; i < cnt; i++) {
                     item = this._items[i];
                     if (item.target == null)
@@ -9475,7 +9391,7 @@
                 item.tweener.kill(setToComplete);
                 item.tweener = null;
                 if (item.type == exports.ActionType.Shake && !setToComplete) //震动必须归位，否则下次就越震越远了。
-                 {
+                {
                     item.target._gearLocked = true;
                     item.target.setPosition(item.target.x - item.value.lastOffsetX, item.target.y - item.value.lastOffsetY);
                     item.target._gearLocked = false;
@@ -9502,13 +9418,11 @@
                 if (item.type == exports.ActionType.Transition) {
                     if (item.value.trans)
                         item.value.trans.setPaused(paused);
-                }
-                else if (item.type == exports.ActionType.Animation) {
+                } else if (item.type == exports.ActionType.Animation) {
                     if (paused) {
                         item.value.flag = item.target.getProp(exports.ObjectPropID.Playing);
                         item.target.setProp(exports.ObjectPropID.Playing, false);
-                    }
-                    else
+                    } else
                         item.target.setProp(exports.ObjectPropID.Playing, item.value.flag);
                 }
                 if (item.tweener)
@@ -9549,12 +9463,10 @@
                     else
                         value = item.value;
                     found = true;
-                }
-                else if (item.tweenConfig && item.tweenConfig.endLabel == label) {
+                } else if (item.tweenConfig && item.tweenConfig.endLabel == label) {
                     value = item.tweenConfig.endValue;
                     found = true;
-                }
-                else
+                } else
                     continue;
                 switch (item.type) {
                     case exports.ActionType.XY:
@@ -9623,8 +9535,7 @@
                     item.hook = callback;
                     found = true;
                     break;
-                }
-                else if (item.tweenConfig && item.tweenConfig.endLabel == label) {
+                } else if (item.tweenConfig && item.tweenConfig.endLabel == label) {
                     item.tweenConfig.endHook = callback;
                     found = true;
                     break;
@@ -9654,8 +9565,7 @@
                             item.target = this._owner.getChildById(item.targetId);
                         else
                             item.target = this._owner;
-                    }
-                    else
+                    } else
                         item.target = null;
                     found = true;
                 }
@@ -9702,8 +9612,7 @@
                         else if (item.type == exports.ActionType.Transition) {
                             if (item.value.trans)
                                 item.value.trans.timeScale = value;
-                        }
-                        else if (item.type == exports.ActionType.Animation) {
+                        } else if (item.type == exports.ActionType.Animation) {
                             if (item.target)
                                 item.target.setProp(exports.ObjectPropID.TimeScale, value);
                         }
@@ -9727,8 +9636,7 @@
                             item.tweenConfig.endValue.f1 += dx;
                             item.tweenConfig.endValue.f2 += dy;
                         }
-                    }
-                    else {
+                    } else {
                         if (!item.value.b3) {
                             item.value.f1 += dx;
                             item.value.f2 += dy;
@@ -9757,8 +9665,7 @@
                             item.displayLockToken = item.target.addDisplayLock();
                     }
                 }
-            }
-            else if (this._onComplete) {
+            } else if (this._onComplete) {
                 var handler = this._onComplete;
                 this._onComplete = null;
                 handler();
@@ -9779,12 +9686,10 @@
                     if (item.type == exports.ActionType.Animation && this._startTime != 0 && item.time <= this._startTime) {
                         needSkipAnimations = true;
                         item.value.flag = false;
-                    }
-                    else
+                    } else
                         this.playItem(item);
                 }
-            }
-            else {
+            } else {
                 for (i = cnt - 1; i >= 0; i--) {
                     item = this._items[i];
                     if (item.target == null)
@@ -9809,8 +9714,7 @@
                     if (this._reversed) {
                         startValue = item.tweenConfig.endValue;
                         endValue = item.tweenConfig.startValue;
-                    }
-                    else {
+                    } else {
                         startValue = item.tweenConfig.startValue;
                         endValue = item.tweenConfig.endValue;
                     }
@@ -9846,8 +9750,7 @@
                         item.tweener.setBreakpoint(this._endTime - time);
                     this._totalTasks++;
                 }
-            }
-            else if (item.type == exports.ActionType.Shake) {
+            } else if (item.type == exports.ActionType.Shake) {
                 if (this._reversed)
                     time = (this._totalDuration - item.time - item.value.duration);
                 else
@@ -9863,8 +9766,7 @@
                 if (this._endTime >= 0)
                     item.tweener.setBreakpoint(this._endTime - item.time);
                 this._totalTasks++;
-            }
-            else {
+            } else {
                 if (this._reversed)
                     time = (this._totalDuration - item.time);
                 else
@@ -9872,8 +9774,7 @@
                 if (time <= this._startTime) {
                     this.applyValue(item);
                     this.callHook(item, false);
-                }
-                else if (this._endTime == -1 || time <= this._endTime) {
+                } else if (this._endTime == -1 || time <= this._endTime) {
                     this._totalTasks++;
                     item.tweener = GTween.delayedCall(time)
                         .setTimeScale(this._timeScale)
@@ -9916,13 +9817,11 @@
                         else
                             playStartTime = -1;
                         playTotalTime = 0;
-                    }
-                    else {
+                    } else {
                         if (value.playing) {
                             if (playStartTime < 0)
                                 playStartTime = item.time;
-                        }
-                        else {
+                        } else {
                             if (playStartTime >= 0)
                                 playTotalTime += (item.time - playStartTime);
                             playStartTime = -1;
@@ -9949,14 +9848,13 @@
         onTweenStart(tweener) {
             var item = tweener.target;
             if (item.type == exports.ActionType.XY || item.type == exports.ActionType.Size) //位置和大小要到start才最终确认起始值
-             {
+            {
                 var startValue;
                 var endValue;
                 if (this._reversed) {
                     startValue = item.tweenConfig.endValue;
                     endValue = item.tweenConfig.startValue;
-                }
-                else {
+                } else {
                     startValue = item.tweenConfig.startValue;
                     endValue = item.tweenConfig.endValue;
                 }
@@ -9978,8 +9876,7 @@
                             tweener.endValue.y = tweener.startValue.y;
                         else if (endValue.b3)
                             tweener.endValue.y = endValue.f2 * this._owner.height;
-                    }
-                    else {
+                    } else {
                         if (!startValue.b1)
                             tweener.startValue.x = item.target.x - this._ownerBaseX;
                         if (!startValue.b2)
@@ -9989,8 +9886,7 @@
                         if (!endValue.b2)
                             tweener.endValue.y = tweener.startValue.y;
                     }
-                }
-                else {
+                } else {
                     if (!startValue.b1)
                         tweener.startValue.x = item.target.width;
                     if (!startValue.b2)
@@ -10057,8 +9953,7 @@
             if (tweenEnd) {
                 if (item.tweenConfig && item.tweenConfig.endHook)
                     item.tweenConfig.endHook();
-            }
-            else {
+            } else {
                 if (item.time >= this._startTime && item.hook)
                     item.hook();
             }
@@ -10069,15 +9964,13 @@
                     this.internalPlay();
                     if (this._totalTasks == 0)
                         GTween.delayedCall(0).setTarget(this).onComplete(this.checkAllComplete, this);
-                }
-                else {
+                } else {
                     this._totalTimes--;
                     if (this._totalTimes > 0) {
                         this.internalPlay();
                         if (this._totalTasks == 0)
                             GTween.delayedCall(0).setTarget(this).onComplete(this.checkAllComplete, this);
-                    }
-                    else {
+                    } else {
                         this._playing = false;
                         var cnt = this._items.length;
                         for (var i = 0; i < cnt; i++) {
@@ -10097,6 +9990,10 @@
             }
         }
         applyValue(item) {
+            if (!item.target) {
+                $.Msg("Error: no target in transition, please call play() first");
+                return;
+            }
             item.target._gearLocked = true;
             var value = item.value;
             switch (item.type) {
@@ -10108,18 +10005,16 @@
                             item.target.x = value.f1 + this._ownerBaseX;
                         else
                             item.target.y = value.f2 + this._ownerBaseY;
-                    }
-                    else {
+                    } else {
                         if (value.b3) //position in percent
-                         {
+                        {
                             if (value.b1 && value.b2)
                                 item.target.setPosition(value.f1 * this._owner.width, value.f2 * this._owner.height);
                             else if (value.b1)
                                 item.target.x = value.f1 * this._owner.width;
                             else if (value.b2)
                                 item.target.y = value.f2 * this._owner.height;
-                        }
-                        else {
+                        } else {
                             if (value.b1 && value.b2)
                                 item.target.setPosition(value.f1, value.f2);
                             else if (value.b1)
@@ -10268,8 +10163,7 @@
                             item.tweenConfig.path.create(pts);
                         }
                     }
-                }
-                else {
+                } else {
                     if (item.time > this._totalDuration)
                         this._totalDuration = item.time;
                     buffer.seek(curPos, 2);
@@ -10354,8 +10248,7 @@
     }
 
     class TranslationHelper {
-        constructor() {
-        }
+        constructor() {}
         static loadFromXML(source) {
             let strings = {};
             TranslationHelper.strings = strings;
@@ -10414,7 +10307,7 @@
                     nextPos = buffer.readShort();
                     nextPos += buffer.pos;
                     if (buffer.readByte() == 6) //gearText
-                     {
+                    {
                         buffer.skip(2); //controller
                         valueCnt = buffer.readShort();
                         for (k = 0; k < valueCnt; k++) {
@@ -10610,16 +10503,14 @@
             if (index >= 0 && index <= this._children.length) {
                 if (child.parent == this) {
                     this.setChildIndex(child, index);
-                }
-                else {
+                } else {
                     child.removeFromParent();
                     child.parent = this;
                     var cnt = this._children.length;
                     if (child.sortingOrder != 0) {
                         this._sortingChildCount++;
                         index = this.getInsertPosForSortingChild(child);
-                    }
-                    else if (this._sortingChildCount > 0) {
+                    } else if (this._sortingChildCount > 0) {
                         if (index > (cnt - this._sortingChildCount))
                             index = cnt - this._sortingChildCount;
                     }
@@ -10631,8 +10522,7 @@
                     this.setBoundsChangedFlag();
                 }
                 return child;
-            }
-            else {
+            } else {
                 throw "Invalid child index";
             }
         }
@@ -10671,8 +10561,7 @@
                     child.dispose();
                 this.setBoundsChangedFlag();
                 return child;
-            }
-            else {
+            } else {
                 throw "Invalid child index";
             }
         }
@@ -10720,8 +10609,7 @@
                     if (!(obj instanceof GComponent)) {
                         obj = null;
                         break;
-                    }
-                    else
+                    } else
                         gcom = obj;
                 }
             }
@@ -10806,8 +10694,7 @@
                     if (displayIndex == this._container.numChildren)
                         displayIndex--;
                     this._container.setChildIndex(child.element, displayIndex);
-                }
-                else if (this._childrenRenderOrder == exports.ChildrenRenderOrder.Descent) {
+                } else if (this._childrenRenderOrder == exports.ChildrenRenderOrder.Descent) {
                     for (i = cnt - 1; i > index; i--) {
                         g = this._children[i];
                         if (g.element.parent)
@@ -10816,8 +10703,7 @@
                     if (displayIndex == this._container.numChildren)
                         displayIndex--;
                     this._container.setChildIndex(child.element, displayIndex);
-                }
-                else {
+                } else {
                     Timers.callLater(this.buildNativeDisplayList, this);
                 }
                 this.setBoundsChangedFlag();
@@ -10841,19 +10727,19 @@
             return this._children.length;
         }
         getChildren() {
-            return this._children;
-        }
-        // public isAncestorOf(child: GObject): boolean {
-        //     if (child == null)
-        //         return false;
-        //     var p: GComponent = child.parent;
-        //     while (p) {
-        //         if (p == this)
-        //             return true;
-        //         p = p.parent;
-        //     }
-        //     return false;
-        // }
+                return this._children;
+            }
+            // public isAncestorOf(child: GObject): boolean {
+            //     if (child == null)
+            //         return false;
+            //     var p: GComponent = child.parent;
+            //     while (p) {
+            //         if (p == this)
+            //             return true;
+            //         p = p.parent;
+            //     }
+            //     return false;
+            // }
         addController(controller) {
             this._controllers.push(controller);
             controller.parent = this;
@@ -10898,7 +10784,7 @@
                 }
                 return;
             }
-            if (child.internalVisible /*&& child.element != this._element.mask*/) {
+            if (child.internalVisible /*&& child.element != this._element.mask*/ ) {
                 if (!child.element.parent) {
                     var index = 0;
                     if (this._childrenRenderOrder == exports.ChildrenRenderOrder.Ascent) {
@@ -10910,8 +10796,7 @@
                                 index++;
                         }
                         this._container.addChildAt(child.element, index);
-                    }
-                    else if (this._childrenRenderOrder == exports.ChildrenRenderOrder.Descent) {
+                    } else if (this._childrenRenderOrder == exports.ChildrenRenderOrder.Descent) {
                         for (let i = cnt - 1; i >= 0; i--) {
                             let g = this._children[i];
                             if (g == child)
@@ -10920,14 +10805,12 @@
                                 index++;
                         }
                         this._container.addChildAt(child.element, index);
-                    }
-                    else {
+                    } else {
                         this._container.addChild(child.element);
                         Timers.callLater(this.buildNativeDisplayList, this);
                     }
                 }
-            }
-            else {
+            } else {
                 if (child.element.parent) {
                     this._container.removeChild(child.element);
                     if (this._childrenRenderOrder == exports.ChildrenRenderOrder.Arch)
@@ -10996,13 +10879,13 @@
         }
         adjustRadioGroupDepth(obj, c) {
             var cnt = this._children.length;
-            var myIndex = -1, maxIndex = -1;
+            var myIndex = -1,
+                maxIndex = -1;
             for (let i = 0; i < cnt; i++) {
                 let child = this._children[i];
                 if (child == obj) {
                     myIndex = i;
-                }
-                else if (("relatedController" in child) /*is button*/ && child.relatedController == c) {
+                } else if (("relatedController" in child) /*is button*/ && child.relatedController == c) {
                     if (i > maxIndex)
                         maxIndex = i;
                 }
@@ -11029,13 +10912,11 @@
         }
         isChildInView(child) {
             if (this._element.clipping) {
-                return child.x + child._width >= 0 && child.x <= this._width
-                    && child.y + child._height >= 0 && child.y <= this._height;
-            }
-            else if (this._scrollPane) {
+                return child.x + child._width >= 0 && child.x <= this._width &&
+                    child.y + child._height >= 0 && child.y <= this._height;
+            } else if (this._scrollPane) {
                 return this._scrollPane.isChildInView(child);
-            }
-            else
+            } else
                 return true;
         }
         getFirstChildInView() {
@@ -11111,8 +10992,7 @@
                 }
                 this._element.clipping = true;
                 this._container.setPosition(this._margin.left, this._margin.top);
-            }
-            else {
+            } else {
                 this._element.clipping = false;
                 if (this._margin.left != 0 || this._margin.top != 0) {
                     if (this._element == this._container) {
@@ -11165,11 +11045,15 @@
                 this.updateBounds();
         }
         updateBounds() {
-            var ax = 0, ay = 0, aw = 0, ah = 0;
+            var ax = 0,
+                ay = 0,
+                aw = 0,
+                ah = 0;
             var len = this._children.length;
             if (len > 0) {
                 ax = Number.POSITIVE_INFINITY, ay = Number.POSITIVE_INFINITY;
-                var ar = Number.NEGATIVE_INFINITY, ab = Number.NEGATIVE_INFINITY;
+                var ar = Number.NEGATIVE_INFINITY,
+                    ab = Number.NEGATIVE_INFINITY;
                 var tmp = 0;
                 var i1 = 0;
                 for (i1 = 0; i1 < len; i1++) {
@@ -11222,11 +11106,11 @@
                 this.height = value + this._margin.top + this._margin.bottom;
         }
         getSnappingPosition(xValue, yValue, resultPoint) {
-            return this.getSnappingPositionWithDir(xValue, yValue, 0, 0, resultPoint);
-        }
-        /**
-         * dir正数表示右移或者下移，负数表示左移或者上移
-         */
+                return this.getSnappingPositionWithDir(xValue, yValue, 0, 0, resultPoint);
+            }
+            /**
+             * dir正数表示右移或者下移，负数表示左移或者上移
+             */
         getSnappingPositionWithDir(xValue, yValue, xDir, yDir, resultPoint) {
             if (!resultPoint)
                 resultPoint = new Vec2();
@@ -11247,8 +11131,7 @@
                         if (i == 0) {
                             yValue = 0;
                             break;
-                        }
-                        else {
+                        } else {
                             prev = this._children[i - 1];
                             if (yValue < prev.y + prev.actualHeight / 2) //top half part
                                 yValue = prev.y;
@@ -11270,8 +11153,7 @@
                         if (i == 0) {
                             xValue = 0;
                             break;
-                        }
-                        else {
+                        } else {
                             prev = this._children[i - 1];
                             if (xValue < prev.x + prev.actualWidth / 2) //top half part
                                 xValue = prev.x;
@@ -11292,8 +11174,7 @@
             if (newValue == 0) {
                 this._sortingChildCount--;
                 this.setChildIndex(child, this._children.length);
-            }
-            else {
+            } else {
                 if (oldValue == 0)
                     this._sortingChildCount++;
                 var oldIndex = this._children.indexOf(child);
@@ -11351,8 +11232,7 @@
                 this.setupScroll(buffer);
                 buffer.pos = savedPos;
                 this.element.clipping = true;
-            }
-            else
+            } else
                 this.setupOverflow(overflow);
             if (buffer.readBool())
                 buffer.skip(8);
@@ -11389,14 +11269,12 @@
                         else
                             pkg = contentItem.owner;
                         pi = pkg ? pkg.getItemById(src) : null;
-                    }
-                    else
+                    } else
                         pi = null;
                     if (pi) {
                         child = $.UIObjectFactory.newObject(pi, null, pi.name);
                         child.constructFromResource();
-                    }
-                    else
+                    } else
                         child = $.UIObjectFactory.newObject(type, null, exports.ObjectType[type]);
                 }
                 child._underConstruct = true;
@@ -11461,10 +11339,8 @@
                 this.constructExtension(buffer);
             this.onConstruct();
         }
-        constructExtension(buffer) {
-        }
-        onConstruct() {
-        }
+        constructExtension(buffer) {}
+        onConstruct() {}
         setup_afterAdd(buffer, beginPos) {
             super.setup_afterAdd(buffer, beginPos);
             buffer.seek(beginPos, 4);
@@ -11652,8 +11528,7 @@
             this._content.nativePanel.AddClass("FGUI_OutScreen");
             if (this._url.startsWith("ui://")) {
                 this.loadFromPackage(this._url);
-            }
-            else {
+            } else {
                 //internal
                 this._content.src = this._url;
                 this.updateLayout();
@@ -11697,15 +11572,13 @@
                         this._content.textureScale = new Vec2(this._contentItem.width / this.sourceWidth, this._contentItem.height / this.sourceHeight);
                     this._content.src = this._contentItem.file;
                     this.updateLayout();
-                }
-                else if (this._contentItem.type == exports.PackageItemType.MovieClip) {
+                } else if (this._contentItem.type == exports.PackageItemType.MovieClip) {
                     this._content.interval = this._contentItem.interval;
                     this._content.swing = this._contentItem.swing;
                     this._content.repeatDelay = this._contentItem.repeatDelay;
                     this._content.frames = this._contentItem.frames;
                     this.updateLayout();
-                }
-                else if (this._contentItem.type == exports.PackageItemType.Component) {
+                } else if (this._contentItem.type == exports.PackageItemType.Component) {
                     this.clearContent();
                     var obj = UIPackage.createObjectFromURL(itemURL);
                     if (!obj)
@@ -11713,27 +11586,22 @@
                     else if (!(obj instanceof GComponent)) {
                         obj.dispose();
                         this.setErrorState();
-                    }
-                    else {
+                    } else {
                         this._content2 = obj;
                         this._element.addChild(this._content2.element);
                         this.updateLayout();
                     }
-                }
-                else {
+                } else {
                     this.clearContent();
                     this.setErrorState();
                 }
-            }
-            else {
+            } else {
                 this.clearContent();
                 this.setErrorState();
             }
         }
-        setErrorState() {
-        }
-        clearErrorState() {
-        }
+        setErrorState() {}
+        clearErrorState() {}
         updateLayout() {
             if (!this._content2 && !this._content.src && !this._content.frames) {
                 if (this._autoSize) {
@@ -11761,15 +11629,15 @@
                     if (this._content2) {
                         this._content2.setPosition(0, 0);
                         this._content2.setScale(1, 1);
-                    }
-                    else {
+                    } else {
                         this._content.setSize(cw, ch);
                         this._content.setPosition(0, 0);
                     }
                     return;
                 }
             }
-            var sx = 1, sy = 1;
+            var sx = 1,
+                sy = 1;
             if (this._fill != exports.LoaderFillType.None) {
                 sx = this.width / this.sourceWidth;
                 sy = this.height / this.sourceHeight;
@@ -11783,8 +11651,7 @@
                             sx = sy;
                         else
                             sy = sx;
-                    }
-                    else if (this._fill == exports.LoaderFillType.ScaleNoBorder) {
+                    } else if (this._fill == exports.LoaderFillType.ScaleNoBorder) {
                         if (sx > sy)
                             sy = sx;
                         else
@@ -11903,8 +11770,7 @@
         }
     }
 
-    class GLoader3D extends GObject {
-    }
+    class GLoader3D extends GObject {}
 
     //此为标签 并非指常规的文本
     class GLabel extends GComponent {
@@ -12073,8 +11939,7 @@
                     }
                     if (buffer.readBool())
                         input.password = true;
-                }
-                else
+                } else
                     buffer.skip(13);
             }
         }
@@ -12189,15 +12054,14 @@
                     if (this._iconObject)
                         this._iconObject.icon = str;
                 }
-                if (this._relatedController
-                    && this._parent
-                    && !this._parent._buildingDisplayList) {
+                if (this._relatedController &&
+                    this._parent &&
+                    !this._parent._buildingDisplayList) {
                     if (this._selected) {
                         this._relatedController.selectedPageId = this._relatedPageId;
                         if (this._relatedController.autoRadioGroupDepth)
                             this._parent.adjustRadioGroupDepth(this, this._relatedController);
-                    }
-                    else if (this._mode == exports.ButtonMode.Check && this._relatedController.selectedPageId == this._relatedPageId)
+                    } else if (this._mode == exports.ButtonMode.Check && this._relatedController.selectedPageId == this._relatedPageId)
                         this._relatedController.oppositePageId = this._relatedPageId;
                 }
             }
@@ -12247,47 +12111,39 @@
         fireClick(downEffect, clickCall) {
             downEffect = downEffect || false;
             if (downEffect && this._mode == exports.ButtonMode.Common) {
-                this.element.nativePanel.style.transitionProperty = "transform";
-                this.element.nativePanel.style.transitionDuration = "0.1s";
-                this.setState("down");
-                // Timers.add(100, 1, this.setState, this, "down");
-                Timers.add(200, 1, this.setState, this, () => {
-                    this.setState("up");
-                    if (clickCall)
-                        this.emit.call(this, "click");
-                });
+                if (clickCall)
+                    this.emit.call(this, "click");
             }
         }
         setState(val) {
             if (this._buttonController)
                 this._buttonController.selectedPage = val;
             if (this._downEffect == 1) {
+                this.AddClass(`FGUI_Button_Animation_1`);
                 var cnt = this.numChildren;
                 if (val == "down" || val == "selectedOver" || val == "selectedDisabled") {
-                    var p = this._downEffectValue * 255;
-                    var r = (p << 16) + (p << 8) + p;
                     for (var i = 0; i < cnt; i++) {
                         var obj = this.getChildAt(i);
-                        if (!(obj instanceof GTextField))
-                            obj.setProp(exports.ObjectPropID.Color, r);
+                        if (!(obj instanceof GTextField)) {
+                            obj.element.nativePanel.style.brightness = `${this._downEffectValue}`;
+                        }
                     }
-                }
-                else {
+                } else {
                     for (i = 0; i < cnt; i++) {
                         obj = this.getChildAt(i);
-                        if (!(obj instanceof GTextField))
-                            obj.setProp(exports.ObjectPropID.Color, 0xFFFFFF);
+                        if (!(obj instanceof GTextField)) {
+                            obj.element.nativePanel.style.brightness = `1`;
+                        }
                     }
                 }
-            }
-            else if (this._downEffect == 2) {
+            } else if (this._downEffect == 2) {
+                this.AddClass(`FGUI_Button_Animation_2`);
                 if (val == "down" || val == "selectedOver" || val == "selectedDisabled") {
                     if (!this._downScaled) {
                         this.setScale(this.scaleX * this._downEffectValue, this.scaleY * this._downEffectValue);
                         this._downScaled = true;
                     }
-                }
-                else {
+                } else {
                     if (this._downScaled) {
                         this.setScale(this.scaleX / this._downEffectValue, this.scaleY / this._downEffectValue);
                         this._downScaled = false;
@@ -12301,8 +12157,7 @@
                     this.setState("selectedDisabled");
                 else
                     this.setState("disabled");
-            }
-            else {
+            } else {
                 if (this._selected)
                     this.setState(this._over ? "selectedOver" : "down");
                 else
@@ -12321,13 +12176,11 @@
                         this.setState("selectedDisabled");
                     else
                         this.setState("disabled");
-                }
-                else if (this._selected)
+                } else if (this._selected)
                     this.setState("down");
                 else
                     this.setState("up");
-            }
-            else
+            } else
                 super.handleGrayedChanged();
         }
         handleTouchableChanged() {
@@ -12484,11 +12337,10 @@
                         this.setState("over");
                     else
                         this.setState("up");
-                }
-                else {
-                    if (!this._over
-                        && this._buttonController
-                        && (this._buttonController.selectedPage == "over" || this._buttonController.selectedPage == "selectedOver")) {
+                } else {
+                    if (!this._over &&
+                        this._buttonController &&
+                        (this._buttonController.selectedPage == "over" || this._buttonController.selectedPage == "selectedOver")) {
                         this.setCurrentState();
                     }
                 }
@@ -12507,14 +12359,12 @@
                     this.selected = !this._selected;
                     this.emit.call(this, "status_changed");
                 }
-            }
-            else if (this._mode == exports.ButtonMode.Radio) {
+            } else if (this._mode == exports.ButtonMode.Radio) {
                 if (this._changeStateOnClick && !this._selected) {
                     this.selected = true;
                     this.emit.call(this, "status_changed");
                 }
-            }
-            else {
+            } else {
                 if (this._relatedController)
                     this._relatedController.selectedPageId = this._relatedPageId;
             }
@@ -12598,8 +12448,7 @@
                 this.text = this._items[this._selectedIndex];
                 if (this._icons && this._selectedIndex < this._icons.length)
                     this.icon = this._icons[this._selectedIndex];
-            }
-            else {
+            } else {
                 this.text = "";
                 if (this._icons)
                     this.icon = null;
@@ -12635,8 +12484,7 @@
                 this.text = this._items[this._selectedIndex];
                 if (this._icons && this._selectedIndex < this._icons.length)
                     this.icon = this._icons[this._selectedIndex];
-            }
-            else {
+            } else {
                 this.text = "";
                 if (this._icons)
                     this.icon = null;
@@ -12684,8 +12532,8 @@
                 this.selectedIndex = c.selectedIndex;
         }
         updateSelectionController() {
-            if (this._selectionController && !this._selectionController.changing
-                && this._selectedIndex < this._selectionController.pageCount) {
+            if (this._selectionController && !this._selectionController.changing &&
+                this._selectedIndex < this._selectionController.pageCount) {
                 var c = this._selectionController;
                 this._selectionController = null;
                 c.selectedIndex = this._selectedIndex;
@@ -12809,12 +12657,10 @@
             if (str != null) {
                 this.text = str;
                 this._selectedIndex = this._items.indexOf(str);
-            }
-            else if (this._items.length > 0) {
+            } else if (this._items.length > 0) {
                 this._selectedIndex = 0;
                 this.text = this._items[0];
-            }
-            else
+            } else
                 this._selectedIndex = -1;
             str = buffer.readS();
             if (str != null)
@@ -12864,7 +12710,8 @@
         showDropdownAutoPosition() {
             this.parent.addChild(this.dropdown);
             var pos = new Vec2(this.x, this.y);
-            var sizeW = this.width, sizeH = this.height;
+            var sizeW = this.width,
+                sizeH = this.height;
             var xx, yy;
             xx = pos.x;
             var screenWidth = Game.GetScreenWidth();
@@ -12872,8 +12719,8 @@
             if (xx + this.dropdown.width > screenWidth)
                 xx = xx + sizeW - this.dropdown.width;
             yy = pos.y + sizeH;
-            if (((this.popupDirection === undefined || this.popupDirection === exports.PopupDirection.Auto) && yy + this.dropdown.height > screenHeight)
-                || this.popupDirection === exports.PopupDirection.Up) {
+            if (((this.popupDirection === undefined || this.popupDirection === exports.PopupDirection.Auto) && yy + this.dropdown.height > screenHeight) ||
+                this.popupDirection === exports.PopupDirection.Up) {
                 yy = pos.y - this.dropdown.height - 1;
                 if (yy < 0) {
                     yy = 0;
@@ -13014,8 +12861,7 @@
                     this._barObjectH.width = Math.round(fullWidth * percent);
                 if (this._barObjectV)
                     this._barObjectV.height = Math.round(fullHeight * percent);
-            }
-            else {
+            } else {
                 if (this._barObjectH) {
                     this._barObjectH.width = Math.round(fullWidth * percent);
                     this._barObjectH.x = this._barStartX + (fullWidth - this._barObjectH.width);
@@ -13042,8 +12888,7 @@
                 this._barMaxWidth = this._barObjectH.width;
                 this._barMaxWidthDelta = this.width - this._barMaxWidth;
                 this._barStartX = this._barObjectH.x;
-            }
-            else if (this._barObjectV) {
+            } else if (this._barObjectV) {
                 this._barMaxHeight = this._barObjectV.height;
                 this._barMaxHeightDelta = this.height - this._barMaxHeight;
                 this._barStartY = this._barObjectV.y;
@@ -13175,8 +13020,7 @@
             if (tweener) {
                 oldValule = tweener.value.x;
                 tweener.kill();
-            }
-            else
+            } else
                 oldValule = this._value;
             this._value = value;
             return GTween.to(oldValule, this._value, duration).setTarget(this, this.update).setEase(exports.EaseType.Linear);
@@ -13210,8 +13054,7 @@
                     if (!this.setFillAmount(this._barObjectV, percent))
                         this._barObjectV.height = Math.round(fullHeight * percent);
                 }
-            }
-            else {
+            } else {
                 if (this._barObjectH) {
                     if (!this.setFillAmount(this._barObjectH, 1 - percent)) {
                         this._barObjectH.width = Math.round(fullWidth * percent);
@@ -13232,8 +13075,7 @@
             if (((bar instanceof GImage) || (bar instanceof GLoader)) && bar.fillMethod != exports.FillMethod.None) {
                 bar.fillAmount = amount;
                 return true;
-            }
-            else
+            } else
                 return false;
         }
         constructExtension(buffer) {
@@ -13298,8 +13140,7 @@
                 if (!this._fixedGripSize)
                     this._grip.height = Math.floor(value * this._bar.height);
                 this._grip.y = this._bar.y + (this._bar.height - this._grip.height) * this._scrollPerc;
-            }
-            else {
+            } else {
                 if (!this._fixedGripSize)
                     this._grip.width = Math.floor(value * this._bar.width);
                 this._grip.x = this._bar.x + (this._bar.width - this._grip.width) * this._scrollPerc;
@@ -13372,8 +13213,7 @@
                     this._target.percY = 0;
                 else
                     this._target.percY = (curY - this._bar.y) / diff;
-            }
-            else {
+            } else {
                 let curX = pt.x - this._dragOffset.x;
                 let diff = this._bar.width - this._grip.width;
                 if (diff == 0)
@@ -13409,8 +13249,7 @@
                     this._target.scrollUp(4);
                 else
                     this._target.scrollDown(4);
-            }
-            else {
+            } else {
                 if (pt.x < 0)
                     this._target.scrollLeft(4);
                 else
@@ -13695,8 +13534,7 @@
                             return i;
                     }
                 }
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 for (i = 0; i < cnt; i++) {
                     var obj = this._children[i];
@@ -13711,8 +13549,7 @@
                 if (this._selectionMode != exports.ListSelectionMode.Single)
                     this.clearSelection();
                 this.addSelection(value);
-            }
-            else
+            } else
                 this.clearSelection();
         }
         getSelection(result) {
@@ -13722,8 +13559,8 @@
             if (this._virtual) {
                 for (i = 0; i < this._realNumItems; i++) {
                     var ii = this._virtualItems[i];
-                    if ((ii.obj instanceof GButton) && ii.obj.selected
-                        || ii.obj == null && ii.selected) {
+                    if ((ii.obj instanceof GButton) && ii.obj.selected ||
+                        ii.obj == null && ii.selected) {
                         var j = i;
                         if (this._loop) {
                             j = i % this._numItems;
@@ -13733,8 +13570,7 @@
                         result.push(j);
                     }
                 }
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 for (i = 0; i < cnt; i++) {
                     var obj = this._children[i];
@@ -13759,8 +13595,7 @@
                 if (ii.obj)
                     obj = ii.obj;
                 ii.selected = true;
-            }
-            else
+            } else
                 obj = this.getChildAt(index);
             if ((obj instanceof GButton) && !obj.selected) {
                 obj.selected = true;
@@ -13776,8 +13611,7 @@
                 if (ii.obj)
                     obj = ii.obj;
                 ii.selected = false;
-            }
-            else
+            } else
                 obj = this.getChildAt(index);
             if (obj instanceof GButton)
                 obj.selected = false;
@@ -13791,8 +13625,7 @@
                         ii.obj.selected = false;
                     ii.selected = false;
                 }
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 for (i = 0; i < cnt; i++) {
                     var obj = this._children[i];
@@ -13812,8 +13645,7 @@
                         ii.selected = false;
                     }
                 }
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 for (i = 0; i < cnt; i++) {
                     var obj = this._children[i];
@@ -13835,8 +13667,7 @@
                     }
                     ii.selected = true;
                 }
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 for (i = 0; i < cnt; i++) {
                     var obj = this._children[i];
@@ -13866,8 +13697,7 @@
                     }
                     ii.selected = !ii.selected;
                 }
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 for (i = 0; i < cnt; i++) {
                     var obj = this._children[i];
@@ -13889,8 +13719,7 @@
                 this.tabStopChildren = true;
                 this.setPanelEvent('onfocus', () => { this.notifySelection(true); });
                 this.setPanelEvent('onblur', () => { this.notifySelection(false); });
-            }
-            else {
+            } else {
                 this.clearPanelEvent("onfocus");
                 this.clearPanelEvent("onblur");
             }
@@ -13925,8 +13754,7 @@
                     this.clearSelectionExcept(item);
                     item.selected = true;
                 }
-            }
-            else {
+            } else {
                 if (GameUI.IsShiftDown()) {
                     if (!item.selected) {
                         if (this._lastSelectedIndex != -1) {
@@ -13941,8 +13769,7 @@
                                         ii.obj.selected = true;
                                     ii.selected = true;
                                 }
-                            }
-                            else {
+                            } else {
                                 for (i = min; i <= max; i++) {
                                     var obj = this.getChildAt(i);
                                     if (obj instanceof GButton)
@@ -13950,21 +13777,17 @@
                                 }
                             }
                             dontChangeLastIndex = true;
-                        }
-                        else {
+                        } else {
                             item.selected = true;
                         }
                     }
-                }
-                else if ((GameUI.IsControlDown()) || this._selectionMode == exports.ListSelectionMode.Multiple_SingleClick) {
+                } else if ((GameUI.IsControlDown()) || this._selectionMode == exports.ListSelectionMode.Multiple_SingleClick) {
                     item.selected = !item.selected;
-                }
-                else {
+                } else {
                     if (!item.selected) {
                         this.clearSelectionExcept(item);
                         item.selected = true;
-                    }
-                    else
+                    } else
                         this.clearSelectionExcept(item);
                 }
             }
@@ -13985,14 +13808,12 @@
                     this.viewHeight = lineCount * this._itemSize.y + Math.max(0, lineCount - 1) * this._lineGap;
                 else
                     this.viewWidth = lineCount * this._itemSize.x + Math.max(0, lineCount - 1) * this._columnGap;
-            }
-            else if (itemCount == 0) {
+            } else if (itemCount == 0) {
                 if (this._layout == exports.ListLayoutType.SingleColumn || this._layout == exports.ListLayoutType.FlowHorizontal)
                     this.viewHeight = minSize;
                 else
                     this.viewWidth = minSize;
-            }
-            else {
+            } else {
                 var i = itemCount - 1;
                 var obj = null;
                 while (i >= 0) {
@@ -14006,16 +13827,14 @@
                         this.viewHeight = minSize;
                     else
                         this.viewWidth = minSize;
-                }
-                else {
+                } else {
                     var size = 0;
                     if (this._layout == exports.ListLayoutType.SingleColumn || this._layout == exports.ListLayoutType.FlowHorizontal) {
                         size = obj.y + obj.height;
                         if (size < minSize)
                             size = minSize;
                         this.viewHeight = size;
-                    }
-                    else {
+                    } else {
                         size = obj.x + obj.width;
                         if (size < minSize)
                             size = minSize;
@@ -14046,8 +13865,8 @@
                 this.selectedIndex = c.selectedIndex;
         }
         updateSelectionController(index) {
-            if (this._selectionController && !this._selectionController.changing
-                && index < this._selectionController.pageCount) {
+            if (this._selectionController && !this._selectionController.changing &&
+                index < this._selectionController.pageCount) {
                 var c = this._selectionController;
                 this._selectionController = null;
                 c.selectedIndex = index;
@@ -14055,9 +13874,9 @@
             }
         }
         shouldSnapToNext(dir, delta, size) {
-            return dir < 0 && delta > UIConfig.defaultScrollSnappingThreshold * size
-                || dir > 0 && delta > (1 - UIConfig.defaultScrollSnappingThreshold) * size
-                || dir == 0 && delta > size / 2;
+            return dir < 0 && delta > UIConfig.defaultScrollSnappingThreshold * size ||
+                dir > 0 && delta > (1 - UIConfig.defaultScrollSnappingThreshold) * size ||
+                dir == 0 && delta > size / 2;
         }
         getSnappingPositionWithDir(xValue, yValue, xDir, yDir, resultPoint) {
             if (this._virtual) {
@@ -14076,8 +13895,7 @@
                         if (this.shouldSnapToNext(yDir, saved - yValue, size))
                             yValue += size + this._lineGap;
                     }
-                }
-                else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
+                } else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
                     saved = xValue;
                     s_n = xValue;
                     index = this.getIndexOnPos2(false);
@@ -14087,8 +13905,7 @@
                         if (this.shouldSnapToNext(xDir, saved - xValue, size))
                             xValue += size + this._columnGap;
                     }
-                }
-                else {
+                } else {
                     saved = xValue;
                     s_n = xValue;
                     index = this.getIndexOnPos3(false);
@@ -14102,8 +13919,7 @@
                 resultPoint.x = xValue;
                 resultPoint.y = yValue;
                 return resultPoint;
-            }
-            else
+            } else
                 return super.getSnappingPositionWithDir(xValue, yValue, xDir, yDir, resultPoint);
         }
         scrollToView(index, ani, setFirst) {
@@ -14123,20 +13939,17 @@
                     for (i = this._curLineItemCount - 1; i < index; i += this._curLineItemCount)
                         pos += this._virtualItems[i].height + this._lineGap;
                     rect = new Rect(0, pos, this._itemSize.x, ii.height);
-                }
-                else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
+                } else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
                     for (i = this._curLineItemCount - 1; i < index; i += this._curLineItemCount)
                         pos += this._virtualItems[i].width + this._columnGap;
                     rect = new Rect(pos, 0, ii.width, this._itemSize.y);
-                }
-                else {
+                } else {
                     var page = index / (this._curLineItemCount * this._curLineItemCount2);
                     rect = new Rect(page * this.viewWidth + (index % this._curLineItemCount) * (ii.width + this._columnGap), (index / this._curLineItemCount) % this._curLineItemCount2 * (ii.height + this._lineGap), ii.width, ii.height);
                 }
                 if (this._scrollPane)
                     this._scrollPane.scrollToView(rect, ani, setFirst);
-            }
-            else {
+            } else {
                 var obj = this.getChildAt(index);
                 if (this._scrollPane)
                     this._scrollPane.scrollToView(obj, ani, setFirst);
@@ -14174,8 +13987,7 @@
                     }
                 }
                 return index;
-            }
-            else {
+            } else {
                 index += this._firstIndex;
                 if (this._loop && this._numItems > 0)
                     index = index % this._numItems;
@@ -14187,26 +13999,24 @@
                 return index;
             if (this._layout == exports.ListLayoutType.Pagination) {
                 return this.getChildIndex(this._virtualItems[index].obj);
-            }
-            else {
+            } else {
                 if (this._loop && this._numItems > 0) {
                     var j = this._firstIndex % this._numItems;
                     if (index >= j)
                         index = index - j;
                     else
                         index = this._numItems - j + index;
-                }
-                else
+                } else
                     index -= this._firstIndex;
                 return index;
             }
         }
         setVirtual() {
-            this._setVirtual(false);
-        }
-        /**
-         * Set the list to be virtual list, and has loop behavior.
-         */
+                this._setVirtual(false);
+            }
+            /**
+             * Set the list to be virtual list, and has loop behavior.
+             */
         setVirtualAndLoop() {
             this._setVirtual(true);
         }
@@ -14228,8 +14038,7 @@
                     var obj = this.getFromPool(null);
                     if (obj == null) {
                         throw new Error("Virtual List must have a default list item resource.");
-                    }
-                    else {
+                    } else {
                         this._itemSize.x = obj.width;
                         this._itemSize.y = obj.height;
                     }
@@ -14239,8 +14048,7 @@
                     this._scrollPane.scrollStep = this._itemSize.y;
                     if (this._loop)
                         this._scrollPane._loop = 2;
-                }
-                else {
+                } else {
                     this._scrollPane.scrollStep = this._itemSize.x;
                     if (this._loop)
                         this._scrollPane._loop = 1;
@@ -14274,8 +14082,7 @@
                         ii.height = this._itemSize.y;
                         this._virtualItems.push(ii);
                     }
-                }
-                else {
+                } else {
                     for (i = this._realNumItems; i < oldCount; i++)
                         this._virtualItems[i].selected = false;
                 }
@@ -14283,8 +14090,7 @@
                     Timers.remove(this._refreshVirtualList, this);
                 //立即刷新
                 this._refreshVirtualList();
-            }
-            else {
+            } else {
                 var cnt = this._children.length;
                 if (value > cnt) {
                     for (i = cnt; i < value; i++) {
@@ -14293,8 +14099,7 @@
                         else
                             this.addItemFromPool(this.itemProvider(i));
                     }
-                }
-                else {
+                } else {
                     this.removeChildrenToPool(value, cnt);
                 }
                 if (this.itemRenderer) {
@@ -14336,8 +14141,7 @@
                         if (this._curLineItemCount <= 0)
                             this._curLineItemCount = 1;
                     }
-                }
-                else if (this._layout == exports.ListLayoutType.FlowVertical) {
+                } else if (this._layout == exports.ListLayoutType.FlowVertical) {
                     if (this._lineCount > 0)
                         this._curLineItemCount = this._lineCount;
                     else {
@@ -14345,9 +14149,8 @@
                         if (this._curLineItemCount <= 0)
                             this._curLineItemCount = 1;
                     }
-                }
-                else //pagination
-                 {
+                } else //pagination
+                {
                     if (this._columnCount > 0)
                         this._curLineItemCount = this._columnCount;
                     else {
@@ -14364,7 +14167,8 @@
                     }
                 }
             }
-            var ch = 0, cw = 0;
+            var ch = 0,
+                cw = 0;
             if (this._realNumItems > 0) {
                 var i;
                 var len = Math.ceil(this._realNumItems / this._curLineItemCount) * this._curLineItemCount;
@@ -14382,8 +14186,7 @@
                         if (cw > 0)
                             cw -= this._columnGap;
                     }
-                }
-                else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
+                } else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
                     for (i = 0; i < len; i += this._curLineItemCount)
                         cw += this._virtualItems[i].width + this._columnGap;
                     if (cw > 0)
@@ -14396,8 +14199,7 @@
                         if (ch > 0)
                             ch -= this._lineGap;
                     }
-                }
-                else {
+                } else {
                     var pageCount = Math.ceil(len / (this._curLineItemCount * this._curLineItemCount2));
                     cw = pageCount * this.viewWidth;
                     ch = this.viewHeight;
@@ -14431,8 +14233,7 @@
                     }
                     s_n = 0;
                     return 0;
-                }
-                else {
+                } else {
                     for (i = this._firstIndex; i < this._realNumItems; i += this._curLineItemCount) {
                         pos3 = pos2 + this._virtualItems[i].height + this._lineGap;
                         if (pos3 > s_n) {
@@ -14444,8 +14245,7 @@
                     s_n = pos2;
                     return this._realNumItems - this._curLineItemCount;
                 }
-            }
-            else {
+            } else {
                 pos2 = 0;
                 for (i = 0; i < this._realNumItems; i += this._curLineItemCount) {
                     pos3 = pos2 + this._virtualItems[i].height + this._lineGap;
@@ -14479,8 +14279,7 @@
                     }
                     s_n = 0;
                     return 0;
-                }
-                else {
+                } else {
                     for (i = this._firstIndex; i < this._realNumItems; i += this._curLineItemCount) {
                         pos3 = pos2 + this._virtualItems[i].width + this._columnGap;
                         if (pos3 > s_n) {
@@ -14492,8 +14291,7 @@
                     s_n = pos2;
                     return this._realNumItems - this._curLineItemCount;
                 }
-            }
-            else {
+            } else {
                 pos2 = 0;
                 for (i = 0; i < this._realNumItems; i += this._curLineItemCount) {
                     pos3 = pos2 + this._virtualItems[i].width + this._columnGap;
@@ -14543,8 +14341,7 @@
                     }
                 }
                 this.handleArchOrder1();
-            }
-            else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
+            } else if (this._layout == exports.ListLayoutType.SingleRow || this._layout == exports.ListLayoutType.FlowVertical) {
                 enterCounter = 0;
                 while (this.handleScroll2(forceUpdate)) {
                     enterCounter++;
@@ -14555,8 +14352,7 @@
                     }
                 }
                 this.handleArchOrder2();
-            }
-            else {
+            } else {
                 this.handleScroll3(forceUpdate);
             }
             this._boundsChanged = false;
@@ -14578,7 +14374,8 @@
             var childCount = this.numChildren;
             var lastIndex = oldFirstIndex + childCount - 1;
             var reuseIndex = forward ? lastIndex : oldFirstIndex;
-            var curX = 0, curY = pos;
+            var curX = 0,
+                curY = pos;
             var needRender;
             var deltaSize = 0;
             var firstItemDeltaSize = 0;
@@ -14618,8 +14415,7 @@
                                 break;
                             }
                         }
-                    }
-                    else {
+                    } else {
                         for (j = reuseIndex; j <= lastIndex; j++) {
                             ii2 = this._virtualItems[j];
                             if (ii2.obj && ii2.flag != this.itemInfoVer && ii2.obj.resourceURL == url) {
@@ -14635,8 +14431,7 @@
                     }
                     if (ii.obj) {
                         this.setChildIndex(ii.obj, forward ? curIndex - newFirstIndex : this.numChildren);
-                    }
-                    else {
+                    } else {
                         ii.obj = this._pool.getObject(url);
                         if (forward)
                             this.addChildAt(ii.obj, curIndex - newFirstIndex);
@@ -14646,8 +14441,7 @@
                     if (ii.obj instanceof GButton)
                         ii.obj.selected = ii.selected;
                     needRender = true;
-                }
-                else
+                } else
                     needRender = forceUpdate;
                 if (needRender) {
                     if (this._autoResizeItem && (this._layout == exports.ListLayoutType.SingleColumn || this._columnCount > 0))
@@ -14713,7 +14507,8 @@
             var childCount = this.numChildren;
             var lastIndex = oldFirstIndex + childCount - 1;
             var reuseIndex = forward ? lastIndex : oldFirstIndex;
-            var curX = pos, curY = 0;
+            var curX = pos,
+                curY = 0;
             var needRender;
             var deltaSize = 0;
             var firstItemDeltaSize = 0;
@@ -14752,8 +14547,7 @@
                                 break;
                             }
                         }
-                    }
-                    else {
+                    } else {
                         for (j = reuseIndex; j <= lastIndex; j++) {
                             ii2 = this._virtualItems[j];
                             if (ii2.obj && ii2.flag != this.itemInfoVer && ii2.obj.resourceURL == url) {
@@ -14769,8 +14563,7 @@
                     }
                     if (ii.obj) {
                         this.setChildIndex(ii.obj, forward ? curIndex - newFirstIndex : this.numChildren);
-                    }
-                    else {
+                    } else {
                         ii.obj = this._pool.getObject(url);
                         if (forward)
                             this.addChildAt(ii.obj, curIndex - newFirstIndex);
@@ -14780,8 +14573,7 @@
                     if (ii.obj instanceof GButton)
                         ii.obj.selected = ii.selected;
                     needRender = true;
-                }
-                else
+                } else
                     needRender = forceUpdate;
                 if (needRender) {
                     if (this._autoResizeItem && (this._layout == exports.ListLayoutType.SingleRow || this._lineCount > 0))
@@ -14865,8 +14657,7 @@
                 if (i - startIndex < pageSize) {
                     if (col < startCol)
                         continue;
-                }
-                else {
+                } else {
                     if (col > startCol)
                         continue;
                 }
@@ -14904,16 +14695,14 @@
                         }
                         ii.obj = this._pool.getObject(url);
                         this.addChildAt(ii.obj, insertIndex);
-                    }
-                    else {
+                    } else {
                         insertIndex = this.setChildIndexBefore(ii.obj, insertIndex);
                     }
                     insertIndex++;
                     if (ii.obj instanceof GButton)
                         ii.obj.selected = ii.selected;
                     needRender = true;
-                }
-                else {
+                } else {
                     needRender = forceUpdate;
                     insertIndex = -1;
                     lastObj = ii.obj;
@@ -14954,8 +14743,7 @@
                         xx = borderX;
                         yy = 0;
                     }
-                }
-                else
+                } else
                     xx += ii.width + this._columnGap;
             }
             //释放未使用的
@@ -15078,8 +14866,7 @@
                     }
                 }
                 cw = Math.ceil(maxWidth);
-            }
-            else if (this._layout == exports.ListLayoutType.SingleRow) {
+            } else if (this._layout == exports.ListLayoutType.SingleRow) {
                 for (i = 0; i < cnt; i++) {
                     child = this.getChildAt(i);
                     if (this.foldInvisibleItems && !child.visible)
@@ -15106,8 +14893,7 @@
                     }
                 }
                 ch = Math.ceil(maxHeight);
-            }
-            else if (this._layout == exports.ListLayoutType.FlowHorizontal) {
+            } else if (this._layout == exports.ListLayoutType.FlowHorizontal) {
                 if (this._autoResizeItem && this._columnCount > 0) {
                     for (i = 0; i < cnt; i++) {
                         child = this.getChildAt(i);
@@ -15126,8 +14912,7 @@
                                 if (j < i) {
                                     child.setSize(child.sourceWidth + Math.round(child.sourceWidth * ratio), child.height, true);
                                     curX += Math.ceil(child.width) + this._columnGap;
-                                }
-                                else {
+                                } else {
                                     child.setSize(viewWidth - curX, child.height, true);
                                 }
                                 if (child.height > maxHeight)
@@ -15143,16 +14928,15 @@
                     }
                     ch = curY + Math.ceil(maxHeight);
                     cw = viewWidth;
-                }
-                else {
+                } else {
                     for (i = 0; i < cnt; i++) {
                         child = this.getChildAt(i);
                         if (this.foldInvisibleItems && !child.visible)
                             continue;
                         if (curX != 0)
                             curX += this._columnGap;
-                        if (this._columnCount != 0 && j >= this._columnCount
-                            || this._columnCount == 0 && curX + child.width > viewWidth && maxHeight != 0) {
+                        if (this._columnCount != 0 && j >= this._columnCount ||
+                            this._columnCount == 0 && curX + child.width > viewWidth && maxHeight != 0) {
                             //new line
                             curX = 0;
                             curY += Math.ceil(maxHeight) + this._lineGap;
@@ -15170,8 +14954,7 @@
                     ch = curY + Math.ceil(maxHeight);
                     cw = Math.ceil(maxWidth);
                 }
-            }
-            else if (this._layout == exports.ListLayoutType.FlowVertical) {
+            } else if (this._layout == exports.ListLayoutType.FlowVertical) {
                 if (this._autoResizeItem && this._lineCount > 0) {
                     for (i = 0; i < cnt; i++) {
                         child = this.getChildAt(i);
@@ -15190,8 +14973,7 @@
                                 if (j < i) {
                                     child.setSize(child.width, child.sourceHeight + Math.round(child.sourceHeight * ratio), true);
                                     curY += Math.ceil(child.height) + this._lineGap;
-                                }
-                                else {
+                                } else {
                                     child.setSize(child.width, viewHeight - curY, true);
                                 }
                                 if (child.width > maxWidth)
@@ -15207,16 +14989,15 @@
                     }
                     cw = curX + Math.ceil(maxWidth);
                     ch = viewHeight;
-                }
-                else {
+                } else {
                     for (i = 0; i < cnt; i++) {
                         child = this.getChildAt(i);
                         if (this.foldInvisibleItems && !child.visible)
                             continue;
                         if (curY != 0)
                             curY += this._lineGap;
-                        if (this._lineCount != 0 && j >= this._lineCount
-                            || this._lineCount == 0 && curY + child.height > viewHeight && maxWidth != 0) {
+                        if (this._lineCount != 0 && j >= this._lineCount ||
+                            this._lineCount == 0 && curY + child.height > viewHeight && maxWidth != 0) {
                             curY = 0;
                             curX += Math.ceil(maxWidth) + this._columnGap;
                             maxWidth = 0;
@@ -15233,9 +15014,8 @@
                     cw = curX + Math.ceil(maxWidth);
                     ch = Math.ceil(maxHeight);
                 }
-            }
-            else //pagination
-             {
+            } else //pagination
+            {
                 var eachHeight;
                 if (this._autoResizeItem && this._lineCount > 0)
                     eachHeight = Math.floor((viewHeight - (this._lineCount - 1) * this._lineGap) / this._lineCount);
@@ -15244,8 +15024,8 @@
                         child = this.getChildAt(i);
                         if (this.foldInvisibleItems && !child.visible)
                             continue;
-                        if (j == 0 && (this._lineCount != 0 && k >= this._lineCount
-                            || this._lineCount == 0 && curY + child.height > viewHeight)) {
+                        if (j == 0 && (this._lineCount != 0 && k >= this._lineCount ||
+                                this._lineCount == 0 && curY + child.height > viewHeight)) {
                             //new page
                             page++;
                             curY = 0;
@@ -15264,8 +15044,7 @@
                                 if (j < i) {
                                     child.setSize(child.sourceWidth + Math.round(child.sourceWidth * ratio), this._lineCount > 0 ? eachHeight : child.height, true);
                                     curX += Math.ceil(child.width) + this._columnGap;
-                                }
-                                else {
+                                } else {
                                     child.setSize(viewWidth - curX, this._lineCount > 0 ? eachHeight : child.height, true);
                                 }
                                 if (child.height > maxHeight)
@@ -15280,8 +15059,7 @@
                             k++;
                         }
                     }
-                }
-                else {
+                } else {
                     for (i = 0; i < cnt; i++) {
                         child = this.getChildAt(i);
                         if (this.foldInvisibleItems && !child.visible)
@@ -15290,17 +15068,17 @@
                             curX += this._columnGap;
                         if (this._autoResizeItem && this._lineCount > 0)
                             child.setSize(child.width, eachHeight, true);
-                        if (this._columnCount != 0 && j >= this._columnCount
-                            || this._columnCount == 0 && curX + child.width > viewWidth && maxHeight != 0) {
+                        if (this._columnCount != 0 && j >= this._columnCount ||
+                            this._columnCount == 0 && curX + child.width > viewWidth && maxHeight != 0) {
                             //new line
                             curX = 0;
                             curY += Math.ceil(maxHeight) + this._lineGap;
                             maxHeight = 0;
                             j = 0;
                             k++;
-                            if (this._lineCount != 0 && k >= this._lineCount
-                                || this._lineCount == 0 && curY + child.height > viewHeight && maxWidth != 0) //new page
-                             {
+                            if (this._lineCount != 0 && k >= this._lineCount ||
+                                this._lineCount == 0 && curY + child.height > viewHeight && maxWidth != 0) //new page
+                            {
                                 page++;
                                 curY = 0;
                                 k = 0;
@@ -15350,8 +15128,7 @@
                 buffer.seek(beginPos, 7);
                 this.setupScroll(buffer);
                 buffer.pos = savedPos;
-            }
-            else
+            } else
                 this.setupOverflow(overflow);
             if (buffer.readBool()) //clipSoftness
                 buffer.skip(8);
@@ -15561,8 +15338,7 @@
             if (index >= 0 && index <= numChildren) {
                 if (child._parent == this) {
                     this.setChildIndex(child, index);
-                }
-                else {
+                } else {
                     if (child._parent)
                         child._parent.removeChild(child);
                     if (index == numChildren)
@@ -15579,8 +15355,7 @@
                         this._tree._afterInserted(child);
                 }
                 return child;
-            }
-            else {
+            } else {
                 throw new RangeError("Invalid child index");
             }
         }
@@ -15603,8 +15378,7 @@
                     this._tree._afterRemoved(child);
                 }
                 return child;
-            }
-            else {
+            } else {
                 throw "Invalid child index";
             }
         }
@@ -15797,11 +15571,11 @@
             }
         }
         createCell(node) {
-            node.createCell();
-            if (this.treeNodeRender)
-                this.treeNodeRender(node, node.cell);
-        }
-        /** @internal */
+                node.createCell();
+                if (this.treeNodeRender)
+                    this.treeNodeRender(node, node.cell);
+            }
+            /** @internal */
         _afterInserted(node) {
             if (!node.cell)
                 this.createCell(node);
@@ -15813,59 +15587,59 @@
                 this.checkChildren(node, index);
         }
         getInsertIndexForNode(node) {
-            var prevNode = node.getPrevSibling();
-            if (prevNode == null)
-                prevNode = node.parent;
-            var insertIndex = this.getChildIndex(prevNode.cell) + 1;
-            var myLevel = node.level;
-            var cnt = this.numChildren;
-            for (var i = insertIndex; i < cnt; i++) {
-                var testNode = this.getChildAt(i)._treeNode;
-                if (testNode.level <= myLevel)
-                    break;
-                insertIndex++;
+                var prevNode = node.getPrevSibling();
+                if (prevNode == null)
+                    prevNode = node.parent;
+                var insertIndex = this.getChildIndex(prevNode.cell) + 1;
+                var myLevel = node.level;
+                var cnt = this.numChildren;
+                for (var i = insertIndex; i < cnt; i++) {
+                    var testNode = this.getChildAt(i)._treeNode;
+                    if (testNode.level <= myLevel)
+                        break;
+                    insertIndex++;
+                }
+                return insertIndex;
             }
-            return insertIndex;
-        }
-        /** @internal */
+            /** @internal */
         _afterRemoved(node) {
-            this.removeNode(node);
-        }
-        /** @internal */
+                this.removeNode(node);
+            }
+            /** @internal */
         _afterExpanded(node) {
-            if (node == this._rootNode) {
-                this.checkChildren(this._rootNode, 0);
-                return;
+                if (node == this._rootNode) {
+                    this.checkChildren(this._rootNode, 0);
+                    return;
+                }
+                if (this.treeNodeWillExpand)
+                    this.treeNodeWillExpand(node, true);
+                if (node.onExpanded)
+                    node.onExpanded(true);
+                if (node.cell == null)
+                    return;
+                if (this.treeNodeRender)
+                    this.treeNodeRender(node, node.cell);
+                if (node.cell.parent)
+                    this.checkChildren(node, this.getChildIndex(node.cell));
             }
-            if (this.treeNodeWillExpand)
-                this.treeNodeWillExpand(node, true);
-            if (node.onExpanded)
-                node.onExpanded(true);
-            if (node.cell == null)
-                return;
-            if (this.treeNodeRender)
-                this.treeNodeRender(node, node.cell);
-            if (node.cell.parent)
-                this.checkChildren(node, this.getChildIndex(node.cell));
-        }
-        /** @internal */
+            /** @internal */
         _afterCollapsed(node) {
-            if (node == this._rootNode) {
-                this.checkChildren(this._rootNode, 0);
-                return;
+                if (node == this._rootNode) {
+                    this.checkChildren(this._rootNode, 0);
+                    return;
+                }
+                if (this.treeNodeWillExpand)
+                    this.treeNodeWillExpand(node, false);
+                if (node.onExpanded)
+                    node.onExpanded(false);
+                if (node.cell == null)
+                    return;
+                if (this.treeNodeRender)
+                    this.treeNodeRender(node, node.cell);
+                if (node.cell.parent)
+                    this.hideFolderNode(node);
             }
-            if (this.treeNodeWillExpand)
-                this.treeNodeWillExpand(node, false);
-            if (node.onExpanded)
-                node.onExpanded(false);
-            if (node.cell == null)
-                return;
-            if (this.treeNodeRender)
-                this.treeNodeRender(node, node.cell);
-            if (node.cell.parent)
-                this.hideFolderNode(node);
-        }
-        /** @internal */
+            /** @internal */
         _afterMoved(node) {
             var startIndex = this.getChildIndex(node.cell);
             var endIndex;
@@ -15882,8 +15656,7 @@
                     obj = this.getChildAt(startIndex + i);
                     this.setChildIndex(obj, insertIndex + i);
                 }
-            }
-            else {
+            } else {
                 for (i = 0; i < cnt; i++) {
                     obj = this.getChildAt(startIndex);
                     this.setChildIndex(obj, insertIndex);
@@ -15994,8 +15767,7 @@
                         for (var j = level; j <= prevLevel; j++)
                             lastNode = lastNode.parent;
                         lastNode.addChild(node);
-                    }
-                    else
+                    } else
                         lastNode.parent.addChild(node);
                 }
                 lastNode = node;
@@ -16225,75 +15997,75 @@
 
     class DOTAScenePanel extends UIElement {
         constructor() {
-            super();
-            //model
-            this.light = "global_light";
-            this.antialias = true;
-            this.renderdeferred = false;
-            //effect
-            this.startActive = true;
-            this.cameraOrigin = "0 0 100";
-            this.lookAt = "0 0 0";
-            this.fov = 60;
-            this.squarePixels = true;
-            this.scenePanel = undefined;
-            this.effectPanel = undefined;
-        }
-        /**
-         *
-         * @param effectPath
-         * @param properties
-         * {
-         *      particleName : this.particleName,
-                startActive : this.startActive,
-                cameraOrigin : this.cameraOrigin,
-                lookAt : this.lookAt,
-                fov : this.fov,
-                squarePixels : this.squarePixels,
-                particleonly : true
-         * }
-         */
+                super();
+                //model
+                this.light = "global_light";
+                this.antialias = true;
+                this.renderdeferred = false;
+                //effect
+                this.startActive = true;
+                this.cameraOrigin = "0 0 100";
+                this.lookAt = "0 0 0";
+                this.fov = 60;
+                this.squarePixels = true;
+                this.scenePanel = undefined;
+                this.effectPanel = undefined;
+            }
+            /**
+             *
+             * @param effectPath
+             * @param properties
+             * {
+             *      particleName : this.particleName,
+                    startActive : this.startActive,
+                    cameraOrigin : this.cameraOrigin,
+                    lookAt : this.lookAt,
+                    fov : this.fov,
+                    squarePixels : this.squarePixels,
+                    particleonly : true
+             * }
+             */
         SetEffectWithParams(effectPath, squarePixels, height, fov) {
-            if (this.effectPanel != undefined) {
-                this.effectPanel.DeleteAsync(1);
+                if (this.effectPanel != undefined) {
+                    this.effectPanel.DeleteAsync(1);
+                }
+                this.effectPanel = $.CreatePanelWithProperties('DOTAParticleScenePanel', this.nativePanel, this.$owner.name, {
+                    particleName: effectPath,
+                    startActive: true,
+                    cameraOrigin: "0 0 " + ((height != undefined) ? height : this.width),
+                    lookAt: "0 0 0",
+                    fov: ((fov != undefined) ? fov : 60),
+                    squarePixels: squarePixels,
+                    camera: "camera_1",
+                    particleonly: true
+                });
+                this.effectPanel.style.width = "100%";
+                this.effectPanel.style.height = "100%";
+                // this.effectPanel.style.overflow = "noclip";
+                // this.effectPanel.style.marginLeft = -this.width / 2 + "px";
+                // this.effectPanel.style.marginTop = -this.height / 2 + "px";
             }
-            this.effectPanel = $.CreatePanelWithProperties('DOTAParticleScenePanel', this.nativePanel, this.$owner.name, {
-                particleName: effectPath,
-                startActive: true,
-                cameraOrigin: "0 0 " + ((height != undefined) ? height : this.width),
-                lookAt: "0 0 0",
-                fov: ((fov != undefined) ? fov : 60),
-                squarePixels: squarePixels,
-                camera: "camera_1",
-                particleonly: true
-            });
-            this.effectPanel.style.width = "100%";
-            this.effectPanel.style.height = "100%";
-            // this.effectPanel.style.overflow = "noclip";
-            // this.effectPanel.style.marginLeft = -this.width / 2 + "px";
-            // this.effectPanel.style.marginTop = -this.height / 2 + "px";
-        }
-        /**
-         *
-         * @param unitName
-         * @param properties
-         * {
-                light : this.light,
-                antialias : this.antialias,
-                renderdeferred : this.renderdeferred,
-                camera : this.camera,
-                particleonly : false,
-                map : this.map,
-                postProcessMaterial : this.postProcessMaterial,
-                rotateonmousemove : this.rotateonmousemove,
-                yawmin : this.yawmin,
-                yawmax : this.yawmax,
-                pitchmin : this.pitchmin,
-                pitchmax : this.pitchmax,
-                deferredalpha : this.deferredalpha,
-                unit : this.unit
-            }
-         */
+            /**
+             *
+             * @param unitName
+             * @param properties
+             * {
+                    light : this.light,
+                    antialias : this.antialias,
+                    renderdeferred : this.renderdeferred,
+                    camera : this.camera,
+                    particleonly : false,
+                    map : this.map,
+                    postProcessMaterial : this.postProcessMaterial,
+                    rotateonmousemove : this.rotateonmousemove,
+                    yawmin : this.yawmin,
+                    yawmax : this.yawmax,
+                    pitchmin : this.pitchmin,
+                    pitchmax : this.pitchmax,
+                    deferredalpha : this.deferredalpha,
+                    unit : this.unit
+                }
+             */
         setModelWithParams(unitName) {
             if (this.scenePanel != undefined) {
                 this.scenePanel.DeleteAsync(1);
@@ -16358,12 +16130,12 @@
             return this.scenePanel.SetScenePanelToLocalHero(heroId);
         }
         SetPostProcessFade(value) {
-            this.scenePanel.SetPostProcessFade(value);
-        }
-        /**
-         * @example
-         * scenePanel.SetCustomPostProcessMaterial("materials/dev/deferred_post_process_graphic_ui.vmat")
-         */
+                this.scenePanel.SetPostProcessFade(value);
+            }
+            /**
+             * @example
+             * scenePanel.SetCustomPostProcessMaterial("materials/dev/deferred_post_process_graphic_ui.vmat")
+             */
         SetCustomPostProcessMaterial(material) {
             this.scenePanel.SetCustomPostProcessMaterial(material);
         }
@@ -16469,8 +16241,7 @@
                 if (checkable) {
                     if (c.selectedIndex == 0)
                         c.selectedIndex = 1;
-                }
-                else
+                } else
                     c.selectedIndex = 0;
             }
         }
@@ -16494,8 +16265,7 @@
                 var index = this._list.getChildIndex(item);
                 this._list.removeChildToPoolAt(index);
                 return true;
-            }
-            else
+            } else
                 return false;
         }
         clearItems() {
@@ -16515,7 +16285,7 @@
             // groot.showPopup(this._contentPane, (target instanceof GRoot) ? null : target, dir);
         }
         hide() {
-            if (this._contentPane.parent) ;
+            if (this._contentPane.parent);
             // GRoot.getInst(this._contentPane).hidePopup(this._contentPane);
         }
         __clickItem(sender, evt) {
@@ -16589,20 +16359,15 @@
         static checkDOTAType(name) {
             if (name == "DOTAAbilityImage") {
                 return new GDOTAAbilityImage(name);
-            }
-            else if (name == "DOTAItemImage") {
+            } else if (name == "DOTAItemImage") {
                 return new GDOTAItemImage(name);
-            }
-            else if (name == "DOTAHeroImage") {
+            } else if (name == "DOTAHeroImage") {
                 return new GDOTAHeroImage(name);
-            }
-            else if (name == "DOTAAvatarImage") {
+            } else if (name == "DOTAAvatarImage") {
                 return new GDOTAAvatarImage(name);
-            }
-            else if (name == "DOTAEffect" || name == "DOTAModel") {
+            } else if (name == "DOTAEffect" || name == "DOTAModel") {
                 return new GDOTAScenePanel(name);
-            }
-            else if (name == "DOTAUserName") {
+            } else if (name == "DOTAUserName") {
                 return new GDOTAUserName(name);
             }
             return null;
@@ -16613,8 +16378,7 @@
             }
             return UIObjectFactory.screenRadio;
         }
-        static openURL(url) {
-        }
+        static openURL(url) {}
         static newObject(type, userClass, name) {
             var obj;
             if (typeof type === 'number') {
@@ -16667,8 +16431,7 @@
                     default:
                         return null;
                 }
-            }
-            else {
+            } else {
                 if (type.type == exports.PackageItemType.Component) {
                     if (userClass)
                         obj = new userClass();
@@ -16676,8 +16439,7 @@
                         obj = new type.extensionType();
                     else
                         obj = UIObjectFactory.newObject(type.objectType, null, type.name);
-                }
-                else
+                } else
                     obj = UIObjectFactory.newObject(type.objectType, null, type.name);
                 if (obj)
                     obj.packageItem = type;
@@ -16809,19 +16571,18 @@
             }
         }
         cancelClick(pointerId) {
-            for (let j = 0; j < maxPointer; j++) {
-                let pointer = this._pointers[j];
-                if (pointer.pointerId == pointerId)
-                    pointer.clickCancelled = true;
+                for (let j = 0; j < maxPointer; j++) {
+                    let pointer = this._pointers[j];
+                    if (pointer.pointerId == pointerId)
+                        pointer.clickCancelled = true;
+                }
             }
-        }
-        //Focus Manage -----------------
+            //Focus Manage -----------------
         get focusedElement() {
             if (this._focused != null) {
                 if (!this._focused.onStage)
                     this._focused = null;
-            }
-            else {
+            } else {
                 this.checkNextFocus();
             }
             return this._focused;
@@ -16855,8 +16616,7 @@
                 if (pos != -1) {
                     if (pos < this._focusHistory.length - 1)
                         this._focusHistory.splice(pos + 1, this._focusHistory.length - pos - 1);
-                }
-                else {
+                } else {
                     this._focusHistory.push(navRoot);
                     if (this._focusHistory.length > 10)
                         this._focusHistory.shift();
@@ -17020,7 +16780,8 @@
             this.multiplyMatrix([-1, 0, 0, 0, 255,
                 0, -1, 0, 0, 255,
                 0, 0, -1, 0, 255,
-                0, 0, 0, 1, 0]);
+                0, 0, 0, 1, 0
+            ]);
         }
         adjustColor(p_brightness, p_contrast, p_saturation, p_hue) {
             this.adjustBrightness(p_brightness);

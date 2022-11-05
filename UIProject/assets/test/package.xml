@@ -29,6 +29,7 @@
     <component id="qrtpx" name="ScrollBarH_grip.xml" path="/components/"/>
     <component id="qrtpy" name="ScrollBarH.xml" path="/components/" exported="true"/>
     <component id="zchyz" name="TestTransition_Root.xml" path="/components/"/>
+    <component id="e80f11" name="Button1_Fade.xml" path="/components/"/>
   </resources>
   <publish name=""/>
 </packageDescription>

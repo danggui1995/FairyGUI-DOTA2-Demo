@@ -18,6 +18,23 @@ export class test_TestButton extends test_TestButton_data{
     {
         this.dropBox_GComboBox.onEvent('status_changed', this.onDropdownUpdate, this);
         this.slider_GSlider.onEvent('changed', this.onSliderUpdate, this);
+
+        this.btnMove2_t.autoReset = false;
+        this.btnMove_t.autoReset = false;
+        this.n0_GButton.onEvent('onactivate', ()=>{
+            //多个transition组合需要使用backToFirstFrame和stayLastFrame配合使用  不然会导致偏移量异常 
+            this.btnMove_t.play(()=>{
+                this.btnMove2_t.play(()=>{
+                    this.btnMove2_t.stayLastFrame();
+                });
+            });
+            this.btnMove_t.backToFirstFrame();
+        });
+        
+        this.n9_GButton.onEvent('onactivate', ()=>{
+            this.btnSingle_t.play(()=>{
+            });
+        });
     }
 
     private onDropdownUpdate()

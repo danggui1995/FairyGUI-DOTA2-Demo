@@ -392,43 +392,17 @@
     margin-left: -9999px;
 }
 
-.FGUI_Transition_XY
-{
+
+/* 按钮按下的动效  想修改就直接改这里-->1.颜色渐变,2.缩放 */
+
+.FGUI_Button_Animation_1 {
+    transition-property: brightness;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
+}
+
+.FGUI_Button_Animation_2 {
     transition-property: transform;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
 }
-
-.FGUI_Transition_Width
-{
-    transition-property: width;
-}
-
-.FGUI_Transition_Height
-{
-    transition-property: height;
-}
-
-.FGUI_Transition_Scale
-{
-    transition-property: pre-transform-scale2d;
-}
-
-.FGUI_Transition_Rotate
-{
-    transition-property: pre-transform-rotate2d;
-}
-
-.FGUI_Transition_Color
-{
-    transition-property: color;
-}
-
-.FGUI_Transition_Color_BG
-{
-    transition-property: background-color;
-}
-
-.FGUI_Transition_Alpha
-{
-    transition-property: opacity;
-}
-

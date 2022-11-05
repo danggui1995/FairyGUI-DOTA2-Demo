@@ -1,3 +1,46 @@
+@keyframes 'TestButton_btnMove_n0_nhre_k' {
+    0% {
+		transform: translate3d(0px, 0px, 0px);
+    }
+
+    66% {
+		transform: translate3d(353px, 0px, 0px);
+    }
+
+    100% {
+		transform: translate3d(177px, 0px, 0px);
+    }
+
+}
+
+@keyframes 'TestButton_btnMove2_n0_nhre_k' {
+    0% {
+		transform: translate3d(177px, 0px, 0px);
+    }
+
+    100% {
+		transform: translate3d(177px, 343px, 0px);
+    }
+
+}
+
+@keyframes 'TestButton_btnSingle_n9_e80f_k' {
+    0% {
+		background-color: #000000;
+		transform: translate3d(0px, 0px, 0px);
+    }
+
+    55% {
+		transform: translate3d(325px, 0px, 0px);
+    }
+
+    100% {
+		background-color: #00ffcc;
+		transform: translate3d(325px, 0px, 0px);
+    }
+
+}
+
 @keyframes 'TestTransition_rotate_n0_nhre_k' {
     0% {
 		transform: rotateZ(0deg);
@@ -134,7 +177,7 @@
 
     100% {
 		background-color: #993300;
-		transform: translate3d(-107px, 0px, 0px);
+		transform: translate3d(-107px, 0px, 0px) skew(0deg, 0deg);
     }
 
 }
@@ -206,6 +249,30 @@
     }
 
 }
+.TestButton_btnMove_n0_nhre {
+    animation-name: TestButton_btnMove_n0_nhre_k;
+    animation-duration: 0.75s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
+}
+
+.TestButton_btnMove2_n0_nhre {
+    animation-name: TestButton_btnMove2_n0_nhre_k;
+    animation-duration: 1.00s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
+}
+
+.TestButton_btnSingle_n9_e80f {
+    animation-name: TestButton_btnSingle_n9_e80f_k;
+    animation-duration: 0.75s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
+}
+
 .TestTransition_rotate_n0_nhre {
     animation-name: TestTransition_rotate_n0_nhre_k;
     animation-duration: 0.50s;

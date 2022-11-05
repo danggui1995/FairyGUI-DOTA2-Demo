@@ -234,6 +234,7 @@ local function genCss_One(handler, xmlPath, kfList, classList)
         --gen keyframe
         for t_target, vv in pairs(frameMap) do
             local frameList = {}
+            local allTpMap = {}
             for frameTime, v in pairs(vv) do
                 local record = {}
                 for t_type, styleList in pairs(v) do
@@ -243,6 +244,7 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     table.insert(record[styleList[1]], {styleList[2], styleList[3] or 0})
                 end
                 local typelist = {}
+                local exlist = {}
                 for tp, sarr in pairs(record) do
                     if #sarr > 1 then
                         table.sort(sarr, function(a,b)
@@ -252,23 +254,83 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     local sortedSArr = {}
                     for _, arr in ipairs(sarr) do
                         table.insert(sortedSArr, arr[1])
+
+                        local ctp = string.format("%s|%d", tp, arr[2])
+                        if not allTpMap[ctp] then
+                            allTpMap[ctp] = {frameTime, arr[1]}
+                        else
+                            if frameTime > allTpMap[ctp][1] then
+                                allTpMap[ctp] = {frameTime, arr[1]}
+                            end
+                        end
+
+                        table.insert(exlist, {string.format("%s|%d", tp, arr[2]), arr[1]})
                     end
                     table.insert(typelist, string.format("\t\t%s: %s;", tp, table.concat(sortedSArr, ' ')))
                 end
                 table.sort(typelist, function(a,b)
                     return a < b
                 end)
-                table.insert(frameList, {frameTime, typelist})
+                table.insert(frameList, {frameTime, typelist, exlist})
             end
 
             table.sort(frameList, function(a,b)
                 return a[1] < b[1]
             end)
+
+            if #frameList > 1 then
+                --补全最后一帧
+                local lastFrame = frameList[#frameList]
+                local lastCtp = {}
+                
+                local exlist = lastFrame[3]
+                local toAdd = {}
+                for ctp, v in pairs(allTpMap) do
+                    local find = false
+                    for _, arr2 in pairs(exlist) do
+                        local tp2 = arr2[1]
+                        local data2 = arr2[2]
+                        if ctp == tp2 then
+                            find = true
+                            break
+                        end
+                    end
+
+                    if not find then
+                        local arr = split(ctp, "|")
+                        local tp = arr[1]
+                        local subtp = arr[2]
+
+                        if not toAdd[tp] then
+                            toAdd[tp] = {v[2]}
+                        else
+                            table.insert(toAdd[tp], v[2])
+                        end
+                    end
+                end
+
+                for tp, v in pairs(toAdd) do
+                    local s = table.concat(v, ' ')
+
+                    local typelist = lastFrame[2]
+                    local find = false
+                    for k, p in pairs(typelist) do
+                        if p:find(tp) then
+                            typelist[k] = p:gsub(";", string.format(" %s;", s))
+                            find = true
+                            break
+                        end
+                    end
+                    if not find then
+                        table.insert(typelist, string.format("\t\t%s: %s;", tp, s))
+                    end
+                end
+            end
+
             local sortedList = {}
             for i, v in ipairs(frameList) do
                 local s = string.format(keyframePattern2, math.floor(v[1] / maxFrame * 100), table.concat(v[2], '\n'))
                 table.insert(sortedList, s)
-
                 if i == #frameList and v[1] < maxFrame then
                     local s = string.format(keyframePattern2, 100, table.concat(v[2], '\n'))
                     table.insert(sortedList, s)
