@@ -39,6 +39,9 @@
     <component id="n9_e80f" name="n9" src="e80f11" fileName="components/Button1_Fade.xml" xy="298,157">
       <Button title="变暗按钮"/>
     </component>
+    <component id="n10_qeo4" name="testDisable" src="nhre7" fileName="components/Button1.xml" xy="312,559">
+      <Button title="缩放按钮"/>
+    </component>
   </displayList>
   <transition name="color"/>
   <transition name="btnMove">

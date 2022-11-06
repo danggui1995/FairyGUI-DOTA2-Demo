@@ -94,6 +94,7 @@ export class test_TestButton_data extends BaseView{
 	public slider_GSlider : fgui.GSlider;
 	public n8_GGraph : fgui.GGraph;
 	public n9_GButton : fgui.GButton;
+	public testDisable_GButton : fgui.GButton;
 	public color_t : fgui.Transition;
 	public btnMove_t : fgui.Transition;
 	public btnMove2_t : fgui.Transition;
@@ -121,6 +122,7 @@ export class test_TestButton_data extends BaseView{
 		this.slider_GSlider = <fgui.GSlider><unknown>(this.getChild("slider"));
 		this.n8_GGraph = <fgui.GGraph><unknown>(this.getChild("n8"));
 		this.n9_GButton = <fgui.GButton><unknown>(this.getChild("n9"));
+		this.testDisable_GButton = <fgui.GButton><unknown>(this.getChild("testDisable"));
 		this.color_t = this.getTransition("color");
 		this.btnMove_t = this.getTransition("btnMove");
 		this.btnMove2_t = this.getTransition("btnMove2");

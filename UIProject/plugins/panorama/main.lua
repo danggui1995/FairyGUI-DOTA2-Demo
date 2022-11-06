@@ -164,14 +164,14 @@ local function genCss_One(handler, xmlPath, kfList, classList)
                     local newx, newy = getTranslateStr(t_startValue, lastx, lasty, oldx, oldy)
                     lastx = newx
                     lasty = newy
-                    local s = string.format("translate3d(%dpx, %dpx, 0px)", newx - oldx, newy - oldy)
+                    local s = string.format("translate3d(%dpx, %dpx, 0px)", math.floor(newx - oldx), math.floor(newy - oldy))
                     frameMap[t_target][t_delay][t_type] = {"transform", s, 4}
                     
                     local s2 = ""
                     local newx, newy = getTranslateStr(t_endValue, lastx, lasty, oldx, oldy)
                     lastx = newx
                     lasty = newy
-                    local s = string.format("translate3d(%dpx, %dpx, 0px)", newx - oldx, newy - oldy)
+                    local s = string.format("translate3d(%dpx, %dpx, 0px)", math.floor(newx - oldx), math.floor(newy - oldy))
                     frameMap[t_target][frame2Time][t_type] = {"transform", s, 4}
                 elseif t_type == ActionType.Alpha then
                     frameMap[t_target][t_delay][t_type] = {"opacity", string.format("%s", t_startValue[1])}
@@ -329,9 +329,14 @@ local function genCss_One(handler, xmlPath, kfList, classList)
 
             local sortedList = {}
             for i, v in ipairs(frameList) do
-                local s = string.format(keyframePattern2, math.floor(v[1] / maxFrame * 100), table.concat(v[2], '\n'))
+                local percent = 0
+                if maxFrame > 0 then
+                    percent = math.floor(v[1] / maxFrame * 100)
+                end
+
+                local s = string.format(keyframePattern2, percent, table.concat(v[2], '\n'))
                 table.insert(sortedList, s)
-                if i == #frameList and v[1] < maxFrame then
+                if (i == #frameList and v[1] < maxFrame) or (maxFrame < 1) then
                     local s = string.format(keyframePattern2, 100, table.concat(v[2], '\n'))
                     table.insert(sortedList, s)
                 elseif i == 1 and v[1] > 0 then
@@ -393,7 +398,12 @@ local function genCss(handler)
         local imageSrcName = component:GetAttribute("name")
         local componentPath = pkgDir .. imageSrcDir .. imageSrcName
 
-        genCss_One(handler, componentPath, kfList, classList)
+        local ok,msg = pcall(function ()
+            genCss_One(handler, componentPath, kfList, classList)
+        end)
+        if not ok then
+            print(string.format("genCss(%s) process error: %s\n%s", componentPath, msg, debug.traceback()))
+        end
     end
 
     --gen pkg css

@@ -2848,7 +2848,7 @@
     UIConfig.scaleLevel = 0;
     //resource path
     UIConfig.ouputDir = "file://{resources}/images/custom_game/fgui/";
-    UIConfig.useNativeTransition = true;
+    UIConfig.useNativeTransition = false;
     // let dpr = window.devicePixelRatio;
     // if (dpr > 3)
     //     UIConfig.scaleLevel = 3; //x4
@@ -4710,9 +4710,12 @@
         }
         set color(value) {
             if (this._color != value) {
+                this._color = value;
                 if (this._type != 0) {
-                    this._color = value;
                     this.nativePanel.style.backgroundColor = convertToHtmlColor(value);
+                }
+                else {
+                    this.nativePanel.style.washColor = convertToHtmlColor(value);
                 }
             }
         }
@@ -9297,7 +9300,7 @@
             this._timeScale = 1;
             this._startTime = 0;
             this._endTime = 0;
-            this.autoReset = true;
+            this.autoReset = false;
             this._runningAnimation = new Set;
             this._onAnimationEndCallback = (p, kName) => {
                 this.onAnimationEnd(p, kName);
@@ -9381,11 +9384,14 @@
             }
             if (cnt > 0) {
                 if (UIConfig.useNativeTransition && this.checkCanUseNative()) {
+                    this._ownerBaseX = this._owner.x;
+                    this._ownerBaseY = this._owner.y;
                     this._playing = true;
                     this.stopAnimation();
-                    if (this.autoReset == true) {
-                        this.applyAnimationProperties(true);
-                    }
+                    // if (this.autoReset == true)
+                    // {
+                    //     this.applyAnimationProperties(true);
+                    // }
                     for (var i = 0; i < cnt; i++) {
                         var item = this._items[i];
                         var transitionClassName = this.getTransitionClassName(item);
@@ -9438,20 +9444,24 @@
                     }
                 }
             }
-            if (this.autoReset == true) {
-                this.applyAnimationProperties(false);
-            }
+            // if (this.autoReset == true)
+            // {
+            //     this.applyAnimationProperties(false);
+            // }
         }
         onAnimationEnd(p, kName) {
             var className = kName.substring(0, kName.length - 2);
             if (this._runningAnimation.has(className)) {
                 this._runningAnimation.delete(className);
             }
-            p.SetHasClass(className, false);
+            if (this.autoReset == true) {
+                p.SetHasClass(className, false);
+            }
             if (this._runningAnimation.size == 0 && this._playing == true) {
-                if (this.autoReset == true) {
-                    this.applyAnimationProperties(false);
-                }
+                // if (this.autoReset == true)
+                // {
+                //     this.applyAnimationProperties(false);
+                // }
                 this._playing = false;
                 if (this._onComplete) {
                     let handler = this._onComplete;

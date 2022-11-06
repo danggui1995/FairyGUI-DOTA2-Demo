@@ -2,8 +2,8 @@
 <component size="1920,1080">
   <displayList>
     <text id="n3_nhre" name="n3" xy="82,591" size="168,34" fontSize="24" text="读取fgui资源："/>
-    <text id="n4_nhre" name="n4" xy="9,861" size="240,34" fontSize="24" text="读取dota2内部资源："/>
-    <loader id="n5_nhre" name="dloader" xy="299,801" size="341,198" url="ui://wdrcd8rpnhre1m" fill="scaleMatchWidth"/>
+    <text id="n4_nhre" name="n4" xy="9,861" size="238,34" fontSize="24" text="读取dota2内部资源："/>
+    <loader id="n5_nhre" name="dloader" xy="299,801" size="341,198" url="ui://wdrcd8rpnhre1m" fill="scaleMatchWidth" color="#9900ff"/>
     <loader id="n2_nhre" name="floader1" xy="300,547" size="169,173" group="n7_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleFree"/>
     <text id="n6_xu3d" name="n6" xy="296,498" size="100,34" group="n7_xu3d" fontSize="24" text="自由缩放"/>
     <loader id="n14_xu3d" name="floader4" xy="907,311" size="169,173" group="n16_xu3d" url="ui://wdrcd8rpnhre1m" fill="scaleNoBorder"/>
