@@ -1,21 +1,14 @@
+# Installation
+```
+npm install
+
+gulp build
+```
+
 # Note
 1.UIProject中的plugins目录是必须的，他会决定导出的ts代码格式以及界面数据。<BR>
-2.关于动效：目前支持高帧率和低帧率两种。
-当 `UIConfig.useNativeTransition = true` 并且使用的动效类型在下列类型中时，会使用高帧率动画。
-其他的情况下（包括Tween类方法的显式调用）都会使用低帧率（其实也可以在Lua端通过控制台提升UI渲染频率，这里不做推荐）。
-```
-enum ActionType {
-    XY = 0,
-    Size = 1,
-    Scale = 2,
-    Alpha = 4,
-    Rotation = 5,
-    Color = 6,
-    Skew = 13,
-}
-```
-3.九宫格：与Unity平台的有差异，插件会将图切成9份来还原九宫图的效果（无力吐槽这翻九倍的消耗）。<Br>
-4.项目结构推荐为
+2.九宫格：与Unity平台的有差异，插件会将图切成9份来还原九宫图的效果（无力吐槽这翻九倍的消耗）。<Br>
+3.项目结构推荐为
 ```
 |-- UIProject
 |-- content
@@ -28,7 +21,7 @@ enum ActionType {
 mklink /J game "C:\Games\steamapps\common\dota 2 beta\game\dota_addons\testlink" 
 mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\testlink"
 ```
-5.禁止使用FairyGUI的批量导出，因为这样会使插件的编译图片功能失效。
+4.禁止使用FairyGUI的批量导出，因为这样会使插件的编译图片功能失效。<BR>
 
 # Q & A
 Q:如何编译导出的图片到vtex_c?<BR>

@@ -17,7 +17,6 @@ export class test_TestTransition extends test_TestTransition_data{
 
     public OnShow():void
     {
-        // UIConfig.useNativeTransition = false;
         this.testBtn_GButton.onEvent('onactivate', ()=>{
             GTween.to2(500, 500, 100, 100, 1).setTarget(this.testBtn_GButton, this.testBtn_GButton.setPosition);
             GTween.to2(1, 1, 0.5, 0.5, 1).setTarget(this.testBtn_GButton, this.testBtn_GButton.setScale);
