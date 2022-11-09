@@ -13,7 +13,6 @@ gulp build
 |-- UIProject
 |-- content
 |-- game
-|-- node_modules
 |-- src_ui
 ```
 其中content和game为软连接，例如：
@@ -27,7 +26,7 @@ mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\tes
 
 # Q & A
 Q:如何编译导出的图片到vtex_c?<BR>
-A:在custom_ui_manifest.xml中引用compile_helper.xml，这个平时是不引用的，需要编译图片才开出来，这个编译需要运行当前mod才能生效，可以自行删掉这里的数据，插件也会在导出后几秒内自动删掉。如果要离线生成，可以借助resourcecompiler.exe
+A:在custom_ui_manifest.xml中引用compile_helper.xml，这个编译需要运行当前mod才能生效，FairyGUI的插件会在导出包的时候将该包的所有导出图片都加入进来编译，需要在编译完成后手动删除[compile_helper.xml]的数据。
 ```
 <Panel>
     <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/main.xml" />

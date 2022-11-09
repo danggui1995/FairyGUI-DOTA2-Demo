@@ -33,7 +33,7 @@ gulp.task("rollup", async function() {
         input: "build/main.js",
         onwarn: onwarn,
         output: {
-            file: 'main.js',
+            file: '../content/panorama/scripts/main.js',
             format: 'umd',
             extend: true,
             name: 'main'
@@ -47,16 +47,6 @@ gulp.task("rollup", async function() {
     await subTask.write(config);
 });
 
-gulp.task("uglify", function() {
-    return gulp.src("main.js")
-        .pipe(uglify( /* options */ ))
-        .pipe(gulp.dest("../content/panorama/scripts/"));
-});
-
-gulp.task("move", function() {
-    return gulp.src("main.js")
-        .pipe(gulp.dest("../content/panorama/scripts/"));
-});
 
 gulp.task("movelib", function() {
     return gulp.src("node_modules/panorama-fgui-types/fgui/FairyGUI.js")
@@ -64,17 +54,8 @@ gulp.task("movelib", function() {
         .pipe(gulp.dest("../content/panorama/scripts/"));
 });
 
-gulp.task("finalclean", function() {
-    return gulp.src("main.js")
-        .pipe(clean('main.js'));
-});
-
 gulp.task('build', gulp.series(
     gulp.parallel('movelib'),
     gulp.parallel('buildJs'),
     gulp.parallel('rollup'),
-    // gulp.parallel('cleanJs'),
-    // gulp.parallel('uglify'),
-    gulp.parallel('move'),
-    gulp.parallel('finalclean'),
 ))
