@@ -1,3 +1,7 @@
+
 @import url("file://{resources}/styles/custom_game/fgui/test.css");
+@import url("file://{resources}/styles/custom_game/fgui/test_images.css");
 @import url("file://{resources}/styles/custom_game/fgui/uipublic.css");
+@import url("file://{resources}/styles/custom_game/fgui/uipublic_images.css");
 @import url("file://{resources}/styles/custom_game/fgui/dotapanel.css");
+@import url("file://{resources}/styles/custom_game/fgui/dotapanel_images.css");

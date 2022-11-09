@@ -50,18 +50,18 @@ gulp.task("rollup", async function() {
 gulp.task("uglify", function() {
     return gulp.src("main.js")
         .pipe(uglify( /* options */ ))
-        .pipe(gulp.dest("content/panorama/scripts/"));
+        .pipe(gulp.dest("../content/panorama/scripts/"));
 });
 
 gulp.task("move", function() {
     return gulp.src("main.js")
-        .pipe(gulp.dest("content/panorama/scripts/"));
+        .pipe(gulp.dest("../content/panorama/scripts/"));
 });
 
 gulp.task("movelib", function() {
     return gulp.src("node_modules/panorama-fgui-types/fgui/FairyGUI.js")
         .pipe(rename("fairygui.js"))
-        .pipe(gulp.dest("content/panorama/scripts/"));
+        .pipe(gulp.dest("../content/panorama/scripts/"));
 });
 
 gulp.task("finalclean", function() {

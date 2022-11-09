@@ -1,6 +1,5 @@
 import { GObject, GComponent } from "panorama-fgui-types/fgui/FairyGUI";
 import { ViewManager } from "../../ViewManager";
-import { BaseView } from "../BaseView";
 import { test_TestHud_data } from "./test_data";
 import { test_TestButton } from "./test_TestButton";
 import { test_TestLabel } from "./test_TestLabel";

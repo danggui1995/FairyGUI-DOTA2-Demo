@@ -13,7 +13,7 @@
       "outDir": "dist"
     },
     "include": [
-      "content/panorama/scripts/**/*"
+      "ts/**/*"
     ],
     "exclude": [
       "node_modules",

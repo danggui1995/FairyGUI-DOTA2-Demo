@@ -21,7 +21,7 @@
 <Image src="file://{resources}/images/custom_game/fgui/uipublic/nhre1n.png"/>
 <Image src="file://{resources}/images/custom_game/fgui/uipublic/nhre1o.png"/>
 <Label text='有图片在编译
-请在compile_helper.xml中删除编译好的图片' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>
+请在编译完成后前往compile_helper.xml中删除对应的条目' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>
   </Panel>
 </root>
 

@@ -1,7 +1,7 @@
-# Installation
+# Build
 ```
+cd src_ui
 npm install
-
 gulp build
 ```
 
@@ -14,6 +14,7 @@ gulp build
 |-- content
 |-- game
 |-- node_modules
+|-- src_ui
 ```
 其中content和game为软连接，例如：
 ```
@@ -22,6 +23,7 @@ mklink /J game "C:\Games\steamapps\common\dota 2 beta\game\dota_addons\testlink"
 mklink /J content "C:\Games\steamapps\common\dota 2 beta\content\dota_addons\testlink"
 ```
 4.禁止使用FairyGUI的批量导出，因为这样会使插件的编译图片功能失效。<BR>
+5.为了防止跟其他的ts项目冲突以及方便后续适配ts直译，将ts项目挪到单独的src_ui目录中<BR>
 
 # Q & A
 Q:如何编译导出的图片到vtex_c?<BR>

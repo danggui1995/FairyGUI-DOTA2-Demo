@@ -433,14 +433,21 @@ local function genCss(handler)
         end
         file:close()
 
-        local pkgCss = string.format("@import url(\"file://{resources}/styles/custom_game/fgui/%s.css\");", handler.pkg.name)
+        local pkgCss = string.format("\n@import url(\"file://{resources}/styles/custom_game/fgui/%s.css\");", handler.pkg.name)
         local findpattern = string.format("styles/custom_game/fgui/%s", handler.pkg.name)
         if not data:find(findpattern) then
-            data = data .. pkgCss .. "\n"
-            local file = io.open(autogenPath, "w")
-            file:write(data)
-            file:close()
+            data = data .. pkgCss
         end
+
+        local pkgImages = string.format("\n@import url(\"file://{resources}/styles/custom_game/fgui/%s_images.css\");", handler.pkg.name)
+        local findpattern = string.format("styles/custom_game/fgui/%s_images", handler.pkg.name)
+        if not data:find(findpattern) then
+            data = data .. pkgImages
+        end
+
+        local file = io.open(autogenPath, "w")
+        file:write(data)
+        file:close()
     end
 end
 
@@ -510,39 +517,6 @@ local function genScale9Grid(handler)
             local imageDestNameArr = split(imageDestName, ".")
             local pkgExportDir = string.format("%s/%s", handler.exportPath:gsub("\\", "/"), handler.pkg.name)
             
-            -- do
-            --     local ll = {"bl", "bc", "br", "ml", "mc", "mr", "tl", "tc", "tr"}
-            --     for _, p in ipairs(ll) do
-            --         for i = 0, grid_pixels[p].Length - 1 do
-            --             table.insert(testcolor, grid_pixels[p][i])
-            --         end
-            --     end
-                
-            --     local texture = CS.UnityEngine.Texture2D(width, height)
-
-            --     for i, c in ipairs(testcolor) do
-            --         local col = (i - 1) % width
-            --         local row = math.floor((i - 1) / width)
-            --         texture:SetPixel(col, row, c)
-            --     end
-            --     texture:Apply()
-
-            --     local gridfilename = string.format("%s_regen.%s", imageDestNameArr[1], imageDestNameArr[2])
-            --     local savepath = string.format("%s/%s", pkgExportDir, gridfilename)
-            --     local file = io.open(savepath, "wb")
-            --     local bdata
-            --     if imageExt == "png" then
-            --         bdata = CS.UnityEngine.ImageConversion.EncodeToPNG(texture)
-            --     elseif imageExt == "jpg" then
-            --         bdata = CS.UnityEngine.ImageConversion.EncodeToJPG(texture, 1)
-            --     elseif imageExt == "tga" then
-            --         bdata = CS.UnityEngine.ImageConversion.EncodeToTGA(texture)
-            --     end
-
-            --     file:write(bdata)
-            --     file:close()
-            -- end
-            
             for pos, colors in pairs(grid_pixels) do
                 local gridfilename = string.format("%s_%s.%s", imageDestNameArr[1], pos, imageDestNameArr[2])
                 local savepath = string.format("%s/%s", pkgExportDir, gridfilename)
@@ -583,8 +557,8 @@ export class PackageRegister
     }
 }
 ]]
-local function genPackageRegister(exportPath, pkgName, str, handler)
-    local path = string.format("%s/../PackageRegister.ts", exportPath)
+local function genPackageRegister(pkgName, str, handler)
+    local path = string.format("%s/../src_ui/ts/PackageRegister.ts", handler.project.basePath:gsub("\\", "/"))
     local file = io.open(path, "r")
     local data
     if not file then
@@ -646,14 +620,14 @@ end
 local function genLayoutFile(handler, allClsData)
     local pkgName = handler.pkg.name
     local exportPath = handler.exportPath:gsub("\\", "/")
-    local scriptPath = exportPath:gsub("/images/", "/scripts/")
+    local scriptPath = string.format("%s/../src_ui/ts", handler.project.basePath)
     local path = string.format("%s/%s/package.xml", exportPath, pkgName)
 
     local timer = CS.FairyGUI.Timers()
     timer:Add(0.5, 1, function()
         
         if IO.File.Exists(path) then
-            local targetDir = string.format("%s/../view/%s", scriptPath, pkgName)
+            local targetDir = string.format("%s/view/%s", scriptPath, pkgName)
             if (not IO.Directory.Exists(targetDir)) then
                 IO.Directory.CreateDirectory(targetDir)
             end
@@ -663,14 +637,14 @@ local function genLayoutFile(handler, allClsData)
             IO.File.WriteAllText(targetPath, string.format(template_data, allClsStr))
 
             local str = genBinaryStr(pkgName, path)
-            genPackageRegister(scriptPath, pkgName, str, handler)
+            genPackageRegister(pkgName, str, handler)
         else
             fprint("File Not Found : " .. path)
         end
 
         genScale9Grid(handler)
         genCss(handler)
-        compileTextures(exportPath, pkgName)
+        compileTextures(exportPath, handler)
     end)
 end
 
@@ -701,20 +675,26 @@ local xmlTemplate = [[
 
 ]]
 
+local imagePattern = [[.%s{background-image: url("file://{resources}/%s");}]]
+
 --图片编译
-function compileTextures(exportPath)
+function compileTextures(exportPath, handler)
     local arr = {}
+    local cssData = {}
     TraverseFolder(exportPath, function (fullPath)
         fullPath = fullPath:gsub("\\", "/")
         fullPath:gsub("/panorama/(.*)", function (str)
             local ext = IO.Path.GetExtension(str):lower()
             if ext == ".png" or ext == ".jpg" or ext == ".tga" then
                 table.insert(arr, string.format("<Image src=\"file://{resources}/%s\"/>", str))
+
+                local imageName = IO.Path.GetFileName(fullPath):gsub("%.", "_")
+                table.insert(cssData, string.format(imagePattern, string.format("%s_%s", handler.pkg.name, imageName), str))
             end
         end)
     end)
 
-    table.insert(arr, string.format("<Label text='有图片在编译\n请在compile_helper.xml中删除编译好的图片' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>"))
+    table.insert(arr, string.format("<Label text='有图片在编译\n请在编译完成后前往compile_helper.xml中删除对应的条目' style='font-size:48px;horizontal-align:center;vertical-align:middle;'/>"))
 
     local str = string.format(xmlTemplate, table.concat(arr, '\n'))
     local layoutPath = exportPath:gsub("/images/", "/layout/")
@@ -722,6 +702,13 @@ function compileTextures(exportPath)
         IO.Directory.CreateDirectory(layoutPath)
     end
     IO.File.WriteAllText(layoutPath .. "/compile_helper.xml", str)
+
+    --图片写入到对应包的css中
+    local stylePath = exportPath:gsub("/images/", "/styles/")
+    local cssPath = string.format("%s/%s_images.css", stylePath, handler.pkg.name)
+    local file = io.open(cssPath, "w")
+    file:write(table.concat(cssData, "\n"))
+    file:close()
 end
 
 function onPublish(handler)

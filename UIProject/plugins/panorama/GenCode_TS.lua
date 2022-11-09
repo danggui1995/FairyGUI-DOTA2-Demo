@@ -122,11 +122,11 @@ local function genCode(handler)
     local classes = handler:CollectClasses(false, false, "fgui")
     local classCnt = classes.Count
     local pkgName = handler.pkg.name
+    local targetDir = string.format("%s/../src_ui/ts/view/%s", handler.project.basePath:gsub("\\", "/"), pkgName)
     for i=0,classCnt-1 do
         local classInfo = classes[i]
         local lowerPath = classInfo.res.path:lower()
         if (lowerPath:find("/view") or lowerPath:find("/component")) and classInfo.res.exported then
-            local targetDir = string.format("%s/../view/%s", handler.exportCodePath, pkgName):gsub("\\", "/"):gsub("/images/", "/scripts/")
             local targetPath = string.format("%s/%s_%s.ts", targetDir, pkgName, classInfo.resName)
             targetPath = targetPath:gsub("\\", "/")
 
@@ -185,7 +185,6 @@ local function genCode(handler)
 
                 table.insert(allCls, saveData2)
             end
-            
 
             local file = io.open(targetPath, "r")
             if not file then
