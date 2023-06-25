@@ -4,8 +4,18 @@
     <scripts>
     </scripts>
   <Panel hittest="false" class="CompileRoot" style="width:100%;height:100%;">
+<Image src="file://{resources}/images/custom_game/fgui/uipublic_atlas0.png"/>
 <Image src="file://{resources}/images/custom_game/fgui/dotapanel/dn3v7.png"/>
 <Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_bc.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_bl.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_br.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_mc.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_ml.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_mr.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_tc.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_tl.png"/>
+<Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl61g_tr.png"/>
 <Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl69.png"/>
 <Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl69_bc.png"/>
 <Image src="file://{resources}/images/custom_game/fgui/uipublic/jrl69_bl.png"/>

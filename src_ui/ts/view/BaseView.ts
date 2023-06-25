@@ -1,4 +1,4 @@
-import { GComponent, UIPackage, Controller, Transition, Timers, UIElement } from "panorama-fgui-types/fgui/FairyGUI";
+import { GComponent, UIPackage, Controller, Transition, GObject } from "panorama-fgui-types/fgui/FairyGUI";
 import { BinCache } from "./BinCache";
 
 export class BaseView{
@@ -18,7 +18,7 @@ export class BaseView{
         
     }
 
-    public getChild<T extends GComponent>(name : string) : T
+    public getChild<T extends GObject>(name : string) : T
     {
         return this.root.getChild(name);
     }

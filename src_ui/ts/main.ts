@@ -11,5 +11,5 @@ class ExampleUI {
     }
 }
 
-let ui = new ExampleUI($.GetContextPanel());
+// let ui = new ExampleUI($.GetContextPanel());
 

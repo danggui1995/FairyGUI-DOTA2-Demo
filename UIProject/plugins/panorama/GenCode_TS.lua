@@ -147,7 +147,7 @@ local function genCode(handler)
                 if memberInfo.group==0 then
                     local ctype = getType(memberInfo)
                     varName = varName .. "_" .. ctype:gsub("fgui%.", "")
-                    table.insert(getArr, string.format('\t\tthis.%s = <%s><unknown>(this.getChild("%s"));', varName, ctype, memberInfo.name))
+                    table.insert(getArr, string.format('\t\tthis.%s = this.getChild<%s>("%s");', varName, ctype, memberInfo.name))
                 elseif memberInfo.group==1 then
                     varName = varName .. "_c"
                     table.insert(getArr, string.format('\t\tthis.%s = this.getController("%s");', varName, memberInfo.name))

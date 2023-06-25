@@ -30,6 +30,9 @@
     <component id="qrtpy" name="ScrollBarH.xml" path="/components/" exported="true"/>
     <component id="zchyz" name="TestTransition_Root.xml" path="/components/"/>
     <component id="e80f11" name="Button1_Fade.xml" path="/components/"/>
+    <component id="gb0n12" name="ProgressBarCircle.xml" path="/components/"/>
+    <component id="keg413" name="TestAtlas.xml" path="/views/" exported="true"/>
+    <component id="keg414" name="TestAtlasComp.xml" path="/components/"/>
   </resources>
   <publish name=""/>
 </packageDescription>

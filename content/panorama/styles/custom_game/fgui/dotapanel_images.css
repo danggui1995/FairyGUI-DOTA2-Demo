@@ -1,111 +1,26 @@
-.dotapanel_dn3v7_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/dotapanel/dn3v7.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl61g_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_bc_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_bc.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_bl_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_bl.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_br_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_br.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_mc_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_mc.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_ml_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_ml.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_mr_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_mr.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_tc_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_tc.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_tl_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_tl.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_jrl69_tr_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_tr.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_nhre1l_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1l.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_nhre1m_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1m.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_nhre1n_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1n.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
-
-.dotapanel_nhre1o_png
-{
-    background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1o.png");
-    background-repeat: no-repeat;
-    background-size: 100%;
-}
+.dotapanel_uipublic_atlas0_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic_atlas0.png");}
+.dotapanel_dn3v7_png{background-image: url("file://{resources}/images/custom_game/fgui/dotapanel/dn3v7.png");}
+.dotapanel_jrl61g_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g.png");}
+.dotapanel_jrl61g_bc_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_bc.png");}
+.dotapanel_jrl61g_bl_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_bl.png");}
+.dotapanel_jrl61g_br_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_br.png");}
+.dotapanel_jrl61g_mc_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_mc.png");}
+.dotapanel_jrl61g_ml_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_ml.png");}
+.dotapanel_jrl61g_mr_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_mr.png");}
+.dotapanel_jrl61g_tc_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_tc.png");}
+.dotapanel_jrl61g_tl_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_tl.png");}
+.dotapanel_jrl61g_tr_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl61g_tr.png");}
+.dotapanel_jrl69_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69.png");}
+.dotapanel_jrl69_bc_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_bc.png");}
+.dotapanel_jrl69_bl_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_bl.png");}
+.dotapanel_jrl69_br_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_br.png");}
+.dotapanel_jrl69_mc_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_mc.png");}
+.dotapanel_jrl69_ml_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_ml.png");}
+.dotapanel_jrl69_mr_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_mr.png");}
+.dotapanel_jrl69_tc_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_tc.png");}
+.dotapanel_jrl69_tl_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_tl.png");}
+.dotapanel_jrl69_tr_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/jrl69_tr.png");}
+.dotapanel_nhre1l_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1l.png");}
+.dotapanel_nhre1m_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1m.png");}
+.dotapanel_nhre1n_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1n.png");}
+.dotapanel_nhre1o_png{background-image: url("file://{resources}/images/custom_game/fgui/uipublic/nhre1o.png");}

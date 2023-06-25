@@ -18,16 +18,10 @@ export class BinCache{
         }
     }
 
-    /**
-     * GetPackageData
-     */
     public static GetPackageData(pkgName : string) {
         return BinCache.cacheData.get(pkgName);
     }
 
-    /**
-     * PreloadPackage
-     */
     public static PreloadPackage(pkgName : string) {
         let data = BinCache.GetPackageData(pkgName);
         if (data != null)

@@ -2,7 +2,7 @@
 <packageDescription id="wdrcd8rp">
   <resources>
     <image id="jrl69" name="gg_xiaodi_01.png" path="/textures/" exported="true" scale="9grid" scale9grid="5,5,8,7"/>
-    <image id="jrl61g" name="gg_chat_sel.png" path="/textures/" exported="true"/>
+    <image id="jrl61g" name="gg_chat_sel.png" path="/textures/" exported="true" scale="9grid" scale9grid="19,20,38,40"/>
     <component id="c2n71" name="itemcell.xml" path="/components/" exported="true"/>
     <image id="nhre1l" name="SKILL_CATE_OFF.png" path="/textures/" exported="true"/>
     <image id="nhre1m" name="SKILL_CATE_ON.png" path="/textures/" exported="true"/>

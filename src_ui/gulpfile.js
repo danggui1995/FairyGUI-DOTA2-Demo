@@ -8,9 +8,9 @@ const rename = require("gulp-rename");
 
 const onwarn = warning => {
     // Silence circular dependency warning for moment package
-    if (warning.code === 'CIRCULAR_DEPENDENCY')
+    if (warning.code === 'CIRCULAR_DEPENDENCY' || warning.code == 'UNRESOLVED_IMPORT' || warning.guess == 'fgui')
         return
-
+    console.warn(warning);
     console.warn(`(!) ${warning.message}`)
 }
 
@@ -36,7 +36,7 @@ gulp.task("rollup", async function() {
             file: '../content/panorama/scripts/main.js',
             format: 'umd',
             extend: true,
-            name: 'main'
+            name: 'main',
         },
         plugins: [
             //不用resolve 将fgui作为全局引入

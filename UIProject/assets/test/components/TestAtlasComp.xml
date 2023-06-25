@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="128,128">
+  <displayList>
+    <graph id="n1_keg4" name="bg" xy="0,0" size="128,128" type="rect" fillColor="#ffcccccc">
+      <relation target="" sidePair="width-width,height-height"/>
+    </graph>
+    <loader id="n0_keg4" name="icon" xy="0,0" size="128,128" fill="scaleFree"/>
+  </displayList>
+</component>

@@ -11750,7 +11750,6 @@
                 }
                 return;
             }
-            this._content.nativePanel.RemoveClass("FGUI_OutScreen");
             this._checkSourceSizeTimer = null;
             this.sourceHeight = Math.floor(this._content.nativePanel.contentheight / this._content.nativePanel.actualuiscale_y);
             this.sourceWidth = Math.floor(this._content.nativePanel.contentwidth / this._content.nativePanel.actualuiscale_x);
@@ -11825,6 +11824,7 @@
                 this._checkSourceSizeFunc(true);
                 return;
             }
+            this._content.nativePanel.RemoveClass("FGUI_OutScreen");
             let cw = this.sourceWidth;
             let ch = this.sourceHeight;
             if (this._autoSize) {
@@ -16459,6 +16459,9 @@
         }
         get element() {
             return this._element;
+        }
+        GetNativePanel() {
+            return this._element.scenePanel;
         }
     }
 
