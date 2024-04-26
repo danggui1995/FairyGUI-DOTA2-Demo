@@ -5,56 +5,10 @@
   <scripts>
     <include src="file://{resources}/scripts/fairygui.js" />
     <include src="file://{resources}/scripts/main.js" />
+    <include src="file://{resources}/scripts/custom_game/setup.js" />
   </scripts>
 
   <Panel hittest="false" class="Root">
-    <Panel id="test" onactivate="$.Msg('111111111');$.DispatchEvent('ToggleDebugger');">
-      <!-- <Panel class="testatlas"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas2"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/>
-      <Panel class="testatlas"/> -->
-    </Panel>
     <Panel id="HiddenRoot" />
     <Panel id="ViewRoot"/>
   </Panel>

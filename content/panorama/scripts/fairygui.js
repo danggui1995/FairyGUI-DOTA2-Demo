@@ -4899,140 +4899,12 @@
         }
     }
 
-    var MarginType;
-    (function (MarginType) {
-        MarginType[MarginType["W11"] = 0] = "W11";
-        MarginType[MarginType["H11"] = 1] = "H11";
-        MarginType[MarginType["W12"] = 2] = "W12";
-        MarginType[MarginType["H12"] = 3] = "H12";
-        MarginType[MarginType["W13"] = 4] = "W13";
-        MarginType[MarginType["H13"] = 5] = "H13";
-        MarginType[MarginType["W21"] = 6] = "W21";
-        MarginType[MarginType["H21"] = 7] = "H21";
-        MarginType[MarginType["W22"] = 8] = "W22";
-        MarginType[MarginType["H22"] = 9] = "H22";
-        MarginType[MarginType["W23"] = 10] = "W23";
-        MarginType[MarginType["H23"] = 11] = "H23";
-        MarginType[MarginType["W31"] = 12] = "W31";
-        MarginType[MarginType["H31"] = 13] = "H31";
-        MarginType[MarginType["W32"] = 14] = "W32";
-        MarginType[MarginType["H32"] = 15] = "H32";
-        MarginType[MarginType["W33"] = 16] = "W33";
-        MarginType[MarginType["H33"] = 17] = "H33";
-    })(MarginType || (MarginType = {}));
-    class Margin {
-        constructor() {
-            this.left = 0;
-            this.right = 0;
-            this.top = 0;
-            this.bottom = 0;
-            //中间的宽度
-            this.width = 0;
-            //中间的高度
-            this.height = 0;
-        }
-        copy(source) {
-            this.top = source.top;
-            this.bottom = source.bottom;
-            this.left = source.left;
-            this.right = source.right;
-            this.width = source.width;
-            this.height = source.height;
-        }
-        getMargin(m) {
-            switch (m) {
-                //horizontal
-                case MarginType.W11:
-                case MarginType.W21:
-                case MarginType.W31:
-                    {
-                        return `${this.left}px`;
-                    }
-                case MarginType.W12:
-                    {
-                        return `${this.left}px`;
-                    }
-                case MarginType.W32:
-                    {
-                        return `${this.right}px`;
-                    }
-                case MarginType.W13:
-                case MarginType.W23:
-                case MarginType.W33:
-                    {
-                        return `${this.right}px`;
-                    }
-                //vertival
-                case MarginType.H11:
-                case MarginType.H12:
-                case MarginType.H13:
-                    {
-                        return `${this.top}px`;
-                    }
-                case MarginType.H21:
-                case MarginType.H23:
-                    {
-                        return `${this.height}px`;
-                    }
-                case MarginType.H31:
-                case MarginType.H32:
-                case MarginType.H33:
-                    {
-                        return `${this.bottom}px`;
-                    }
-                case MarginType.W22:
-                    {
-                        return `${this.left}px`;
-                    }
-                case MarginType.H22:
-                    {
-                        return `${this.right}px`;
-                    }
-                default:
-                    {
-                        return `0px`;
-                    }
-            }
-        }
-    }
-
-    const GridStyleTemplate = new Map([
-        ["cornerStyle", {
-                "background-size": `100%`,
-                "background-repeat": `no-repeat`,
-            }],
-        ["horizontalBorderStyle", {
-                "width": `100%`,
-                "background-repeat": `repeat-x`,
-            }],
-        ["verticalBorderStyle", {
-                "height": `100%`,
-                "background-repeat": `repeat-y`,
-            }],
-        ["centerStyle", {
-                "width": `100%`,
-                "height": `100%`,
-                "background-size": `100%`,
-                "background-repeat": `repeat`,
-            }]
-    ]);
-    const GridStyleParams = [
-        ["width", MarginType.W11, "height", MarginType.H11], ["margin-left", MarginType.W11, "margin-right", MarginType.W13, "height", MarginType.H12], ["width", MarginType.W13, "height", MarginType.H13],
-        ["margin-top", MarginType.H11, "margin-bottom", MarginType.H31, "width", MarginType.W21], ["margin-left", MarginType.W12, "margin-right", MarginType.W32, "margin-top", MarginType.H12, "margin-bottom", MarginType.H32], ["margin-top", MarginType.H13, "margin-bottom", MarginType.H33, "width", MarginType.W23],
-        ["width", MarginType.W31, "height", MarginType.H31], ["margin-left", MarginType.W11, "margin-right", MarginType.W33, "height", MarginType.H32], ["width", MarginType.W33, "height", MarginType.H33],
-    ];
-    const GridStyleMap = [
-        ["tl", "left top", "cornerStyle"], ["tc", "center top", "horizontalBorderStyle"], ["tr", "right top", "cornerStyle"],
-        ["ml", "left center", "verticalBorderStyle"], ["mc", "center center", "centerStyle"], ["mr", "right center", "verticalBorderStyle"],
-        ["bl", "left bottom", "cornerStyle"], ["bc", "center bottom", "horizontalBorderStyle"], ["br", "right bottom", "cornerStyle"],
-    ];
     class Image extends UIElement {
         constructor() {
             super();
             this._tileGridIndice = 0;
             this._color = 0xFFFFFF;
             this._textureScale = new Vec2(1, 1);
-            this._scale9Panels = [];
         }
         init() {
             this.nativePanel = $.CreatePanel("Image", $('#HiddenRoot'), this.$owner.name);
@@ -5121,47 +4993,15 @@
             }
             else if (this._scale9Grid) {
                 this.nativePanel.style.backgroundRepeat = "no-repeat";
-                if (this._textureScale.x != 1 || this._textureScale.y != 1) {
-                    this.nativePanel.style.backgroundSize = (this._textureScale.x * 100) + "% " + (this._textureScale.y * 100) + "%";
-                }
-                else {
-                    this.nativePanel.style.backgroundSize = "auto";
-                }
-                if (this._scale9Panels.length == 0) {
-                    var urlDir;
-                    var urlExt;
-                    var totalLen = this._src.length - 1;
-                    for (var i = totalLen; i >= 0; i--) {
-                        if (this._src[i] == '.') {
-                            urlDir = this._src.substring(0, i);
-                            urlExt = this._src.substring(i + 1, totalLen + 1);
-                            break;
-                        }
-                    }
-                    for (var i = 0; i < GridStyleMap.length; i++) {
-                        var gridArray = GridStyleMap[i];
-                        var gridPos = gridArray[0];
-                        var gridAlign = gridArray[1];
-                        var gridStyleName = gridArray[2];
-                        var gridPath = `url('${urlDir}_${gridPos}.${urlExt}')`;
-                        var styleType = GridStyleTemplate.get(gridStyleName);
-                        var styleImplement = Object.assign({
-                            "align": `${gridAlign}`,
-                            "background-image": `${gridPath}`,
-                        }, styleType);
-                        var gridpanel = $.CreatePanel("Image", this.nativePanel, gridPos);
-                        for (const k in styleImplement) {
-                            gridpanel.style[k] = styleImplement[k];
-                        }
-                        var GridStyleParam = GridStyleParams[i];
-                        for (var j = 0; j < GridStyleParam.length; j += 2) {
-                            var key = GridStyleParam[j];
-                            var value = GridStyleParam[j + 1];
-                            gridpanel.style[key] = this._scale9Grid.getMargin(value);
-                        }
-                        this._scale9Panels.push(gridpanel);
-                    }
-                }
+                this.nativePanel.style.backgroundImage = "none";
+                this.nativePanel.style.borderImage = "url('" + this._src + "')";
+                var size = `${this._scale9Grid.top}px ${this._scale9Grid.right}px ${this._scale9Grid.bottom}px ${this._scale9Grid.left}px`;
+                this.nativePanel.style.borderWidth = size;
+                this.nativePanel.style.borderImageSlice = size + " fill";
+                if ((this._tileGridIndice & 0xF) != 0)
+                    this.nativePanel.style.borderImageRepeat = "repeat";
+                else
+                    this.nativePanel.style.borderImageRepeat = "stretch";
             }
             else {
                 this.nativePanel.style.backgroundSize = "100% 100%";
@@ -5658,7 +5498,6 @@
             super();
             this._maxWidth = 0;
             this._layoutStyleChanged = true;
-            this._tmpChangWrapping = false;
             this._textFormat = new TextFormat();
             this._text = "";
             this._textSize = new Vec2();
@@ -5705,8 +5544,9 @@
                 arr.push(convertToHtmlColor(this._textFormat.outlineColor));
                 this._label.style.textShadow = arr.join(' ');
             }
-            else
+            else {
                 this._label.style.boxShadow = null;
+            }
         }
         get text() {
             return this._text;
@@ -5729,16 +5569,6 @@
             this.applyText();
         }
         applyText() {
-            this._updatingSize = true;
-            this._tmpChangWrapping = false;
-            if (this._autoSize == exports.AutoSizeType.Both) {
-                this._label.style.width = null;
-                if (this._maxWidth > 0) {
-                    this.updateWrapping();
-                    this._tmpChangWrapping = true;
-                }
-            }
-            this._label.AddClass("FGUI_OutScreen");
             this._label.html = this._html;
             this._label.text = this.text;
             this._delayUpdateFunc(true);
@@ -5753,7 +5583,6 @@
             }
             var height = Math.floor(this._label.contentheight / this._label.actualuiscale_y);
             var width = Math.floor(this._label.contentwidth / this._label.actualuiscale_x);
-            this._label.RemoveClass("FGUI_OutScreen");
             this._textSize.set(width, height);
             if (this._autoSize == exports.AutoSizeType.Both) {
                 if (this.$owner) {
@@ -5765,12 +5594,6 @@
                     this.$owner.height = this._textSize.y;
                 }
             }
-            if (this._tmpChangWrapping && this._contentRect.width > this._maxWidth) {
-                this._label.style.width = this._maxWidth + "px";
-                this.updateWrapping(true);
-            }
-            this._container.style.width = this._contentRect.width + "px";
-            this._updatingSize = false;
         }
         get autoSize() {
             return this._autoSize;
@@ -5809,6 +5632,12 @@
         set maxWidth(value) {
             if (this._maxWidth != value) {
                 this._maxWidth = value;
+                if (this._autoSize == exports.AutoSizeType.Both) {
+                    if (this._maxWidth > 0) {
+                        this._label.style.width = this._maxWidth + "px";
+                        this.updateWrapping(true);
+                    }
+                }
             }
         }
         get textWidth() {
@@ -6050,6 +5879,103 @@
             else {
                 this._pos = tmp;
                 return false;
+            }
+        }
+    }
+
+    var MarginType;
+    (function (MarginType) {
+        MarginType[MarginType["W11"] = 0] = "W11";
+        MarginType[MarginType["H11"] = 1] = "H11";
+        MarginType[MarginType["W12"] = 2] = "W12";
+        MarginType[MarginType["H12"] = 3] = "H12";
+        MarginType[MarginType["W13"] = 4] = "W13";
+        MarginType[MarginType["H13"] = 5] = "H13";
+        MarginType[MarginType["W21"] = 6] = "W21";
+        MarginType[MarginType["H21"] = 7] = "H21";
+        MarginType[MarginType["W22"] = 8] = "W22";
+        MarginType[MarginType["H22"] = 9] = "H22";
+        MarginType[MarginType["W23"] = 10] = "W23";
+        MarginType[MarginType["H23"] = 11] = "H23";
+        MarginType[MarginType["W31"] = 12] = "W31";
+        MarginType[MarginType["H31"] = 13] = "H31";
+        MarginType[MarginType["W32"] = 14] = "W32";
+        MarginType[MarginType["H32"] = 15] = "H32";
+        MarginType[MarginType["W33"] = 16] = "W33";
+        MarginType[MarginType["H33"] = 17] = "H33";
+    })(MarginType || (MarginType = {}));
+    class Margin {
+        constructor() {
+            this.left = 0;
+            this.right = 0;
+            this.top = 0;
+            this.bottom = 0;
+            //中间的宽度
+            this.width = 0;
+            //中间的高度
+            this.height = 0;
+        }
+        copy(source) {
+            this.top = source.top;
+            this.bottom = source.bottom;
+            this.left = source.left;
+            this.right = source.right;
+            this.width = source.width;
+            this.height = source.height;
+        }
+        getMargin(m) {
+            switch (m) {
+                //horizontal
+                case MarginType.W11:
+                case MarginType.W21:
+                case MarginType.W31:
+                    {
+                        return `${this.left}px`;
+                    }
+                case MarginType.W12:
+                    {
+                        return `${this.left}px`;
+                    }
+                case MarginType.W32:
+                    {
+                        return `${this.right}px`;
+                    }
+                case MarginType.W13:
+                case MarginType.W23:
+                case MarginType.W33:
+                    {
+                        return `${this.right}px`;
+                    }
+                //vertival
+                case MarginType.H11:
+                case MarginType.H12:
+                case MarginType.H13:
+                    {
+                        return `${this.top}px`;
+                    }
+                case MarginType.H21:
+                case MarginType.H23:
+                    {
+                        return `${this.height}px`;
+                    }
+                case MarginType.H31:
+                case MarginType.H32:
+                case MarginType.H33:
+                    {
+                        return `${this.bottom}px`;
+                    }
+                case MarginType.W22:
+                    {
+                        return `${this.left}px`;
+                    }
+                case MarginType.H22:
+                    {
+                        return `${this.right}px`;
+                    }
+                default:
+                    {
+                        return `0px`;
+                    }
             }
         }
     }
@@ -6684,7 +6610,6 @@
             let str = this._text;
             if (this._template)
                 str = this.parseTemplate(str);
-            this._element.maxWidth = this.maxWidth;
             if (this._ubbEnabled)
                 this._element.htmlText = defaultParser.parse(XMLUtils.encodeString(str));
             else
@@ -6851,6 +6776,7 @@
                 this._template = {};
             if (buffer.version >= 3)
                 tf.strikethrough = buffer.readBool();
+            this._element.maxWidth = this.maxWidth;
             this._element.applyFormat();
         }
         setup_afterAdd(buffer, beginPos) {
@@ -16330,7 +16256,7 @@
             if (this.effectPanel != undefined) {
                 this.effectPanel.DeleteAsync(1);
             }
-            this.effectPanel = $.CreatePanelWithProperties('DOTAParticleScenePanel', this.nativePanel, this.$owner.name, {
+            this.effectPanel = $.CreatePanel('DOTAParticleScenePanel', this.nativePanel, this.$owner.name, {
                 particleName: effectPath,
                 startActive: true,
                 cameraOrigin: "0 0 " + ((height != undefined) ? height : this.width),
@@ -16371,7 +16297,7 @@
             if (this.scenePanel != undefined) {
                 this.scenePanel.DeleteAsync(1);
             }
-            this.scenePanel = $.CreatePanelWithProperties('DOTAScenePanel', this.nativePanel, this.$owner.name, {
+            this.scenePanel = $.CreatePanel('DOTAScenePanel', this.nativePanel, this.$owner.name, {
                 light: this.light,
                 antialias: this.antialias,
                 renderdeferred: this.renderdeferred,
@@ -16396,7 +16322,7 @@
             if (this.scenePanel != undefined) {
                 this.scenePanel.DeleteAsync(1);
             }
-            this.scenePanel = $.CreatePanelWithProperties('DOTAScenePanel', this.nativePanel, this.$owner.name, params);
+            this.scenePanel = $.CreatePanel('DOTAScenePanel', this.nativePanel, this.$owner.name, params);
             this.scenePanel.style.width = "100%";
             this.scenePanel.style.height = "100%";
         }
@@ -16459,9 +16385,6 @@
         }
         get element() {
             return this._element;
-        }
-        GetNativePanel() {
-            return this._element.scenePanel;
         }
     }
 
