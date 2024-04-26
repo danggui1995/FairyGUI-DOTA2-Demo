@@ -643,7 +643,7 @@ local function genLayoutFile(handler, allClsData)
             fprint("File Not Found : " .. path)
         end
 
-        genScale9Grid(handler)
+        -- genScale9Grid(handler)
         genCss(handler)
         compileTextures(exportPath, handler)
     end)

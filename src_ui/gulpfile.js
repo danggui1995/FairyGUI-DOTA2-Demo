@@ -10,7 +10,6 @@ const onwarn = warning => {
     // Silence circular dependency warning for moment package
     if (warning.code === 'CIRCULAR_DEPENDENCY' || warning.code == 'UNRESOLVED_IMPORT' || warning.guess == 'fgui')
         return
-    console.warn(warning);
     console.warn(`(!) ${warning.message}`)
 }
 
